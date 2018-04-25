@@ -23,6 +23,14 @@ namespace Axle
         {
             services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
             services.AddTransient<SessionHubMethods<SessionHub>>();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy(
+                    "CorsPolicy",
+                    builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+            });
+
             services.AddSignalR();
 
             services.AddMvcCore()
@@ -38,7 +46,8 @@ namespace Axle
                 app.UseDatabaseErrorPage();
             }
 
-            app.UseMvcWithDefaultRoute();
+            app.UseCors("CorsPolicy");
+            app.UseMvc();
             app.UseSignalR(routes =>
             {
                 routes.MapHub<SessionHub>(SessionHub.Name);

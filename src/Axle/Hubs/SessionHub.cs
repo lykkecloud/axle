@@ -16,9 +16,9 @@
 
         public static string Name => "session";
 
-        public void TerminateSession(string sessionId)
+        public void TerminateSession()
         {
-            this.hubMethods.TerminateSession(sessionId);
+            this.hubMethods.TerminateSession(this.Context.ConnectionId);
         }
 
         public void StartSession(string userId)

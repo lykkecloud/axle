@@ -75,6 +75,7 @@ namespace Axle
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>()
                 .UseSerilog()
+                .UseUrls("http://+:5012")
                 .Build();
         }
     }
