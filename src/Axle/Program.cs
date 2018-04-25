@@ -69,11 +69,13 @@ namespace Axle
             }
         }
 
-        private static IWebHost BuildWebHost(string[] args, IConfigurationRoot configuration) =>
-            WebHost.CreateDefaultBuilder(args)
+        private static IWebHost BuildWebHost(string[] args, IConfigurationRoot configuration)
+        {
+            return WebHost.CreateDefaultBuilder(args)
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>()
                 .UseSerilog()
                 .Build();
+        }
     }
 }

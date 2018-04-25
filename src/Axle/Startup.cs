@@ -3,6 +3,8 @@
 
 namespace Axle
 {
+    using Axle.Hubs;
+    using Axle.Persistence;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -19,6 +21,10 @@ namespace Axle
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
+            services.AddTransient<SessionHubMethods<SessionHub>>();
+            services.AddSignalR();
+
             services.AddMvcCore()
                 .AddJsonFormatters();
         }
@@ -32,8 +38,11 @@ namespace Axle
                 app.UseDatabaseErrorPage();
             }
 
-            app.UseAuthentication();
             app.UseMvcWithDefaultRoute();
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<SessionHub>(SessionHub.Name);
+            });
         }
     }
 }
