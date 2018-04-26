@@ -1,8 +1,6 @@
 ﻿namespace Axle.Hubs
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using Axle.Persistence;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
@@ -33,6 +31,16 @@
                 this.sessionRepository.RemoveSession(connectionId);
 
                 Log.Information($"Session {connectionId} terminated by user {userId}.");
+            }
+        }
+
+        public void RemoveDeadSession(string connectionId)
+        {
+            if (this.sessionRepository.TryGetSession(connectionId, out var _))
+            {
+                this.sessionRepository.RemoveSession(connectionId);
+
+                Log.Information($"Dead session {connectionId} deleted.");
             }
         }
 

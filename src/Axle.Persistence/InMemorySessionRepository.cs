@@ -19,6 +19,11 @@
             return this.sessions[sessionId];
         }
 
+        public bool TryGetSession(string sessionId, out string userId)
+        {
+            return this.sessions.TryGetValue(sessionId, out userId);
+        }
+
         public void RemoveSession(string sessionId)
         {
             this.sessions.Remove(sessionId);
