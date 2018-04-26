@@ -8,7 +8,7 @@
 
         public void Add(TId id, TEntity entity)
         {
-            this.repo.Add(id, entity);    
+            this.repo.Add(id, entity);
         }
 
         public TEntity Get(TId id)

@@ -29,7 +29,8 @@
             this.sessions.Remove(sessionId);
         }
 
-        public IEnumerable<string> GetSessionsByUser(string userId) {
+        public IEnumerable<string> GetSessionsByUser(string userId)
+        {
             // TODO (Marta): Replace this with an extra dictionary.
             return this.sessions.Where(x => x.Value == userId).Select(kv => kv.Key).ToList();
         }

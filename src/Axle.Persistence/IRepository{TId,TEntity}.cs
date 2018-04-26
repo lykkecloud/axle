@@ -6,6 +6,7 @@
     {
         void Add(TId id, TEntity entity);
 
+#pragma warning disable CA1716 // Identifiers should not match keywords
         TEntity Get(TId id);
 
         IEnumerable<TEntity> GetAll();
