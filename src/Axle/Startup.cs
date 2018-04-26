@@ -7,6 +7,7 @@ namespace Axle
     using Axle.Persistence;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -21,6 +22,7 @@ namespace Axle
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IRepository<string, HubConnectionContext>, InMemoryRepository<string, HubConnectionContext>>();
             services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
             services.AddTransient<SessionHubMethods<SessionHub>>();
 

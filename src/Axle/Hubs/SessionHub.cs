@@ -23,7 +23,8 @@
 
         public void StartSession(string userId)
         {
-            this.hubMethods.StartSession(this.Context.ConnectionId, userId);
+            this.hubMethods.StartSession(this.Context.Connection, userId);
+            Console.WriteLine(this.Context.ConnectionId);
         }
 
         public override Task OnConnectedAsync()

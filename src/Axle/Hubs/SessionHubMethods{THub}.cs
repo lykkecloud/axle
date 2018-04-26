@@ -1,6 +1,8 @@
 ﻿namespace Axle.Hubs
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using Axle.Persistence;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
@@ -10,27 +12,43 @@
     {
         private readonly IHubContext<THub> hubContext;
         private readonly ISessionRepository sessionRepository;
+        private readonly IRepository<string, HubConnectionContext> connectionRepository;
 
-        public SessionHubMethods(IHubContext<THub> hubContext, ISessionRepository sessionRepository)
+        public SessionHubMethods(IHubContext<THub> hubContext, ISessionRepository sessionRepository, IRepository<string, HubConnectionContext> connectionRepository)
         {
             this.hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
             this.sessionRepository = sessionRepository ?? throw new ArgumentNullException(nameof(sessionRepository));
+            this.connectionRepository = connectionRepository ?? throw new ArgumentNullException(nameof(connectionRepository));
         }
 
         public void TerminateSession(string connectionId)
         {
-            this.hubContext.Clients.Client(connectionId).InvokeAsync("terminateSession");
+            var connection = this.connectionRepository.Get(connectionId);
 
-            var userId = this.sessionRepository.GetSession(connectionId);
-            this.sessionRepository.RemoveSession(connectionId);
+            if (connection != null)
+            {
+                connection.Abort();
 
-            Log.Information($"Session {connectionId} terminated by user {userId}.");
+                var userId = this.sessionRepository.GetSession(connectionId);
+                this.sessionRepository.RemoveSession(connectionId);
+
+                Log.Information($"Session {connectionId} terminated by user {userId}.");
+            }
         }
 
-        public void StartSession(string connectionId, string userId)
+        public void StartSession(HubConnectionContext connection, string userId)
         {
-            this.sessionRepository.AddSession(connectionId, userId);
-            Log.Information($"Session {connectionId} started by user {userId}.");
+            var activeSessionIds = this.sessionRepository.GetSessionsByUser(userId);
+            foreach (var activeSessionId in activeSessionIds)
+            {
+                this.TerminateSession(activeSessionId);
+            }
+
+            // TODO (Marta): Thread-safety, du-uh!
+            this.connectionRepository.Add(connection.ConnectionId, connection);
+            this.sessionRepository.AddSession(connection.ConnectionId, userId);
+
+            Log.Information($"Session {connection.ConnectionId} started by user {userId}.");
         }
     }
 }

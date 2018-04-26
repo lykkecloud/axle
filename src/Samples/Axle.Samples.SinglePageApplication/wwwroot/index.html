@@ -154,7 +154,6 @@
         function terminateSession() {
             if (connection != null) {
                 connection.invoke('terminateSession');
-                connection.stop();
             }
         }
 
@@ -237,6 +236,10 @@
                 if (user) {
                     connection.start().then(function () {
                         connection.invoke('startSession', user.profile.sub);
+                    });
+
+                    connection.onclose(function () {
+                        log("The connection was closed.");
                     });
                 }
             });
