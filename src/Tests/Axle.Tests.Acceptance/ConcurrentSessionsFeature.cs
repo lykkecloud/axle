@@ -1,12 +1,17 @@
 ﻿namespace Axle.Tests.Acceptance
 {
-    using System.Threading;
+    using Axle.Tests.Acceptance.Support;
+    using Axle.Tests.Acceptance.Support.SecuritySdk;
     using Xbehave;
     using Xunit;
 
-    [Collection("Axle collection")]
-    public class ConcurrentSessionsFeature
+    public class ConcurrentSessionsFeature : IntegrationTest
     {
+        public ConcurrentSessionsFeature(SecurityFixture securityFixture, AxleFixture axleFixture)
+            : base(securityFixture, axleFixture)
+        {
+        }
+
         [Scenario]
         public void OpeningANewSessionShouldCloseAnOlderActiveSession()
         {

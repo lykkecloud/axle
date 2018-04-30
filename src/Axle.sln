@@ -17,6 +17,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axle", "Axle\Axle.csproj", "{E9A8E725-C940-4D6B-8CEB-C31FD3EE6BA2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{284FEFDB-AE8F-450D-8426-929D9A7F0F9C}"
+	ProjectSection(SolutionItems) = preProject
+		Axle\Program.cs = Axle\Program.cs
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axle.Samples.SinglePageApplication", "Samples\Axle.Samples.SinglePageApplication\Axle.Samples.SinglePageApplication.csproj", "{5308274D-2B06-4CE3-BB0A-792FAA3AD607}"
 EndProject
@@ -24,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axle.Persistence", "Axle.Pe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{4F97F7B6-AF25-4133-803B-57CE1411439E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axle.Tests.Acceptance", "Tests\Axle.Tests.Acceptance\Axle.Tests.Acceptance.csproj", "{D649DAC0-2EDA-40F8-B773-1DF516854268}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axle.Tests.Acceptance", "Tests\Axle.Tests.Acceptance\Axle.Tests.Acceptance.csproj", "{D649DAC0-2EDA-40F8-B773-1DF516854268}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
