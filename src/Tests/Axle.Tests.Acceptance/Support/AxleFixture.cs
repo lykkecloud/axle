@@ -20,15 +20,12 @@
         public AxleFixture()
         {
             var config = new ConfigurationBuilder().AddJsonFile("testsettings.json").Build();
-            this.Authority = config.GetValue<string>("authority");
             this.AxleUrl = config.GetValue<Uri>("axle-url");
 
             this.axleProcess = this.StartAxle();
         }
 
         public Uri AxleUrl { get; }
-
-        public string Authority { get; }
 
         public void Dispose()
         {

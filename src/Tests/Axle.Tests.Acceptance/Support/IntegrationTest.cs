@@ -3,24 +3,17 @@
 
 namespace Axle.Tests.Acceptance.Support
 {
-    using System.Net.Http;
-    using Axle.Tests.Acceptance.Support.SecuritySdk;
-    using Xunit;
+    using System;
 
-    [Collection("Axle")]
     public class IntegrationTest
     {
-        private readonly SecurityFixture securityFixture;
         private readonly AxleFixture axleFixture;
 
-        public IntegrationTest(SecurityFixture securityFixture, AxleFixture axleFixture)
+        public IntegrationTest(AxleFixture axleFixture)
         {
-            this.securityFixture = securityFixture;
             this.axleFixture = axleFixture;
         }
 
-        protected string Authority => this.securityFixture.Authority;
-
-        protected HttpMessageHandler Handler => this.securityFixture.Handler;
+        protected Uri AxleUrl => this.axleFixture.AxleUrl;
     }
 }
