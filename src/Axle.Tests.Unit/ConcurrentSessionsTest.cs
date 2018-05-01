@@ -23,7 +23,7 @@
         {
             IHubContext<SessionHub> hubContext = null;
             ISessionRepository sessionRepository = null;
-            IRepository<string, HubConnectionContext> connectionRepository = null;
+            IReadOnlyRepository<string, HubConnectionContext> connectionRepository = null;
             Thread[] threads = null;
             SessionHubMethods<SessionHub> hubMethods = null;
             ConcurrentQueue<Exception> exceptions = null;
@@ -36,7 +36,9 @@
 
                     hubContext = A.Fake<IHubContext<SessionHub>>();
                     sessionRepository = new InMemorySessionRepository();
-                    connectionRepository = new InMemoryRepository<string, HubConnectionContext>();
+
+                    connectionRepository = A.Fake<IReadOnlyRepository<string, HubConnectionContext>>();
+                    A.CallTo(() => connectionRepository.Get(A<string>.Ignored)).Returns(A.Fake<HubConnectionContext>());
 
                     hubMethods = new SessionHubMethods<SessionHub>(hubContext, sessionRepository, connectionRepository);
                 });
@@ -63,9 +65,6 @@
 
                     var activeSessionsOfUser = sessionRepository.GetSessionsByUser(UserId);
                     activeSessionsOfUser.Count().Should().Be(1);
-
-                    var connections = connectionRepository.GetAll();
-                    connections.Count().Should().Be(1);
                 })
                 .Teardown(() =>
                 {
@@ -93,10 +92,7 @@
 
         private void StartSession(SessionHubMethods<SessionHub> hubMethods)
         {
-            var connection = A.Fake<HubConnectionContext>();
-            A.CallTo(() => connection.ConnectionId).Returns(value: Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture));
-
-            hubMethods.StartSession(connection, UserId);
+            hubMethods.StartSession(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId);
         }
     }
 }

@@ -21,30 +21,32 @@
 
         public void TerminateSession(string connectionId)
         {
-            var connection = this.connectionRepository.Get(connectionId);
+            this.AbortConnection(connectionId);
 
-            if (connection != null)
-            {
-                connection.Abort();
+            var userId = this.sessionRepository.GetSession(connectionId);
+            this.sessionRepository.RemoveSession(connectionId);
 
-                var userId = this.sessionRepository.GetSession(connectionId);
-                this.sessionRepository.RemoveSession(connectionId);
-
-                Log.Information($"Session {connectionId} terminated by user {userId}.");
-            }
+            Log.Information($"Session {connectionId} terminated by user {userId}.");
         }
 
-        public void StartSession(HubConnectionContext connection, string userId)
+        public void StartSession(string connectionId, string userId)
         {
             var activeSessionIds = this.sessionRepository.GetSessionsByUser(userId);
             foreach (var activeSessionId in activeSessionIds)
             {
-                this.TerminateSession(activeSessionId);
+                this.AbortConnection(activeSessionId);
+                this.sessionRepository.RemoveSession(activeSessionId);
             }
 
-            this.sessionRepository.AddSession(connection.ConnectionId, userId);
+            this.sessionRepository.AddSession(connectionId, userId);
 
-            Log.Information($"Session {connection.ConnectionId} started by user {userId}.");
+            Log.Information($"Session {connectionId} started by user {userId}.");
+        }
+
+        private void AbortConnection(string connectionId)
+        {
+            var connection = this.connectionRepository.Get(connectionId);
+            connection?.Abort();
         }
     }
 }
