@@ -1,5 +1,6 @@
 ﻿namespace Axle.Persistence
 {
+    using System;
     using System.Collections.Generic;
 
     public class InMemoryRepository<TId, TEntity> : IRepository<TId, TEntity>

@@ -18,7 +18,7 @@
         {
         }
 
-        [Scenario]
+        [Scenario(Skip = "To be replaced by a unit test")]
         public void OpeningMultipleSessionsShouldKeepOnlyOneActiveSession()
         {
             var numberOfSessions = 3;
