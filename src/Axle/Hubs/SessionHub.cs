@@ -13,8 +13,8 @@
 
         public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, HubConnectionContext> connectionRepository)
         {
-            this.hubMethods = hubMethods ?? throw new ArgumentNullException(nameof(hubMethods));
-            this.connectionRepository = connectionRepository ?? throw new ArgumentNullException(nameof(connectionRepository));
+            this.hubMethods = hubMethods;
+            this.connectionRepository = connectionRepository;
         }
 
         public static string Name => "session";

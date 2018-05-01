@@ -1,5 +1,5 @@
 ﻿{
-  "axle-url": "http://localhost:5012",
+  "axleUrl": "http://localhost:5012",
   "authority": "https://auth-test.lykkecloud.com/",
   "clientId": "axle_console",
   "scope": "openid profile axle_api",

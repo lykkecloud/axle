@@ -68,6 +68,7 @@
                 {
                     await Task.Delay(100);
                     signalRClient.IsConnected.Should().BeFalse();
+                    signalRClient2.IsConnected.Should().BeTrue();
                 })
                 .Teardown(async () =>
                 {

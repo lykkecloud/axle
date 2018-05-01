@@ -20,7 +20,7 @@
         public AxleFixture()
         {
             var config = new ConfigurationBuilder().AddJsonFile("testsettings.json").Build();
-            this.AxleUrl = config.GetValue<Uri>("axle-url");
+            this.AxleUrl = config.GetValue<Uri>("axleUrl");
 
             this.axleProcess = this.StartAxle();
         }

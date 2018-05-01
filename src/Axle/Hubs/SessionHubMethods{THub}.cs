@@ -16,9 +16,9 @@
 
         public SessionHubMethods(IHubContext<THub> hubContext, ISessionRepository sessionRepository, IReadOnlyRepository<string, HubConnectionContext> connectionRepository)
         {
-            this.hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
-            this.sessionRepository = sessionRepository ?? throw new ArgumentNullException(nameof(sessionRepository));
-            this.connectionRepository = connectionRepository ?? throw new ArgumentNullException(nameof(connectionRepository));
+            this.hubContext = hubContext;
+            this.sessionRepository = sessionRepository;
+            this.connectionRepository = connectionRepository;
         }
 
         public void TerminateSession(string connectionId)

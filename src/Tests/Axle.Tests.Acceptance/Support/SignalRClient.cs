@@ -30,7 +30,12 @@
 
         public Task TerminateSession() => this.connection.InvokeAsync("terminateSession");
 
-        public Task Teardown() => this.connection.DisposeAsync();
+        public async Task Teardown()
+        {
+            this.connection.Closed -= this.Connection_Closed;
+            this.connection.Connected -= this.Connection_Connected;
+            await this.connection.DisposeAsync();
+        }
 
         private void InitializeConnection()
         {

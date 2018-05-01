@@ -19,7 +19,6 @@
             <ul class="list-unstyled list-inline">
                 <li><a class="btn btn-primary" href="index.html">Home</a></li>
                 <li><button class="btn btn-default request" data-scope='openid profile' data-type='id_token token'>Login</button></li>
-                <!--<li><button class="btn btn-primary call">Call Service</button></li>-->
                 <li><button class="btn btn-info revoke">Revoke Access Token</button></li>
                 <li><button class="btn btn-info logout">Logout</button></li>
             </ul>
@@ -157,27 +156,6 @@
             }
         }
 
-        //function callApi() {
-        //    mgr.getUser().then(function (user) {
-        //        var xhr = new XMLHttpRequest();
-        //        xhr.onload = function (e) {
-        //            if (xhr.status >= 400) {
-        //                display("#ajax-result", {
-        //                    status: xhr.status,
-        //                    statusText: xhr.statusText,
-        //                    wwwAuthenticate: xhr.getResponseHeader("WWW-Authenticate")
-        //                });
-        //            }
-        //            else {
-        //                display("#ajax-result", xhr.response);
-        //            }
-        //        };
-        //        xhr.open("GET", "http://localhost:5007/api", true);
-        //        xhr.setRequestHeader("Authorization", "Bearer " + user.access_token);
-        //        xhr.send();
-        //    });
-        //}
-
         if (window.location.hash) {
             handleCallback();
         }
@@ -188,7 +166,6 @@
             });
         });
 
-        //document.querySelector(".call").addEventListener("click", callApi, false);
         document.querySelector(".revoke").addEventListener("click", revoke, false);
         document.querySelector(".logout").addEventListener("click", logout, false);
 
