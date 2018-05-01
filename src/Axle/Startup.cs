@@ -22,7 +22,11 @@ namespace Axle
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IRepository<string, HubConnectionContext>, InMemoryRepository<string, HubConnectionContext>>();
+            var connectionRepository = new InMemoryRepository<string, HubConnectionContext>();
+
+            services.AddSingleton<IRepository<string, HubConnectionContext>>(connectionRepository);
+            services.AddSingleton<IReadOnlyRepository<string, HubConnectionContext>>(connectionRepository);
+
             services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
             services.AddTransient<SessionHubMethods<SessionHub>>();
 

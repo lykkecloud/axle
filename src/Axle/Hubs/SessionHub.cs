@@ -2,16 +2,19 @@
 {
     using System;
     using System.Threading.Tasks;
+    using Axle.Persistence;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
 
     public class SessionHub : Hub
     {
         private readonly SessionHubMethods<SessionHub> hubMethods;
+        private readonly IRepository<string, HubConnectionContext> connectionRepository;
 
-        public SessionHub(SessionHubMethods<SessionHub> hubMethods)
+        public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, HubConnectionContext> connectionRepository)
         {
             this.hubMethods = hubMethods ?? throw new ArgumentNullException(nameof(hubMethods));
+            this.connectionRepository = connectionRepository ?? throw new ArgumentNullException(nameof(connectionRepository));
         }
 
         public static string Name => "session";
@@ -24,18 +27,19 @@
         public void StartSession(string userId)
         {
             this.hubMethods.StartSession(this.Context.Connection, userId);
-            Console.WriteLine(this.Context.ConnectionId);
         }
 
         public override Task OnConnectedAsync()
         {
             Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
+            this.connectionRepository.Add(this.Context.ConnectionId, this.Context.Connection);
             return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
             Log.Information($"Disconnected: {this.Context.ConnectionId}).");
+            this.connectionRepository.Remove(this.Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
     }
