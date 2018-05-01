@@ -1,6 +1,7 @@
 ﻿namespace Axle.Tests.Acceptance
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -18,16 +19,26 @@
         {
         }
 
-        [Scenario(Skip = "To be replaced by a unit test")]
-        public void OpeningMultipleSessionsShouldKeepOnlyOneActiveSession()
+        [Scenario]
+        [Example(3)]
+        public void OpeningMultipleSessionsShouldKeepOnlyOneActiveSession(int numberOfSessions)
         {
-            var numberOfSessions = 3;
-            var signalRClients = Enumerable.Range(0, numberOfSessions).Select(x => new SignalRClient(this.AxleUrl)).ToArray();
-            var threads = Enumerable.Range(0, numberOfSessions).Select(x => new Thread(this.StartSessionSynchronously)).ToArray();
+            SignalRClient[] signalRClients = null;
+            Thread[] threads = null;
+
+            ConcurrentQueue<Exception> exceptions = null;
 
             "Given multiple connections to Axle"
                 .x(async () =>
                 {
+                    exceptions = new ConcurrentQueue<Exception>();
+                    signalRClients = new SignalRClient[numberOfSessions];
+
+                    for (int i = 0; i < numberOfSessions; i++)
+                    {
+                        signalRClients[i] = new SignalRClient(this.AxleUrl);
+                    }
+
                     foreach (var client in signalRClients)
                     {
                         await client.StartConnection();
@@ -37,9 +48,17 @@
             "When I try to open multiple sessions with the same user ID at once"
                 .x(() =>
                 {
+                    threads = new Thread[numberOfSessions];
+
                     for (int i = 0; i < numberOfSessions; i++)
                     {
-                        threads[i].Start(signalRClients[i]);
+                        var client = signalRClients[i];
+                        threads[i] = new Thread(() => SafeExecute(() => this.StartSessionSynchronously(client), exceptions));
+                    }
+
+                    for (int i = 0; i < numberOfSessions; i++)
+                    {
+                        threads[i].Start();
                     }
                 });
 
@@ -62,6 +81,7 @@
                         }
                     }
 
+                    exceptions.Should().BeEmpty();
                     connected.Should().Be(1);
                     disconnected.Should().Be(numberOfSessions - 1);
                 })
@@ -79,21 +99,21 @@
                 });
         }
 
-        private void StartSessionSynchronously(object obj)
+        private static void SafeExecute(Action test, ConcurrentQueue<Exception> exceptions)
         {
-            // TODO (Marta): This is quite horrendous, I should implement a unit test for the concurrency stuff instead.
-            var client = (SignalRClient)obj;
             try
             {
-                client.StartSession("abc").Wait();
+                test.Invoke();
             }
-            catch (AggregateException aex)
+            catch (Exception ex)
             {
-                if (aex.InnerException.GetType() != typeof(HubException))
-                {
-                    throw;
-                }
+                exceptions.Enqueue(ex);
             }
+        }
+
+        private void StartSessionSynchronously(SignalRClient client)
+        {
+            client.StartSession("abc").Wait();
         }
     }
 }
