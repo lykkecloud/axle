@@ -21,11 +21,13 @@
 
         public void TerminateSession()
         {
+            Log.Information($"Session associated with connection {this.Context.ConnectionId} will be terminated.");
             this.hubMethods.TerminateSession(this.Context.ConnectionId);
         }
 
         public void StartSession(string userId)
         {
+            Log.Information($"New session started established (ID: {userId}, connection: {this.Context.ConnectionId}).");
             this.hubMethods.StartSession(this.Context.ConnectionId, userId);
         }
 

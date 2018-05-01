@@ -3,8 +3,7 @@
     using System.Collections.Generic;
     using System.Linq;
 
-    // TODO (Marta): Use another dictionary for the per-user lookup and make this a decorator around
-    // the generic InMemoryRepository.
+    // NOTE (Marta): This is going to be replaced in the future with a repository that persists data.
     public sealed class InMemorySessionRepository : ISessionRepository
     {
         private readonly IDictionary<string, string> sessions = new Dictionary<string, string>();

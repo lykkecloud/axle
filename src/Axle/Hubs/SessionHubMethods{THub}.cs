@@ -1,6 +1,7 @@
 ﻿namespace Axle.Hubs
 {
     using System;
+    using System.Collections.Concurrent;
     using Axle.Persistence;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
@@ -11,6 +12,7 @@
         private readonly IHubContext<THub> hubContext;
         private readonly ISessionRepository sessionRepository;
         private readonly IReadOnlyRepository<string, HubConnectionContext> connectionRepository;
+        private readonly ConcurrentDictionary<string, object> locks = new ConcurrentDictionary<string, object>();
 
         public SessionHubMethods(IHubContext<THub> hubContext, ISessionRepository sessionRepository, IReadOnlyRepository<string, HubConnectionContext> connectionRepository)
         {
@@ -24,21 +26,32 @@
             this.AbortConnection(connectionId);
 
             var userId = this.sessionRepository.GetSession(connectionId);
-            this.sessionRepository.RemoveSession(connectionId);
+
+            var lockObject = this.locks.GetOrAdd(userId, new object());
+
+            lock (lockObject)
+            {
+                this.sessionRepository.RemoveSession(connectionId);
+            }
 
             Log.Information($"Session {connectionId} terminated by user {userId}.");
         }
 
         public void StartSession(string connectionId, string userId)
         {
-            var activeSessionIds = this.sessionRepository.GetSessionsByUser(userId);
-            foreach (var activeSessionId in activeSessionIds)
-            {
-                this.AbortConnection(activeSessionId);
-                this.sessionRepository.RemoveSession(activeSessionId);
-            }
+            var lockObject = this.locks.GetOrAdd(userId, new object());
 
-            this.sessionRepository.AddSession(connectionId, userId);
+            lock (lockObject)
+            {
+                var activeSessionIds = this.sessionRepository.GetSessionsByUser(userId);
+                foreach (var activeSessionId in activeSessionIds)
+                {
+                    this.AbortConnection(activeSessionId);
+                    this.sessionRepository.RemoveSession(activeSessionId);
+                }
+
+                this.sessionRepository.AddSession(connectionId, userId);
+            }
 
             Log.Information($"Session {connectionId} started by user {userId}.");
         }
@@ -47,6 +60,7 @@
         {
             var connection = this.connectionRepository.Get(connectionId);
             connection?.Abort();
+            Log.Information($"Connection {connectionId} aborted.");
         }
     }
 }

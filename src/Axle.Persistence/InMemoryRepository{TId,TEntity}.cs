@@ -1,15 +1,15 @@
 ﻿namespace Axle.Persistence
 {
-    using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
 
     public class InMemoryRepository<TId, TEntity> : IRepository<TId, TEntity>
     {
-        private readonly IDictionary<TId, TEntity> repo = new Dictionary<TId, TEntity>();
+        private readonly ConcurrentDictionary<TId, TEntity> repo = new ConcurrentDictionary<TId, TEntity>();
 
         public void Add(TId id, TEntity entity)
         {
-            this.repo.Add(id, entity);
+            this.repo.TryAdd(id, entity);
         }
 
         public TEntity Get(TId id)
@@ -29,7 +29,7 @@
 
         public void Remove(TId id)
         {
-            this.repo.Remove(id);
+            this.repo.TryRemove(id, out var _);
         }
     }
 }
