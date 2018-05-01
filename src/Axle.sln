@@ -29,7 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{4F97F7B6
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axle.Tests.Acceptance", "Tests\Axle.Tests.Acceptance\Axle.Tests.Acceptance.csproj", "{D649DAC0-2EDA-40F8-B773-1DF516854268}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axle.Tests.Unit", "Axle.Tests.Unit\Axle.Tests.Unit.csproj", "{DA20319F-5123-4BFB-B2F6-BE67D2FBEBCA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Axle.Tests.Unit", "Tests\Axle.Tests.Unit\Axle.Tests.Unit.csproj", "{DA20319F-5123-4BFB-B2F6-BE67D2FBEBCA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

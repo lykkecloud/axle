@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Axle.Persistence\Axle.Persistence.csproj" />
-    <ProjectReference Include="..\Axle\Axle.csproj" />
+    <ProjectReference Include="..\..\Axle.Persistence\Axle.Persistence.csproj" />
+    <ProjectReference Include="..\..\Axle\Axle.csproj" />
   </ItemGroup>
 
 </Project>
