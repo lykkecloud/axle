@@ -4,9 +4,7 @@
     using Axle.Tests.Acceptance.Support;
     using FluentAssertions;
     using Xbehave;
-    using Xunit;
 
-    [Collection("Axle")]
     public class NewSessionFeature : IntegrationTest
     {
         private const string AxleUserId = "abc";

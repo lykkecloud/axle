@@ -8,29 +8,28 @@
     {
         private readonly IDictionary<string, string> sessions = new Dictionary<string, string>();
 
-        public void AddSession(string sessionId, string userId)
+        public void Add(string sessionId, string userId)
         {
             this.sessions.Add(sessionId, userId);
         }
 
-        public string GetSession(string sessionId)
+        public string Get(string sessionId)
         {
             return this.sessions[sessionId];
         }
 
-        public bool TryGetSession(string sessionId, out string userId)
+        public bool TryGet(string sessionId, out string userId)
         {
             return this.sessions.TryGetValue(sessionId, out userId);
         }
 
-        public void RemoveSession(string sessionId)
+        public void Remove(string sessionId)
         {
             this.sessions.Remove(sessionId);
         }
 
-        public IEnumerable<string> GetSessionsByUser(string userId)
+        public IEnumerable<string> GetByUser(string userId)
         {
-            // TODO (Marta): Replace this with an extra dictionary.
             return this.sessions.Where(x => x.Value == userId).Select(kv => kv.Key).ToList();
         }
     }

@@ -4,7 +4,9 @@
 namespace Axle.Tests.Acceptance.Support
 {
     using System;
+    using Xunit;
 
+    [Collection("Axle")]
     public class IntegrationTest
     {
         private readonly AxleFixture axleFixture;

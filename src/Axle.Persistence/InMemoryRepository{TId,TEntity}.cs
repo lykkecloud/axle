@@ -22,11 +22,6 @@
             return default(TEntity);
         }
 
-        public IEnumerable<TEntity> GetAll()
-        {
-            return this.repo.Values;
-        }
-
         public void Remove(TId id)
         {
             this.repo.TryRemove(id, out var _);

@@ -75,9 +75,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="appsettings.Customr.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Update="appsettings.Custom.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

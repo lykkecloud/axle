@@ -63,7 +63,7 @@
                     Thread.Sleep(500);
                     exceptions.Should().BeEmpty();
 
-                    var activeSessionsOfUser = sessionRepository.GetSessionsByUser(UserId);
+                    var activeSessionsOfUser = sessionRepository.GetByUser(UserId);
                     activeSessionsOfUser.Count().Should().Be(1);
                 })
                 .Teardown(() =>

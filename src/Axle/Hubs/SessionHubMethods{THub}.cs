@@ -25,13 +25,13 @@
         {
             this.AbortConnection(connectionId);
 
-            var userId = this.sessionRepository.GetSession(connectionId);
+            var userId = this.sessionRepository.Get(connectionId);
 
             var lockObject = this.locks.GetOrAdd(userId, new object());
 
             lock (lockObject)
             {
-                this.sessionRepository.RemoveSession(connectionId);
+                this.sessionRepository.Remove(connectionId);
             }
 
             Log.Information($"Session {connectionId} terminated by user {userId}.");
@@ -43,14 +43,14 @@
 
             lock (lockObject)
             {
-                var activeSessionIds = this.sessionRepository.GetSessionsByUser(userId);
+                var activeSessionIds = this.sessionRepository.GetByUser(userId);
                 foreach (var activeSessionId in activeSessionIds)
                 {
                     this.AbortConnection(activeSessionId);
-                    this.sessionRepository.RemoveSession(activeSessionId);
+                    this.sessionRepository.Remove(activeSessionId);
                 }
 
-                this.sessionRepository.AddSession(connectionId, userId);
+                this.sessionRepository.Add(connectionId, userId);
             }
 
             Log.Information($"Session {connectionId} started by user {userId}.");
