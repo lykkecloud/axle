@@ -34,16 +34,6 @@
             }
         }
 
-        public void RemoveDeadSession(string connectionId)
-        {
-            if (this.sessionRepository.TryGetSession(connectionId, out var _))
-            {
-                this.sessionRepository.RemoveSession(connectionId);
-
-                Log.Information($"Dead session {connectionId} deleted.");
-            }
-        }
-
         public void StartSession(HubConnectionContext connection, string userId)
         {
             var activeSessionIds = this.sessionRepository.GetSessionsByUser(userId);
