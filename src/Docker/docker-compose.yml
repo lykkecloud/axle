@@ -3,7 +3,11 @@ version: '3'
 services:
 
   api:
-    image: axle:${TAG:-dev}
+    build:
+      context: ../
+      dockerfile: Axle/Dockerfile
+      args:
+        version: ${VERSION:-0.1.0-developer}
     container_name: axle
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
@@ -12,10 +16,6 @@ services:
       - API_SECRET=${API_SECRET}
     env_file:
       - ./default.env
-    build:
-      context: ../Axle/
-      dockerfile: VisualStudio.Dockerfile
-      args:
-        version: ${VERSION:-0.1.0-developer}
+    image: axle:${TAG:-dev}
     volumes:
       - ${LOG_PATH:-/logs}:/app/logs
