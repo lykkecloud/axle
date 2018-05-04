@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+docker-compose -f Docker/docker-compose.yml -p lykke.snow.axle build

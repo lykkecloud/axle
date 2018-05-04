@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# defining projects to handle
+projects=( \
+"axle")
+
+echo $projects
