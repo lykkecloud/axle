@@ -37,7 +37,7 @@
             Log.Information($"Session {connectionId} terminated by user {userId}.");
         }
 
-        public void StartSession(string connectionId, string userId)
+        public void StartSession(string connectionId, string userId, string sessionId)
         {
             var lockObject = this.locks.GetOrAdd(userId, new object());
 
