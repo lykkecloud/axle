@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Linq;
     using Axle.Persistence;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
@@ -21,20 +22,23 @@
             this.connectionRepository = connectionRepository;
         }
 
-        public void TerminateSession(string connectionId)
+        public void TerminateSession(string sessionId)
         {
-            this.AbortConnection(connectionId);
+            var sessionState = this.sessionRepository.Get(sessionId);
 
-            var userId = this.sessionRepository.Get(connectionId);
-
-            var lockObject = this.locks.GetOrAdd(userId, new object());
+            var lockObject = this.locks.GetOrAdd(sessionState.UserId, new object());
 
             lock (lockObject)
             {
-                this.sessionRepository.Remove(connectionId);
+                foreach (var connection in sessionState.Connections)
+                {
+                    this.AbortConnection(connection);
+                }
+
+                this.sessionRepository.Remove(sessionId);
             }
 
-            Log.Information($"Session {connectionId} terminated by user {userId}.");
+            Log.Information($"Session {sessionId} terminated by user {sessionState.UserId}.");
         }
 
         public void StartSession(string connectionId, string userId, string sessionId)
@@ -43,17 +47,29 @@
 
             lock (lockObject)
             {
-                var activeSessionIds = this.sessionRepository.GetByUser(userId);
-                foreach (var activeSessionId in activeSessionIds)
+                var activeSessions = this.sessionRepository.GetByUser(userId).Where(s => s.SessionId != sessionId).ToList();
+                foreach (var activeSession in activeSessions)
                 {
-                    this.AbortConnection(activeSessionId);
-                    this.sessionRepository.Remove(activeSessionId);
+                    foreach (var connection in activeSession.Connections)
+                    {
+                        this.AbortConnection(connection);
+                    }
+
+                    this.sessionRepository.Remove(activeSession.SessionId);
                 }
 
-                this.sessionRepository.Add(connectionId, userId);
+                if (this.sessionRepository.TryGet(sessionId, out var sessionState))
+                {
+                    sessionState.AddConnection(connectionId);
+                }
+                else
+                {
+                    sessionState = new SessionState(userId, sessionId, connectionId);
+                    this.sessionRepository.Add(sessionId, sessionState);
+                }
             }
 
-            Log.Information($"Session {connectionId} started by user {userId}.");
+            Log.Information($"Session {sessionId} started by user {userId}.");
         }
 
         private void AbortConnection(string connectionId)

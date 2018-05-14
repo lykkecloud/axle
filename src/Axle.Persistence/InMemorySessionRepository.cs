@@ -6,19 +6,19 @@
     // NOTE (Marta): This is going to be replaced in the future with a repository that persists data.
     public sealed class InMemorySessionRepository : ISessionRepository
     {
-        private readonly IDictionary<string, string> sessions = new Dictionary<string, string>();
+        private readonly IDictionary<string, SessionState> sessions = new Dictionary<string, SessionState>();
 
-        public void Add(string sessionId, string userId)
+        public void Add(string sessionId, SessionState sessionState)
         {
-            this.sessions.Add(sessionId, userId);
+            this.sessions.Add(sessionId, sessionState);
         }
 
-        public string Get(string sessionId)
+        public SessionState Get(string sessionId)
         {
             return this.sessions[sessionId];
         }
 
-        public bool TryGet(string sessionId, out string userId)
+        public bool TryGet(string sessionId, out SessionState userId)
         {
             return this.sessions.TryGetValue(sessionId, out userId);
         }
@@ -28,9 +28,9 @@
             this.sessions.Remove(sessionId);
         }
 
-        public IEnumerable<string> GetByUser(string userId)
+        public IEnumerable<SessionState> GetByUser(string userId)
         {
-            return this.sessions.Where(x => x.Value == userId).Select(kv => kv.Key).ToList();
+            return this.sessions.Where(x => x.Value.UserId == userId).Select(kv => kv.Value).ToList();
         }
     }
 }
