@@ -15,7 +15,12 @@
 
         public SessionState Get(string sessionId)
         {
-            return this.sessions[sessionId];
+            if (this.sessions.TryGetValue(sessionId, out var entity))
+            {
+                return entity;
+            }
+
+            return null;
         }
 
         public bool TryGet(string sessionId, out SessionState userId)

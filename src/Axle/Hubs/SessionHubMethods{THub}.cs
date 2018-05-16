@@ -25,9 +25,12 @@
         public void TerminateSession(string sessionId)
         {
             var sessionState = this.sessionRepository.Get(sessionId);
+            if (sessionState == null)
+            {
+                return;
+            }
 
             var lockObject = this.locks.GetOrAdd(sessionState.UserId, new object());
-
             lock (lockObject)
             {
                 foreach (var connection in sessionState.Connections)
@@ -47,16 +50,7 @@
 
             lock (lockObject)
             {
-                var activeSessions = this.sessionRepository.GetByUser(userId).Where(s => s.SessionId != sessionId).ToList();
-                foreach (var activeSession in activeSessions)
-                {
-                    foreach (var connection in activeSession.Connections)
-                    {
-                        this.AbortConnection(connection);
-                    }
-
-                    this.sessionRepository.Remove(activeSession.SessionId);
-                }
+                this.TerminateOtherSessions(userId, sessionId);
 
                 if (this.sessionRepository.TryGet(sessionId, out var sessionState))
                 {
@@ -70,6 +64,21 @@
             }
 
             Log.Information($"Session {sessionId} started by user {userId}.");
+        }
+
+        private void TerminateOtherSessions(string userId, string sessionId)
+        {
+            var activeSessions = this.sessionRepository.GetByUser(userId).Where(s => s.SessionId != sessionId).ToList();
+
+            foreach (var activeSession in activeSessions)
+            {
+                foreach (var connection in activeSession.Connections)
+                {
+                    this.AbortConnection(connection);
+                }
+
+                this.sessionRepository.Remove(activeSession.SessionId);
+            }
         }
 
         private void AbortConnection(string connectionId)
