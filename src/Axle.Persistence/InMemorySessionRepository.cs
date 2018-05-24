@@ -23,9 +23,9 @@
             return null;
         }
 
-        public bool TryGet(string sessionId, out SessionState userId)
+        public bool TryGet(string sessionId, out SessionState sessionState)
         {
-            return this.sessions.TryGetValue(sessionId, out userId);
+            return this.sessions.TryGetValue(sessionId, out sessionState);
         }
 
         public void Remove(string sessionId)
