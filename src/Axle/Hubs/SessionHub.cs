@@ -24,9 +24,9 @@
             this.hubMethods.TerminateSession(this.Context.ConnectionId);
         }
 
-        public void StartSession(string userId)
+        public void StartSession(string userId, string sessionId)
         {
-            this.hubMethods.StartSession(this.Context.ConnectionId, userId);
+            this.hubMethods.StartSession(this.Context.ConnectionId, userId, sessionId);
         }
 
         public override Task OnConnectedAsync()

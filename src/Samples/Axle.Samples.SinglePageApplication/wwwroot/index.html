@@ -98,8 +98,22 @@
             filterProtocolClaims: false
         };
 
+        // NOTE (Marta): GUID generator from: https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript,
+        // implementation provided by https://stackoverflow.com/users/109538/broofa (based on https://gist.github.com/jed/982883)
+        function uuidv4() {
+            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+        }
+
         var transport = signalR.TransportType.WebSockets;
         var connection = new signalR.HubConnection(`http://localhost:5012/session`, { transport: transport });
+        var sessionId = "";
+
+        if (document.cookie.indexOf("sessionId=") >= 0) {
+            sessionId = document.cookie.replace(/(?:(?:^|.*;\s*)sessionId\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+        } else {
+            document.cookie = "sessionId=" + uuidv4();
+        }
 
         Oidc.Log.logger = window.console;
         Oidc.Log.level = Oidc.Log.INFO;
@@ -212,7 +226,7 @@
             mgr.getUser().then(function (user) {
                 if (user) {
                     connection.start().then(function () {
-                        connection.invoke('startSession', user.profile.sub);
+                        connection.invoke('startSession', user.profile.sub, sessionId);
                     });
 
                     connection.onclose(function () {

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Linq;
     using Axle.Persistence;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
@@ -21,39 +22,63 @@
             this.connectionRepository = connectionRepository;
         }
 
-        public void TerminateSession(string connectionId)
+        public void TerminateSession(string sessionId)
         {
-            this.AbortConnection(connectionId);
-
-            var userId = this.sessionRepository.Get(connectionId);
-
-            var lockObject = this.locks.GetOrAdd(userId, new object());
-
-            lock (lockObject)
+            var sessionState = this.sessionRepository.Get(sessionId);
+            if (sessionState == null)
             {
-                this.sessionRepository.Remove(connectionId);
+                return;
             }
 
-            Log.Information($"Session {connectionId} terminated by user {userId}.");
-        }
-
-        public void StartSession(string connectionId, string userId)
-        {
-            var lockObject = this.locks.GetOrAdd(userId, new object());
-
+            var lockObject = this.locks.GetOrAdd(sessionState.UserId, new object());
             lock (lockObject)
             {
-                var activeSessionIds = this.sessionRepository.GetByUser(userId);
-                foreach (var activeSessionId in activeSessionIds)
+                foreach (var connection in sessionState.Connections)
                 {
-                    this.AbortConnection(activeSessionId);
-                    this.sessionRepository.Remove(activeSessionId);
+                    this.AbortConnection(connection);
                 }
 
-                this.sessionRepository.Add(connectionId, userId);
+                this.sessionRepository.Remove(sessionId);
             }
 
-            Log.Information($"Session {connectionId} started by user {userId}.");
+            Log.Information($"Session {sessionId} terminated by user {sessionState.UserId}.");
+        }
+
+        public void StartSession(string connectionId, string userId, string sessionId)
+        {
+            var lockObject = this.locks.GetOrAdd(userId, new object());
+
+            lock (lockObject)
+            {
+                this.TerminateOtherSessions(userId, sessionId);
+
+                if (this.sessionRepository.TryGet(sessionId, out var sessionState))
+                {
+                    sessionState.AddConnection(connectionId);
+                }
+                else
+                {
+                    sessionState = new SessionState(userId, sessionId, connectionId);
+                    this.sessionRepository.Add(sessionId, sessionState);
+                }
+            }
+
+            Log.Information($"Session {sessionId} started by user {userId}.");
+        }
+
+        private void TerminateOtherSessions(string userId, string sessionId)
+        {
+            var activeSessions = this.sessionRepository.GetByUser(userId).Where(s => s.SessionId != sessionId).ToList();
+
+            foreach (var activeSession in activeSessions)
+            {
+                foreach (var connection in activeSession.Connections)
+                {
+                    this.AbortConnection(connection);
+                }
+
+                this.sessionRepository.Remove(activeSession.SessionId);
+            }
         }
 
         private void AbortConnection(string connectionId)

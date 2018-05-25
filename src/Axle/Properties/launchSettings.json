@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Axle": {
+      "commandName": "Project",
+      "launchUrl": "http://localhost:5012",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

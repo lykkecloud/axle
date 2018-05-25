@@ -2,10 +2,10 @@
 {
     using System.Collections.Generic;
 
-    public interface ISessionRepository : IRepository<string, string>
+    public interface ISessionRepository : IRepository<string, SessionState>
     {
-        bool TryGet(string sessionId, out string userId);
+        bool TryGet(string sessionId, out SessionState sessionState);
 
-        IEnumerable<string> GetByUser(string userId);
+        IEnumerable<SessionState> GetByUser(string userId);
     }
 }

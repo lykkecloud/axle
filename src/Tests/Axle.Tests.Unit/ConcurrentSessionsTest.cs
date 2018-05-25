@@ -90,9 +90,11 @@
             }
         }
 
-        private void StartSession(SessionHubMethods<SessionHub> hubMethods)
+        private void StartSession(SessionHubMethods<SessionHub> hubMethods, string sessionId = null)
         {
-            hubMethods.StartSession(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId);
+            sessionId = sessionId ?? Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
+
+            hubMethods.StartSession(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId, sessionId);
         }
     }
 }

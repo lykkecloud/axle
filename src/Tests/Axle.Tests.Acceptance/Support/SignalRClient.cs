@@ -26,7 +26,7 @@
             this.InitializeConnection();
         }
 
-        public Task StartSession(string userId) => this.connection.InvokeAsync("startSession", userId);
+        public Task StartSession(string userId, string sessionId) => this.connection.InvokeAsync("startSession", userId, sessionId);
 
         public Task TerminateSession() => this.connection.InvokeAsync("terminateSession");
 
