@@ -1,4 +1,7 @@
-﻿namespace Axle.Hubs
+﻿// Copyright (c) Lykke Corp.
+// See the LICENSE file in the project root for more information.
+
+namespace Axle.Hubs
 {
     using System;
     using System.Collections.Concurrent;
