@@ -14,9 +14,9 @@
 
   <PropertyGroup>
     <Version>0.0.1-developer</Version>
-    <Authors>Axle Contributers</Authors>
+    <Authors>Axle Contributors</Authors>
     <Company>Lykke</Company>
-    <Copyright>Copyright (c) Axle Contributers. All rights reserved.</Copyright>
+    <Copyright>Copyright (c) Axle Contributors. All rights reserved.</Copyright>
   </PropertyGroup>
 
   <PropertyGroup>

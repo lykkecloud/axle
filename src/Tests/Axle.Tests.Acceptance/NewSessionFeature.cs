@@ -1,4 +1,7 @@
-﻿namespace Axle.Tests.Acceptance
+﻿// Copyright (c) Lykke Corp.
+// See the LICENSE file in the project root for more information.
+
+namespace Axle.Tests.Acceptance
 {
     using System.Globalization;
     using System.Threading.Tasks;

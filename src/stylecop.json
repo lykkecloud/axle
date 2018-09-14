@@ -9,7 +9,8 @@
     "documentationRules": {
       "companyName": "Lykke Corp",
       "copyrightText": "Copyright (c) {companyName}.\nSee the LICENSE file in the project root for more information.",
-      "xmlHeader": false
+      "xmlHeader": false,
+      "documentInternalElements": false
     }
   }
 }

@@ -1,4 +1,7 @@
-﻿namespace Axle.Tests.Acceptance.Support
+﻿// Copyright (c) Lykke Corp.
+// See the LICENSE file in the project root for more information.
+
+namespace Axle.Tests.Acceptance.Support
 {
     using System;
     using System.Diagnostics;

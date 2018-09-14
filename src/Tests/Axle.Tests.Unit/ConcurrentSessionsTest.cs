@@ -1,4 +1,7 @@
-﻿namespace Axle.Tests.Unit
+﻿// Copyright (c) Lykke Corp.
+// See the LICENSE file in the project root for more information.
+
+namespace Axle.Tests.Unit
 {
     using System;
     using System.Collections.Concurrent;
