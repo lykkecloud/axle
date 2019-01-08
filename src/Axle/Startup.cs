@@ -3,11 +3,11 @@
 
 namespace Axle
 {
-    using System.Security.Claims;
     using Axle.Hubs;
     using Axle.Persistence;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -22,17 +22,24 @@ namespace Axle
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var connectionRepository = new InMemoryRepository<string, ClaimsPrincipal>();
+            var connectionRepository = new InMemoryRepository<string, HubCallerContext>();
 
-            services.AddSingleton<IRepository<string, ClaimsPrincipal>>(connectionRepository);
-            services.AddSingleton<IReadOnlyRepository<string, ClaimsPrincipal>>(connectionRepository);
+            services.AddSingleton<IRepository<string, HubCallerContext>>(connectionRepository);
+            services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
             services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
             services.AddTransient<SessionHubMethods<SessionHub>>();
 
+            services.AddMvcCore()
+                .AddJsonFormatters();
+
+            services.AddCors(options => options.AddPolicy(
+                "AllowAll",
+                builder => { builder.AllowAnyOrigin(); }));
+
             services.AddCors(o =>
              {
-                 o.AddPolicy("Everything", p =>
+                 o.AddPolicy("AllowCors", p =>
                  {
                      p.AllowAnyHeader()
                          .AllowAnyMethod()
@@ -42,9 +49,6 @@ namespace Axle
              });
 
             services.AddSignalR();
-
-            services.AddMvcCore()
-                .AddJsonFormatters();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -56,12 +60,14 @@ namespace Axle
                 app.UseDatabaseErrorPage();
             }
 
-            app.UseCors("Everything");
-            app.UseMvc();
+            app.UseCors("AllowCors");
+
             app.UseSignalR(routes =>
             {
                 routes.MapHub<SessionHub>(SessionHub.Name);
             });
+
+            app.UseMvc();
         }
     }
 }

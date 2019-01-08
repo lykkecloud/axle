@@ -14,9 +14,9 @@ namespace Axle.Hubs
     public class SessionHub : Hub
     {
         private readonly SessionHubMethods<SessionHub> hubMethods;
-        private readonly IRepository<string, ClaimsPrincipal> connectionRepository;
+        private readonly IRepository<string, HubCallerContext> connectionRepository;
 
-        public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, ClaimsPrincipal> connectionRepository)
+        public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, HubCallerContext> connectionRepository)
         {
             this.hubMethods = hubMethods;
             this.connectionRepository = connectionRepository;
@@ -37,7 +37,7 @@ namespace Axle.Hubs
         public override Task OnConnectedAsync()
         {
             Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
-            this.connectionRepository.Add(this.Context.ConnectionId,  this.Context.User);
+            this.connectionRepository.Add(this.Context.ConnectionId,  this.Context);
             return base.OnConnectedAsync();
         }
 

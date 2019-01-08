@@ -12,34 +12,28 @@ namespace SampleSinglePageApp
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddConnections();
-
-            services.AddSignalR(options =>
-            {
-                options.KeepAliveInterval = TimeSpan.FromSeconds(5);
-            });
-
             services.AddCors(o =>
-            {
-                o.AddPolicy("Everything", p =>
-                {
-                    p.AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowAnyOrigin()
-                        .AllowCredentials();
-                });
-            });
-
-
+             {
+                 o.AddPolicy("AllowCors", p =>
+                 {
+                     p.AllowAnyHeader()
+                         .AllowAnyMethod()
+                         .AllowAnyOrigin()
+                         .AllowCredentials();
+                 });
+             });
         }
+
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseDeveloperExceptionPage();
+            app.UseFileServer();
 
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
 
-            app.UseCors("Everything");
+            app.UseCors("AllowCors");
         }
     }
 }

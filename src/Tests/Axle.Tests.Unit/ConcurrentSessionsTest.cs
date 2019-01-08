@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System.Security.Claims;
+
 namespace Axle.Tests.Unit
 {
     using System;
@@ -26,7 +28,7 @@ namespace Axle.Tests.Unit
         {
             IHubContext<SessionHub> hubContext = null;
             ISessionRepository sessionRepository = null;
-            IReadOnlyRepository<string, HubConnectionContext> connectionRepository = null;
+            IReadOnlyRepository<string, HubCallerContext> connectionRepository = null;
             Thread[] threads = null;
             SessionHubMethods<SessionHub> hubMethods = null;
             ConcurrentQueue<Exception> exceptions = null;
@@ -40,8 +42,8 @@ namespace Axle.Tests.Unit
                     hubContext = A.Fake<IHubContext<SessionHub>>();
                     sessionRepository = new InMemorySessionRepository();
 
-                    connectionRepository = A.Fake<IReadOnlyRepository<string, HubConnectionContext>>();
-                    A.CallTo(() => connectionRepository.Get(A<string>.Ignored)).Returns(A.Fake<HubConnectionContext>());
+                    connectionRepository = A.Fake<IReadOnlyRepository<string, HubCallerContext>>();
+                    A.CallTo(() => connectionRepository.Get(A<string>.Ignored)).Returns(A.Fake<HubCallerContext>());
 
                     hubMethods = new SessionHubMethods<SessionHub>(hubContext, sessionRepository, connectionRepository);
                 });
