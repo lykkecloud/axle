@@ -3,11 +3,11 @@
 
 namespace Axle
 {
+    using System.Security.Claims;
     using Axle.Hubs;
     using Axle.Persistence;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
-    using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -22,20 +22,24 @@ namespace Axle
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var connectionRepository = new InMemoryRepository<string, HubConnectionContext>();
+            var connectionRepository = new InMemoryRepository<string, ClaimsPrincipal>();
 
-            services.AddSingleton<IRepository<string, HubConnectionContext>>(connectionRepository);
-            services.AddSingleton<IReadOnlyRepository<string, HubConnectionContext>>(connectionRepository);
+            services.AddSingleton<IRepository<string, ClaimsPrincipal>>(connectionRepository);
+            services.AddSingleton<IReadOnlyRepository<string, ClaimsPrincipal>>(connectionRepository);
 
             services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
             services.AddTransient<SessionHubMethods<SessionHub>>();
 
-            services.AddCors(options =>
-            {
-                options.AddPolicy(
-                    "CorsPolicy",
-                    builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials());
-            });
+            services.AddCors(o =>
+             {
+                 o.AddPolicy("Everything", p =>
+                 {
+                     p.AllowAnyHeader()
+                         .AllowAnyMethod()
+                         .AllowAnyOrigin()
+                         .AllowCredentials();
+                 });
+             });
 
             services.AddSignalR();
 
@@ -52,7 +56,7 @@ namespace Axle
                 app.UseDatabaseErrorPage();
             }
 
-            app.UseCors("CorsPolicy");
+            app.UseCors("Everything");
             app.UseMvc();
             app.UseSignalR(routes =>
             {

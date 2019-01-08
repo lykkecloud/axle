@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System.Security.Claims;
+
 namespace Axle.Hubs
 {
     using System;
@@ -12,15 +14,15 @@ namespace Axle.Hubs
     public class SessionHub : Hub
     {
         private readonly SessionHubMethods<SessionHub> hubMethods;
-        private readonly IRepository<string, HubConnectionContext> connectionRepository;
+        private readonly IRepository<string, ClaimsPrincipal> connectionRepository;
 
-        public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, HubConnectionContext> connectionRepository)
+        public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, ClaimsPrincipal> connectionRepository)
         {
             this.hubMethods = hubMethods;
             this.connectionRepository = connectionRepository;
         }
 
-        public static string Name => "session";
+        public static string Name => "/session";
 
         public void TerminateSession()
         {
@@ -35,7 +37,7 @@ namespace Axle.Hubs
         public override Task OnConnectedAsync()
         {
             Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
-            this.connectionRepository.Add(this.Context.ConnectionId, this.Context.Connection);
+            this.connectionRepository.Add(this.Context.ConnectionId,  this.Context.User);
             return base.OnConnectedAsync();
         }
 

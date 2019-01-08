@@ -68,10 +68,11 @@
     </div>
 
     <script src="oidc-client.min.js"></script>
-    <script type="text/javascript" src="signalr-client-1.0.0-alpha2-final.js"></script>
+    <script type="text/javascript" src="lib/signalr/signalr.js"></script>
+
     <script>
         var config = {
-            authority: "https://auth-test.lykkecloud.com/",
+            authority: "https://bouncer-dev.azurewebsites.net",
             client_id: "axle_spa",
             redirect_uri: window.location.origin + "/callback.html",
             post_logout_redirect_uri: window.location.origin + "/index.html",
@@ -96,6 +97,8 @@
 
             // this will allow all the OIDC protocol claims to be visible in the window. normally a client app wouldn't care about them or want them taking up space
             filterProtocolClaims: false
+
+            , userStore: new Oidc.WebStorageStateStore({ store: window.localStorage })
         };
 
         // NOTE (Marta): GUID generator from: https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript,
@@ -105,8 +108,14 @@
                 (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
         }
 
-        var transport = signalR.TransportType.WebSockets;
-        var connection = new signalR.HubConnection(`http://localhost:5012/session`, { transport: transport });
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl("http://localhost:5012/session",
+                {
+                    transport: signalR.HttpTransportType.WebSocket
+                })
+            .configureLogging(signalR.LogLevel.Trace)
+            .build();
+
         var sessionId = "";
 
         if (document.cookie.indexOf("sessionId=") >= 0) {
@@ -182,7 +191,6 @@
 
         document.querySelector(".revoke").addEventListener("click", revoke, false);
         document.querySelector(".logout").addEventListener("click", logout, false);
-
 
         function log(data) {
             document.getElementById('response').innerText = '';
