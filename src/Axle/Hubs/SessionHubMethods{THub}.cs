@@ -5,7 +5,6 @@ namespace Axle.Hubs
 {
     using System.Collections.Concurrent;
     using System.Linq;
-    using System.Security.Claims;
     using Axle.Persistence;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
@@ -13,14 +12,12 @@ namespace Axle.Hubs
     public class SessionHubMethods<THub>
         where THub : SessionHub
     {
-        private readonly IHubContext<THub> hubContext;
         private readonly ISessionRepository sessionRepository;
         private readonly IReadOnlyRepository<string, HubCallerContext> connectionRepository;
         private readonly ConcurrentDictionary<string, object> locks = new ConcurrentDictionary<string, object>();
 
         public SessionHubMethods(IHubContext<THub> hubContext, ISessionRepository sessionRepository, IReadOnlyRepository<string, HubCallerContext> connectionRepository)
         {
-            this.hubContext = hubContext;
             this.sessionRepository = sessionRepository;
             this.connectionRepository = connectionRepository;
         }
