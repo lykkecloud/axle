@@ -78,7 +78,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="appsettings.Custom.json">
+    <Content Update="appsettings.Deployment.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="appsettings.Docker.json">
