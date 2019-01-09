@@ -33,10 +33,6 @@ namespace Axle
             services.AddMvcCore()
                 .AddJsonFormatters();
 
-            services.AddCors(options => options.AddPolicy(
-                "AllowAll",
-                builder => { builder.AllowAnyOrigin(); }));
-
             services.AddCors(o =>
              {
                  o.AddPolicy("AllowCors", p =>
