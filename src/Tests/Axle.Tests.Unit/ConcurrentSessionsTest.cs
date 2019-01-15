@@ -24,7 +24,6 @@ namespace Axle.Tests.Unit
         [Example(3)]
         public void OpeningMultipleSessionsShouldKeepOnlyOneActiveSession(int numberOfSessions)
         {
-            IHubContext<SessionHub> hubContext = null;
             ISessionRepository sessionRepository = null;
             IReadOnlyRepository<string, HubCallerContext> connectionRepository = null;
             Thread[] threads = null;
@@ -37,13 +36,12 @@ namespace Axle.Tests.Unit
                     exceptions = new ConcurrentQueue<Exception>();
                     threads = new Thread[numberOfSessions];
 
-                    hubContext = A.Fake<IHubContext<SessionHub>>();
                     sessionRepository = new InMemorySessionRepository();
 
                     connectionRepository = A.Fake<IReadOnlyRepository<string, HubCallerContext>>();
                     A.CallTo(() => connectionRepository.Get(A<string>.Ignored)).Returns(A.Fake<HubCallerContext>());
 
-                    hubMethods = new SessionHubMethods<SessionHub>(hubContext, sessionRepository, connectionRepository);
+                    hubMethods = new SessionHubMethods<SessionHub>(sessionRepository, connectionRepository);
                 });
 
             "When I open multiple sessions with the same user ID"

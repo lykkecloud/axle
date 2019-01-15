@@ -36,7 +36,7 @@ namespace Axle.Tests.Acceptance.Support
     //    public async Task Teardown()
     //    {
     //        this.connection.Closed -= this.Connection_Closed;
-    //        this.connection.Connected -= this.Connection_Connected;
+    //        //this.connection.Connected -= this.Connection_Connected;
     //        await this.connection.DisposeAsync();
     //    }
 
@@ -44,10 +44,10 @@ namespace Axle.Tests.Acceptance.Support
     //    {
     //        this.connection = new HubConnectionBuilder()
     //                         .WithUrl(new Uri(this.axleUri, "session"))
-    //                         .WithConsoleLogger()
+    //                         //.WithConsoleLogger()
     //                         .Build();
 
-    //        this.connection.Connected += this.Connection_Connected;
+    //        this.connection.Connected+= this.Connection_Connected;
     //        this.connection.Closed += this.Connection_Closed;
     //    }
 

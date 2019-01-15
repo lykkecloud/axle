@@ -16,7 +16,7 @@ namespace Axle.Hubs
         private readonly IReadOnlyRepository<string, HubCallerContext> connectionRepository;
         private readonly ConcurrentDictionary<string, object> locks = new ConcurrentDictionary<string, object>();
 
-        public SessionHubMethods(IHubContext<THub> hubContext, ISessionRepository sessionRepository, IReadOnlyRepository<string, HubCallerContext> connectionRepository)
+        public SessionHubMethods(ISessionRepository sessionRepository, IReadOnlyRepository<string, HubCallerContext> connectionRepository)
         {
             this.sessionRepository = sessionRepository;
             this.connectionRepository = connectionRepository;
