@@ -11,7 +11,7 @@ RUN dotnet build -c Release -r linux-x64 -o /app
 FROM build AS publish
 RUN dotnet publish -c Release -r linux-x64 -o /app
 
-FROM publish AS final
+FROM base AS final
 WORKDIR /app
 COPY --from=publish /app .
 ENTRYPOINT ["dotnet", "Axle.dll"]
