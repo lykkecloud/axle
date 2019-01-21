@@ -22,25 +22,29 @@ namespace Axle
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var connectionRepository = new InMemoryRepository<string, HubConnectionContext>();
+            var connectionRepository = new InMemoryRepository<string, HubCallerContext>();
 
-            services.AddSingleton<IRepository<string, HubConnectionContext>>(connectionRepository);
-            services.AddSingleton<IReadOnlyRepository<string, HubConnectionContext>>(connectionRepository);
+            services.AddSingleton<IRepository<string, HubCallerContext>>(connectionRepository);
+            services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
             services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
             services.AddTransient<SessionHubMethods<SessionHub>>();
 
-            services.AddCors(options =>
-            {
-                options.AddPolicy(
-                    "CorsPolicy",
-                    builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials());
-            });
-
-            services.AddSignalR();
-
             services.AddMvcCore()
                 .AddJsonFormatters();
+
+            services.AddCors(o =>
+             {
+                 o.AddPolicy("AllowCors", p =>
+                 {
+                     p.AllowAnyHeader()
+                         .AllowAnyMethod()
+                         .AllowAnyOrigin()
+                         .AllowCredentials();
+                 });
+             });
+
+            services.AddSignalR();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -52,12 +56,14 @@ namespace Axle
                 app.UseDatabaseErrorPage();
             }
 
-            app.UseCors("CorsPolicy");
-            app.UseMvc();
+            app.UseCors("AllowCors");
+
             app.UseSignalR(routes =>
             {
                 routes.MapHub<SessionHub>(SessionHub.Name);
             });
+
+            app.UseMvc();
         }
     }
 }

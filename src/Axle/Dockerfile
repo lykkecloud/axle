@@ -1,8 +1,8 @@
-FROM microsoft/aspnetcore:2.0 AS base
+FROM microsoft/dotnet:2.1.5-aspnetcore-runtime AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM microsoft/aspnetcore-build:2.0 AS build
+FROM microsoft/dotnet:2.1.403-sdk AS build
 WORKDIR /src
 COPY . ./
 WORKDIR /src/Axle
@@ -11,7 +11,7 @@ RUN dotnet build -c Release -r linux-x64 -o /app
 FROM build AS publish
 RUN dotnet publish -c Release -r linux-x64 -o /app
 
-FROM publish AS final
+FROM base AS final
 WORKDIR /app
-COPY --from=build /app .
+COPY --from=publish /app .
 ENTRYPOINT ["dotnet", "Axle.dll"]

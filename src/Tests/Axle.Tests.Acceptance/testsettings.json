@@ -1,6 +1,6 @@
 ﻿{
   "axleUrl": "http://localhost:5012",
-  "authority": "https://auth-test.lykkecloud.com/",
+  "authority": "https://bouncer-dev.azurewebsites.net/",
   "clientId": "axle_console",
   "scope": "openid profile axle_api",
   "username": "axle-test",

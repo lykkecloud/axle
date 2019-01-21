@@ -12,15 +12,15 @@ namespace Axle.Hubs
     public class SessionHub : Hub
     {
         private readonly SessionHubMethods<SessionHub> hubMethods;
-        private readonly IRepository<string, HubConnectionContext> connectionRepository;
+        private readonly IRepository<string, HubCallerContext> connectionRepository;
 
-        public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, HubConnectionContext> connectionRepository)
+        public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, HubCallerContext> connectionRepository)
         {
             this.hubMethods = hubMethods;
             this.connectionRepository = connectionRepository;
         }
 
-        public static string Name => "session";
+        public static string Name => "/session";
 
         public void TerminateSession()
         {
@@ -35,7 +35,7 @@ namespace Axle.Hubs
         public override Task OnConnectedAsync()
         {
             Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
-            this.connectionRepository.Add(this.Context.ConnectionId, this.Context.Connection);
+            this.connectionRepository.Add(this.Context.ConnectionId,  this.Context);
             return base.OnConnectedAsync();
         }
 

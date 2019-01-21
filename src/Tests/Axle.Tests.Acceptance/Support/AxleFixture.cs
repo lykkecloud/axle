@@ -1,6 +1,10 @@
 ﻿// Copyright (c) Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+
 namespace Axle.Tests.Acceptance.Support
 {
     using System;
@@ -43,6 +47,19 @@ namespace Axle.Tests.Acceptance.Support
             this.axleProcess.Dispose();
         }
 
+        private static JsonSerializerSettings GetJsonSerializerSettings()
+        {
+            var settings = new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() },
+                NullValueHandling = NullValueHandling.Ignore,
+            };
+
+            settings.Converters.Add(new StringEnumConverter());
+
+            return settings;
+        }
+
         [DebuggerStepThrough]
         private Process StartAxle()
         {
@@ -69,11 +86,13 @@ namespace Axle.Tests.Acceptance.Support
                     Thread.Sleep(500);
                     try
                     {
-                        using (var response = client.GetAsync(new Uri(this.AxleUrl, "api/status")).GetAwaiter().GetResult())
+                        using (var response = client.GetAsync(new Uri(this.AxleUrl, "api/isalive")).GetAwaiter().GetResult())
                         {
                             if (response.StatusCode == HttpStatusCode.OK)
                             {
-                                return int.Parse(response.Content.ReadAsStringAsync().GetAwaiter().GetResult(), CultureInfo.InvariantCulture);
+                                var api = JsonConvert.DeserializeObject<IsAliveResponse>(response.Content.ReadAsStringAsync().GetAwaiter().GetResult(), GetJsonSerializerSettings());
+                                var processId = int.Parse(api.ProcessId, CultureInfo.InvariantCulture);
+                                return processId;
                             }
                         }
 
