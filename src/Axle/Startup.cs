@@ -6,6 +6,8 @@ namespace Axle
     using Axle.Authorization;
     using Axle.Hubs;
     using Axle.Persistence;
+    using Axle.Services;
+    using IdentityModel.Client;
     using IdentityServer4.AccessTokenValidation;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
@@ -83,7 +85,17 @@ namespace Axle
             services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
             services.AddTransient<SessionHubMethods<SessionHub>>();
 
+            services.AddSingleton(provider => new DiscoveryClient(authority)
+            {
+                Policy = new DiscoveryPolicy
+                {
+                    ValidateIssuerName = validateIssuerName,
+                    RequireHttps = requireHttps
+                }
+            });
 
+            services.AddSingleton<DiscoveryCache>();
+            services.AddSingleton<ITokenRevocationService, BouncerService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
