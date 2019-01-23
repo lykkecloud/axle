@@ -6,9 +6,12 @@ namespace Axle.Hubs
     using System;
     using System.Threading.Tasks;
     using Axle.Persistence;
+    using Microsoft.AspNetCore.Authentication.JwtBearer;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
 
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class SessionHub : Hub
     {
         private readonly SessionHubMethods<SessionHub> hubMethods;
