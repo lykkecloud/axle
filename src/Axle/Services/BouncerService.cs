@@ -27,6 +27,8 @@ namespace Axle.Services
 
         public async Task RevokeAccessToken(string accessToken)
         {
+            this.logger.LogInformation($"Revoking access token: [{accessToken}]");
+
             var discoveryResponse = await this.discoveryCache.GetAsync();
             if (discoveryResponse.IsError)
             {
@@ -46,6 +48,8 @@ namespace Axle.Services
                     this.logger.LogError($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
                     throw new Exception($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
                 }
+
+                this.logger.LogInformation($"Successfully revoked access token: [{accessToken}]");
             }
         }
     }

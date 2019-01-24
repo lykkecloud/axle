@@ -8,6 +8,7 @@ namespace Axle.Hubs
     using Axle.Persistence;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http.Connections;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
 
@@ -32,7 +33,10 @@ namespace Axle.Hubs
 
         public void StartSession(string userId, string sessionId)
         {
-            this.hubMethods.StartSession(this.Context.ConnectionId, userId, sessionId);
+            var httpContext = this.Context.GetHttpContext();
+            var accessToken = httpContext.Request.Query["access_token"];
+
+            this.hubMethods.StartSession(this.Context.ConnectionId, userId, sessionId, accessToken);
         }
 
         public override Task OnConnectedAsync()

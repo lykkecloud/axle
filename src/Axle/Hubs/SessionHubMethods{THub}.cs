@@ -6,6 +6,7 @@ namespace Axle.Hubs
     using System.Collections.Concurrent;
     using System.Linq;
     using Axle.Persistence;
+    using Axle.Services;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
 
@@ -14,12 +15,17 @@ namespace Axle.Hubs
     {
         private readonly ISessionRepository sessionRepository;
         private readonly IReadOnlyRepository<string, HubCallerContext> connectionRepository;
+        private readonly ITokenRevocationService tokenRevocationService;
         private readonly ConcurrentDictionary<string, object> locks = new ConcurrentDictionary<string, object>();
 
-        public SessionHubMethods(ISessionRepository sessionRepository, IReadOnlyRepository<string, HubCallerContext> connectionRepository)
+        public SessionHubMethods(
+            ISessionRepository sessionRepository,
+            IReadOnlyRepository<string, HubCallerContext> connectionRepository,
+            ITokenRevocationService tokenRevocationService)
         {
             this.sessionRepository = sessionRepository;
             this.connectionRepository = connectionRepository;
+            this.tokenRevocationService = tokenRevocationService;
         }
 
         public void TerminateSession(string sessionId)
@@ -44,7 +50,7 @@ namespace Axle.Hubs
             Log.Information($"Session {sessionId} terminated by user {sessionState.UserId}.");
         }
 
-        public void StartSession(string connectionId, string userId, string sessionId)
+        public void StartSession(string connectionId, string userId, string sessionId, string accessToken)
         {
             var lockObject = this.locks.GetOrAdd(userId, new object());
 
@@ -58,7 +64,7 @@ namespace Axle.Hubs
                 }
                 else
                 {
-                    sessionState = new SessionState(userId, sessionId, connectionId);
+                    sessionState = new SessionState(userId, sessionId, accessToken, connectionId);
                     this.sessionRepository.Add(sessionId, sessionState);
                 }
             }
@@ -76,6 +82,8 @@ namespace Axle.Hubs
                 {
                     this.AbortConnection(connection);
                 }
+
+                this.tokenRevocationService.RevokeAccessToken(activeSession.AccessToken);
 
                 this.sessionRepository.Remove(activeSession.SessionId);
             }

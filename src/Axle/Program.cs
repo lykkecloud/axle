@@ -26,7 +26,6 @@ namespace Axle
             ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false"),
             ("Client-Id",                   "CLIENT_ID",                    null),
             ("Client-Secret",               "CLIENT_SECRET",                null),
-            ("Client-Scope",                "CLIENT_SCOPE",                 null),
         };
 
         public static int Main(string[] args)
