@@ -83,7 +83,7 @@ namespace Axle
             services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
             services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
-            services.AddTransient<SessionHubMethods<SessionHub>>();
+            services.AddSingleton<ISessionLifecycleService, SessionLifecycleService>();
 
             services.AddSingleton(provider => new DiscoveryClient(authority)
             {

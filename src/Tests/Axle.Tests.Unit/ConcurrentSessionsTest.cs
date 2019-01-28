@@ -11,6 +11,7 @@ namespace Axle.Tests.Unit
     using System.Threading;
     using Axle.Hubs;
     using Axle.Persistence;
+    using Axle.Services;
     using FakeItEasy;
     using FluentAssertions;
     using Microsoft.AspNetCore.SignalR;
@@ -25,9 +26,8 @@ namespace Axle.Tests.Unit
         public void OpeningMultipleSessionsShouldKeepOnlyOneActiveSession(int numberOfSessions)
         {
             ISessionRepository sessionRepository = null;
-            IReadOnlyRepository<string, HubCallerContext> connectionRepository = null;
             Thread[] threads = null;
-            SessionHubMethods<SessionHub> hubMethods = null;
+            SessionLifecycleService lifecycleService = null;
             ConcurrentQueue<Exception> exceptions = null;
 
             "Given Axle SignalR hub"
@@ -38,10 +38,7 @@ namespace Axle.Tests.Unit
 
                     sessionRepository = new InMemorySessionRepository();
 
-                    connectionRepository = A.Fake<IReadOnlyRepository<string, HubCallerContext>>();
-                    A.CallTo(() => connectionRepository.Get(A<string>.Ignored)).Returns(A.Fake<HubCallerContext>());
-
-                    hubMethods = new SessionHubMethods<SessionHub>(sessionRepository, connectionRepository);
+                    lifecycleService = new SessionLifecycleService(sessionRepository);
                 });
 
             "When I open multiple sessions with the same user ID"
@@ -49,7 +46,7 @@ namespace Axle.Tests.Unit
                 {
                     for (int i = 0; i < numberOfSessions; i++)
                     {
-                        threads[i] = new Thread(() => SafeExecute(() => this.StartSession(hubMethods), exceptions));
+                        threads[i] = new Thread(() => SafeExecute(() => this.StartSession(lifecycleService), exceptions));
                     }
 
                     for (int i = 0; i < numberOfSessions; i++)
@@ -65,7 +62,7 @@ namespace Axle.Tests.Unit
                     exceptions.Should().BeEmpty();
 
                     var activeSessionsOfUser = sessionRepository.GetByUser(UserId);
-                    activeSessionsOfUser.Count().Should().Be(1);
+                    activeSessionsOfUser.Connections.Count().Should().Be(1);
                 })
                 .Teardown(() =>
                 {
@@ -91,11 +88,19 @@ namespace Axle.Tests.Unit
             }
         }
 
-        private void StartSession(SessionHubMethods<SessionHub> hubMethods, string sessionId = null)
+        private void StartSession(SessionLifecycleService lifecycleService, string token = null)
         {
-            sessionId = sessionId ?? Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
+            token = token ?? Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
 
-            hubMethods.StartSession(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId, sessionId);
+            var state = lifecycleService.OpenConnection(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId, token);
+
+            if (state != null)
+            {
+                foreach (var connection in state.Connections.ToList())
+                {
+                    lifecycleService.CloseConnection(connection);
+                }
+            }
         }
     }
 }

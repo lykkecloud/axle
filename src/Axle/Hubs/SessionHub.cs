@@ -4,8 +4,11 @@
 namespace Axle.Hubs
 {
     using System;
+    using System;
+    using System.Linq;
     using System.Threading.Tasks;
     using Axle.Persistence;
+    using Axle.Services;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http.Connections;
@@ -15,17 +18,19 @@ namespace Axle.Hubs
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class SessionHub : Hub
     {
-        private readonly SessionHubMethods<SessionHub> hubMethods;
         private readonly IRepository<string, HubCallerContext> connectionRepository;
+        private readonly ISessionLifecycleService sessionLifecycleService;
 
-        public SessionHub(SessionHubMethods<SessionHub> hubMethods, IRepository<string, HubCallerContext> connectionRepository)
+        public SessionHub(
+            IRepository<string, HubCallerContext> connectionRepository,
+            ISessionLifecycleService sessionLifecycleService)
         {
-            this.hubMethods = hubMethods;
             this.connectionRepository = connectionRepository;
+            this.sessionLifecycleService = sessionLifecycleService;
         }
 
         public static string Name => "/session";
-
+            
         public void TerminateSession()
         {
             this.hubMethods.TerminateSession(this.Context.ConnectionId);
@@ -37,7 +42,19 @@ namespace Axle.Hubs
             var accessToken = httpContext.Request.Query["access_token"];
             var clientId = httpContext.User.FindFirst("client_id").Value;
 
-            this.hubMethods.StartSession(this.Context.ConnectionId, userId, sessionId, accessToken, clientId);
+            var state = this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, userId, token);
+
+            if (state == null)
+            {
+                return;
+            }
+
+            foreach (var connection in state.Connections.ToList())
+            {
+                this.connectionRepository.Get(connection).Abort();
+            }
+
+                this.hubMethods.StartSession(this.Context.ConnectionId, userId, sessionId, accessToken, clientId);
         }
 
         public override Task OnConnectedAsync()
@@ -51,6 +68,7 @@ namespace Axle.Hubs
         {
             Log.Information($"Disconnected: {this.Context.ConnectionId}).");
             this.connectionRepository.Remove(this.Context.ConnectionId);
+            this.sessionLifecycleService.CloseConnection(this.Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
     }

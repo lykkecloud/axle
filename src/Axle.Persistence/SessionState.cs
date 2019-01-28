@@ -10,18 +10,21 @@ namespace Axle.Persistence
     {
         private readonly ISet<string> connectionIds = new HashSet<string>();
 
-        public SessionState(string userId, string sessionId, string accessToken, string clientId, string initialConnection)
+        public SessionState(string userId, int sessionId, string token, string accessToken, string clientId, string initialConnection)
         {
             this.UserId = userId ?? throw new ArgumentNullException(nameof(userId));
-            this.SessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
             this.AccessToken = accessToken ?? throw new ArgumentNullException(nameof(accessToken));
             this.ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
+            this.Token = token ?? throw new ArgumentNullException(nameof(token));
+            this.SessionId = sessionId;
             this.connectionIds.Add(initialConnection);
         }
 
         public string UserId { get; }
 
-        public string SessionId { get; }
+        public string Token { get; }
+
+        public int SessionId { get; }
 
         public string AccessToken { get; }
 
