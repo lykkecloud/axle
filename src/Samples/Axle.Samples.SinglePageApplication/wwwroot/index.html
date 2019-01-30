@@ -18,7 +18,7 @@
         <div class="row">
             <ul class="list-unstyled list-inline">
                 <li><a class="btn btn-primary" href="index.html">Home</a></li>
-                <li><button class="btn btn-default request" data-scope='openid profile' data-type='id_token token'>Login</button></li>
+                <li><button class="btn btn-default request" data-scope='openid profile axle_api' data-type='id_token token'>Login</button></li>
                 <li><button class="btn btn-info revoke">Revoke Access Token</button></li>
                 <li><button class="btn btn-info logout">Logout</button></li>
             </ul>
@@ -83,7 +83,7 @@
 
             // these two will be done dynamically from the buttons clicked, but are needed if you want to use the silent_renew
             response_type: "id_token token",
-            scope: "openid profile",
+            scope: "openid profile axle_api",
 
             // this will toggle if profile endpoint is used
             loadUserInfo: true,
@@ -108,14 +108,7 @@
                 (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
         }
 
-        var connection = new signalR.HubConnectionBuilder()
-            .withUrl("http://localhost:5012/session",
-                {
-                    transport: signalR.HttpTransportType.WebSocket
-                })
-            .configureLogging(signalR.LogLevel.Trace)
-            .build();
-
+        var connection = null;
         var sessionId = "";
 
         if (document.cookie.indexOf("sessionId=") >= 0) {
@@ -233,6 +226,15 @@
         function setUpAxleConnection() {
             mgr.getUser().then(function (user) {
                 if (user) {
+                    connection = new signalR.HubConnectionBuilder()
+                        .withUrl("http://localhost:5012/session",
+                            {
+                                accessTokenFactory: () => user.access_token,
+                                transport: signalR.HttpTransportType.WebSocket
+                            })
+                        .configureLogging(signalR.LogLevel.Trace)
+                        .build();
+
                     connection.start().then(function () {
                         connection.invoke('startSession', user.profile.sub, sessionId);
                     });
