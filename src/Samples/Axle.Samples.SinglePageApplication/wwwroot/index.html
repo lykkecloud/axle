@@ -237,6 +237,12 @@
 
                     connection.start().then(function () {
                         connection.invoke('startSession', user.profile.sub, sessionId);
+                    }).catch(function (err) {
+                        if (err.statusCode === 401) {
+                            mgr.signoutRedirect();
+                            return;
+                        }
+                        throw err.message;
                     });
 
                     connection.onclose(function () {
