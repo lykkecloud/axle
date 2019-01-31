@@ -4,11 +4,12 @@
 namespace Axle.Hubs
 {
     using System;
-    using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using Axle.Authorization;
     using Axle.Persistence;
     using Axle.Services;
+    using IdentityModel;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http.Connections;
@@ -30,37 +31,25 @@ namespace Axle.Hubs
         }
 
         public static string Name => "/session";
-            
-        public void TerminateSession()
-        {
-            this.hubMethods.TerminateSession(this.Context.ConnectionId);
-        }
-
-        public void StartSession(string userId, string sessionId)
-        {
-            var httpContext = this.Context.GetHttpContext();
-            var accessToken = httpContext.Request.Query["access_token"];
-            var clientId = httpContext.User.FindFirst("client_id").Value;
-
-            var state = this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, userId, token);
-
-            if (state == null)
-            {
-                return;
-            }
-
-            foreach (var connection in state.Connections.ToList())
-            {
-                this.connectionRepository.Get(connection).Abort();
-            }
-
-                this.hubMethods.StartSession(this.Context.ConnectionId, userId, sessionId, accessToken, clientId);
-        }
 
         public override Task OnConnectedAsync()
         {
+            var sub = this.Context.User.Claims.First(x => x.Type == JwtClaimTypes.Subject).Value;
+            var token = this.Context.GetHttpContext().Request.Query[BearerTokenRetriever.SignalRTokenKey];
+
+            var state = this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, token);
+
             Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
-            this.connectionRepository.Add(this.Context.ConnectionId,  this.Context);
+            this.connectionRepository.Add(this.Context.ConnectionId, this.Context);
+
+            if (state != null)
+            {
+                foreach (var connection in state.Connections.ToList())
+                {
+                    this.connectionRepository.Get(connection).Abort();
+                }
+            }
+
             return base.OnConnectedAsync();
         }
 
