@@ -3,12 +3,12 @@
 
 namespace Axle
 {
-    using Axle.Authorization;
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
     using IdentityModel.Client;
     using IdentityServer4.AccessTokenValidation;
+    using Lykke.Snow.Common.Startup;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Mvc;
