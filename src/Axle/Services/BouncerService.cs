@@ -6,26 +6,22 @@ namespace Axle.Services
     using System;
     using System.Threading.Tasks;
     using IdentityModel.Client;
-    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
 
     public class BouncerService : ITokenRevocationService
     {
         private readonly DiscoveryCache discoveryCache;
         private readonly ILogger<BouncerService> logger;
-        private readonly IConfiguration configuration;
 
         public BouncerService(
             DiscoveryCache discoveryCache,
-            ILogger<BouncerService> logger,
-            IConfiguration configuration)
+            ILogger<BouncerService> logger)
         {
             this.discoveryCache = discoveryCache;
             this.logger = logger;
-            this.configuration = configuration;
         }
 
-        public async Task RevokeAccessToken(string accessToken)
+        public async Task RevokeAccessToken(string accessToken, string clientId)
         {
             this.logger.LogInformation($"Revoking access token: [{accessToken}]");
 
@@ -36,8 +32,7 @@ namespace Axle.Services
                 throw new Exception(discoveryResponse.Error, discoveryResponse.Exception);
             }
 
-            var clientId = this.configuration.GetValue<string>(Constants.ClientId);
-            var clientSecret = this.configuration.GetValue<string>(Constants.ClientSecret);
+            var clientSecret = "no-secret-for-public-client";
 
             using (TokenRevocationClient client = new TokenRevocationClient(discoveryResponse.RevocationEndpoint, clientId, clientSecret))
             {

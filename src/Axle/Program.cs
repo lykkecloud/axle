@@ -24,8 +24,6 @@ namespace Axle
             ("Api-Secret",                  "API_SECRET",                  null),
             ("Require-Https",               "REQUIRE_HTTPS",               "true"),
             ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false"),
-            ("Client-Id",                   "CLIENT_ID",                    null),
-            ("Client-Secret",               "CLIENT_SECRET",                null),
         };
 
         public static int Main(string[] args)

@@ -35,8 +35,9 @@ namespace Axle.Hubs
         {
             var httpContext = this.Context.GetHttpContext();
             var accessToken = httpContext.Request.Query["access_token"];
+            var clientId = httpContext.User.FindFirst("client_id").Value;
 
-            this.hubMethods.StartSession(this.Context.ConnectionId, userId, sessionId, accessToken);
+            this.hubMethods.StartSession(this.Context.ConnectionId, userId, sessionId, accessToken, clientId);
         }
 
         public override Task OnConnectedAsync()

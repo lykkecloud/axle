@@ -7,6 +7,6 @@ namespace Axle.Services
 
     public interface ITokenRevocationService
     {
-        Task RevokeAccessToken(string accessToken);
+        Task RevokeAccessToken(string accessToken, string clientId);
     }
 }

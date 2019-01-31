@@ -50,7 +50,7 @@ namespace Axle.Hubs
             Log.Information($"Session {sessionId} terminated by user {sessionState.UserId}.");
         }
 
-        public void StartSession(string connectionId, string userId, string sessionId, string accessToken)
+        public void StartSession(string connectionId, string userId, string sessionId, string accessToken, string clientId)
         {
             var lockObject = this.locks.GetOrAdd(userId, new object());
 
@@ -64,7 +64,7 @@ namespace Axle.Hubs
                 }
                 else
                 {
-                    sessionState = new SessionState(userId, sessionId, accessToken, connectionId);
+                    sessionState = new SessionState(userId, sessionId, accessToken, clientId, connectionId);
                     this.sessionRepository.Add(sessionId, sessionState);
                 }
             }
@@ -83,7 +83,7 @@ namespace Axle.Hubs
                     this.AbortConnection(connection);
                 }
 
-                this.tokenRevocationService.RevokeAccessToken(activeSession.AccessToken);
+                this.tokenRevocationService.RevokeAccessToken(activeSession.AccessToken, activeSession.ClientId);
 
                 this.sessionRepository.Remove(activeSession.SessionId);
             }
