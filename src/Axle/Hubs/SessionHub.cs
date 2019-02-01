@@ -6,7 +6,6 @@ namespace Axle.Hubs
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using Axle.Authorization;
     using Axle.Persistence;
     using Axle.Services;
     using IdentityModel;
@@ -34,10 +33,11 @@ namespace Axle.Hubs
 
         public override Task OnConnectedAsync()
         {
-            var sub = this.Context.User.Claims.First(x => x.Type == JwtClaimTypes.Subject).Value;
-            var token = this.Context.GetHttpContext().Request.Query[BearerTokenRetriever.SignalRTokenKey];
+            var sub = this.Context.User.FindFirst(JwtClaimTypes.Subject).Value;
+            var clientId = this.Context.User.FindFirst("client_id").Value;
+            var token = this.Context.GetHttpContext().Request.Query["access_token"];
 
-            var state = this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, token);
+            var state = this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, clientId, token);
 
             Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
             this.connectionRepository.Add(this.Context.ConnectionId, this.Context);

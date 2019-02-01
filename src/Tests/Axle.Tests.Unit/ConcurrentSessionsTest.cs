@@ -5,16 +5,13 @@ namespace Axle.Tests.Unit
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Threading;
-    using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
     using FakeItEasy;
     using FluentAssertions;
-    using Microsoft.AspNetCore.SignalR;
     using Xbehave;
 
     public class ConcurrentSessionsTest
@@ -37,8 +34,9 @@ namespace Axle.Tests.Unit
                     threads = new Thread[numberOfSessions];
 
                     sessionRepository = new InMemorySessionRepository();
+                    var tokenRevocationService = A.Fake<ITokenRevocationService>();
 
-                    lifecycleService = new SessionLifecycleService(sessionRepository);
+                    lifecycleService = new SessionLifecycleService(sessionRepository, tokenRevocationService);
                 });
 
             "When I open multiple sessions with the same user ID"
@@ -92,7 +90,7 @@ namespace Axle.Tests.Unit
         {
             token = token ?? Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
 
-            var state = lifecycleService.OpenConnection(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId, token);
+            var state = lifecycleService.OpenConnection(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId, "clientid", token);
 
             if (state != null)
             {

@@ -7,7 +7,7 @@ namespace Axle.Services
 
     public interface ISessionLifecycleService
     {
-        SessionState OpenConnection(string connectionId, string userId, string token);
+        SessionState OpenConnection(string connectionId, string userId, string clientId, string accessToken);
 
         void CloseConnection(string connectionId);
     }
