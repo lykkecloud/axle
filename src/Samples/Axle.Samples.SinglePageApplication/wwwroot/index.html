@@ -168,7 +168,7 @@
 
         function terminateSession() {
             if (connection != null) {
-                connection.invoke('terminateSession');
+                connection.stop();
             }
         }
 
@@ -235,9 +235,7 @@
                         .configureLogging(signalR.LogLevel.Trace)
                         .build();
 
-                    connection.start().then(function () {
-                        connection.invoke('startSession', user.profile.sub, sessionId);
-                    }).catch(function (err) {
+                    connection.start().catch(function (err) {
                         if (err.statusCode === 401) {
                             mgr.signoutRedirect();
                             return;
