@@ -24,6 +24,7 @@ namespace Axle
             ("Api-Secret",                  "API_SECRET",                  null),
             ("Require-Https",               "REQUIRE_HTTPS",               "true"),
             ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false"),
+            ("Swagger-Client-Id",           "SWAGGER_CLIENT_ID",           "axle_api_swagger"),
         };
 
         public static int Main(string[] args)
