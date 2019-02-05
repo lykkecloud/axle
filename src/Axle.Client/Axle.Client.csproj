@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>../Axle.ruleset</CodeAnalysisRuleSet>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <TrimUnusedDependencies>true</TrimUnusedDependencies>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>1701;1702;1705;CA2007</NoWarn>
+    <UserSecretsId>25692E6B-C123-474C-A44B-6B2C93BCF65D</UserSecretsId>
+    <AssemblyName>Axle.Client</AssemblyName>
+    <Version>0.0.2-developer</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.6.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.15" />
+    <PackageReference Include="Refit" Version="4.6.48" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="../stylecop.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Axle.Dto\Axle.Dto.csproj" />
+  </ItemGroup>
+
+</Project>
