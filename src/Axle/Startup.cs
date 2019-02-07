@@ -4,6 +4,7 @@
 namespace Axle
 {
     using Axle.Configurators;
+    using Axle.Constants;
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
@@ -51,6 +52,7 @@ namespace Axle
                     options =>
                     {
                         // add any authorization policy
+                        options.AddPolicy(AuthorizationPolicies.System, policy => policy.RequireClaim("scope", "axle_api:server"));
                     });
 
             services.AddSwagger();

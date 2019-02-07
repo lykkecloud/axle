@@ -4,13 +4,14 @@
 namespace Axle.Controllers
 {
     using System.Net;
+    using Axle.Constants;
     using Axle.Dto;
     using Axle.Persistence;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using NSwag.Annotations;
 
-    [Authorize]
+    [Authorize(AuthorizationPolicies.System)]
     [Route("api/[controller]")]
     [ApiController]
     public class SessionsController : Controller

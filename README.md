@@ -6,7 +6,7 @@ A simple service handling session management
 The api is required to start the axle. Axle will use this api for instrospection of reference token passed in the header when some client will call the secure endpoints of axle.
 
 ```
-auth apis add axle_api secret -d "Session Management API (AXLE)" -c name -c role -c username -a axle_api -v
+auth apis add axle_api secret -d "Session Management API (AXLE)" -c name -c role -c username -a axle_api -a axle_api:server -v
 ```
 
 ### clients
