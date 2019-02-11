@@ -39,7 +39,8 @@ namespace Axle.Configurators
                     AuthorizationUrl = $"{authority}/connect/authorize",
                     Scopes = new Dictionary<string, string>
                     {
-                        { apiName, "CFD Platform (Nova)" }
+                        { apiName, "CFD Platform (Nova)" },
+                        { $"{apiName}:server", "CFD Platform (Nova) server side methods" }
                     }
                 };
 
