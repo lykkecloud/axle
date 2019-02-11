@@ -3,6 +3,8 @@
 
 namespace Axle
 {
+    using Axle.Configurators;
+    using Axle.Constants;
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
@@ -15,6 +17,8 @@ namespace Axle
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using NSwag.AspNetCore;
+    using System.Reflection;
 
     public class Startup
     {
@@ -43,11 +47,15 @@ namespace Axle
             services.AddMvcCore()
                 .AddJsonFormatters()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddApiExplorer()
                 .AddAuthorization(
                     options =>
                     {
                         // add any authorization policy
+                        options.AddPolicy(AuthorizationPolicies.System, policy => policy.RequireClaim("scope", "axle_api:server"));
                     });
+
+            services.AddSwagger();
 
             var authority = this.configuration.GetValue<string>("Api-Authority");
             var apiName = this.configuration.GetValue<string>("Api-Name");
@@ -115,6 +123,15 @@ namespace Axle
             {
                 routes.MapHub<SessionHub>(SessionHub.Name);
             });
+
+            // Enable the Swagger UI middleware and the Swagger generator.
+            var assembly = typeof(Startup).GetTypeInfo().Assembly;
+            app.UseSwaggerUi3WithApiExplorer(
+                SwaggerConfigurator.Configure(
+                        assembly,
+                        this.configuration.GetValue<string>("Api-Authority"),
+                        this.configuration.GetValue<string>("Api-Name"),
+                        this.configuration.GetValue<string>("Swagger-Client-Id")));
 
             app.UseMvc();
         }
