@@ -94,7 +94,7 @@ namespace Axle
             services.AddSingleton<IRepository<string, HubCallerContext>>(connectionRepository);
             services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
-            var sessionTimeout = TimeSpan.FromSeconds(this.configuration.GetValue<int>("SessionConfig:TimeoutInSec"));
+            var sessionTimeout = TimeSpan.FromSeconds(this.configuration.GetValue<int>("SessionConfig:TimeoutInSec", 300));
 
             services.AddSingleton<ISessionRepository, RedisSessionRepository>(x =>
                 new RedisSessionRepository(

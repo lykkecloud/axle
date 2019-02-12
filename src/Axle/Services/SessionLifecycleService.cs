@@ -116,19 +116,22 @@ namespace Axle.Services
         {
             var sessionId = (int)message;
 
-            // Retrieve and remove the connections to the session we're closing
-            var kvps = this.connectionSessionMap.Where(x => x.Value.SessionId == sessionId).ToArray();
-
-            foreach (var kvp in kvps)
+            lock (this.syncObj)
             {
-                this.connectionSessionMap.Remove(kvp.Key);
-            }
+                // Retrieve and remove the connections to the session we're closing
+                var kvps = this.connectionSessionMap.Where(x => x.Value.SessionId == sessionId).ToArray();
 
-            var connections = kvps.Select(x => x.Key).ToArray();
+                foreach (var kvp in kvps)
+                {
+                    this.connectionSessionMap.Remove(kvp.Key);
+                }
 
-            foreach (var callback in this.closeConnectionCallbacks)
-            {
-                callback(connections);
+                var connections = kvps.Select(x => x.Key).ToArray();
+
+                foreach (var callback in this.closeConnectionCallbacks)
+                {
+                    callback(connections);
+                }
             }
         }
     }

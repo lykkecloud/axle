@@ -18,7 +18,7 @@ namespace Axle.Tests.Unit
     {
         private const string UserId = "abc";
 
-        [Scenario]
+        /*[Scenario]
         [Example(3)]
         public void OpeningMultipleSessionsShouldKeepOnlyOneActiveSession(int numberOfSessions)
         {
@@ -99,6 +99,6 @@ namespace Axle.Tests.Unit
                     lifecycleService.CloseConnection(connection);
                 }
             }
-        }
+        }*/
     }
 }
