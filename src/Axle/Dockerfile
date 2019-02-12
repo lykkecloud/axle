@@ -6,7 +6,7 @@ FROM microsoft/dotnet:2.1.403-sdk AS build
 WORKDIR /src
 COPY . ./
 WORKDIR /src/Axle
-RUN dotnet build -c Release -r linux-x64 -o /app
+RUN dotnet build -c Release -r linux-x64 -o /app --no-restore
 
 FROM build AS publish
 RUN dotnet publish -c Release -r linux-x64 -o /app
