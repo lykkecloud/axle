@@ -22,9 +22,10 @@ namespace Axle
             ("Api-Authority",               "API_AUTHORITY",               null),
             ("Api-Name",                    "API_NAME",                    null),
             ("Api-Secret",                  "API_SECRET",                  null),
+            ("ConnectionStrings:Redis",     "REDIS_CONNECTION_STRING",     null),
             ("Require-Https",               "REQUIRE_HTTPS",               "true"),
             ("Swagger-Client-Id",           "SWAGGER_CLIENT_ID",           "axle_api_swagger"),
-            ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false"),
+            ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false")
         };
 
         public static int Main(string[] args)
