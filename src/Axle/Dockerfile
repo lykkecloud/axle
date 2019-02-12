@@ -2,7 +2,7 @@ FROM microsoft/dotnet:2.1.5-aspnetcore-runtime AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM microsoft/dotnet:2.1.300-sdk AS build
+FROM microsoft/dotnet:2.1.403-sdk AS build
 WORKDIR /src
 COPY . ./
 WORKDIR /src/Axle
