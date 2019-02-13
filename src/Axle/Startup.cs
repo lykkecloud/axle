@@ -10,6 +10,8 @@ namespace Axle
     using Axle.Services;
     using IdentityModel.Client;
     using IdentityServer4.AccessTokenValidation;
+    using Lykke.Middlewares;
+    using Lykke.Middlewares.Mappers;
     using Lykke.Snow.Common.Startup;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
@@ -104,6 +106,9 @@ namespace Axle
 
             services.AddSingleton<DiscoveryCache>();
             services.AddSingleton<ITokenRevocationService, BouncerService>();
+
+            services.AddSingleton<IHttpStatusCodeMapper, DefaultHttpStatusCodeMapper>();
+            services.AddSingleton<ILogLevelMapper, DefaultLogLevelMapper>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -114,6 +119,9 @@ namespace Axle
                 app.UseBrowserLink();
                 app.UseDatabaseErrorPage();
             }
+
+            app.UseMiddleware<LogHandlerMiddleware>();
+            app.UseMiddleware<ExceptionHandlerMiddleware>();
 
             app.UseCors("AllowCors");
 
