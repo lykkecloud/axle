@@ -43,7 +43,7 @@
 
   <ItemGroup>
     <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="2.7.0" />
-    <PackageReference Include="Lykke.Middlewares" Version="1.0.0-1537228216" />
+    <PackageReference Include="Lykke.Middlewares" Version="2.0.0-1550072344" />
     <PackageReference Include="Lykke.Snow.Common.Startup" Version="1.2.4" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />

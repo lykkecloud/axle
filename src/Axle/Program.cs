@@ -65,11 +65,10 @@ namespace Axle
             Log.Information($"Running on: {RuntimeInformation.OSDescription}");
 
             Console.Title = $"{title} [{version}]";
-
-            configuration.ValidateEnvironmentSecrets(EnvironmentSecretConfig, Log.Logger);
-
             try
             {
+                configuration.ValidateEnvironmentSecrets(EnvironmentSecretConfig, Log.Logger);
+
                 Log.Information($"Starting {title} web API");
                 BuildWebHost(args, configuration).Run();
                 Log.Information($"{title} web API stopped");
