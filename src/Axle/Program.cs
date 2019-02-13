@@ -23,8 +23,8 @@ namespace Axle
             ("Api-Name",                    "API_NAME",                    null),
             ("Api-Secret",                  "API_SECRET",                  null),
             ("Require-Https",               "REQUIRE_HTTPS",               "true"),
-            ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false"),
             ("Swagger-Client-Id",           "SWAGGER_CLIENT_ID",           "axle_api_swagger"),
+            ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false"),
         };
 
         public static int Main(string[] args)
@@ -39,12 +39,12 @@ namespace Axle
             // LINK (Cameron): https://github.com/aspnet/KestrelHttpServer/issues/1334
             var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             var configuration = new ConfigurationBuilder()
+                .AddEnvironmentSecrets<Startup>(EnvironmentSecretConfig)
                 .AddJsonFile("appsettings.json")
                 .AddJsonFile($"appsettings.Custom.json", optional: true)
                 .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
+                .AddEnvironmentVariables()
                 .AddCommandLine(args)
-                .AddUserSecrets<Startup>()
-                .AddEnvironmentSecrets<Startup>(EnvironmentSecretConfig)
                 .Build();
 
             // LINK (Cameron): https://mitchelsellers.com/blogs/2017/10/09/real-world-aspnet-core-logging-configuration
