@@ -33,18 +33,16 @@ namespace Axle.Hubs
 
         public static string Name => "/session";
 
-        public override Task OnConnectedAsync()
+        public override async Task OnConnectedAsync()
         {
             var sub = this.Context.User.FindFirst(JwtClaimTypes.Subject).Value;
             var clientId = this.Context.User.FindFirst("client_id").Value;
             var token = this.Context.GetHttpContext().Request.Query["access_token"];
 
-            this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, clientId, token);
+            await this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, clientId, token);
 
             Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
             this.connectionRepository.Add(this.Context.ConnectionId, this.Context);
-
-            return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception exception)

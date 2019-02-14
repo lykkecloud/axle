@@ -65,7 +65,7 @@ These available variables are detailed below:
   | urls | Url that service will be exposed |
   | serilog:* | Serilog settings including output template, rolling file interval and file size limit |
   | CorsOrigins:* | Cors origins configuration |
-  | SessionConfig:* | Session timeout in seconds, defaul value will be 300 seconds |
+  | SessionConfig:* | Session timeout in seconds, default value will be 300 seconds |
 
 ### Log specific configuration
 
@@ -122,7 +122,9 @@ All the configuration above can be set via ```appSettings.json```, but if you do
       "Api-Authority": "https://bouncer-dev.azurewebsite.net",
       "Api-Name": "axle_api",
       "Api-Secret": "secret",
-      "ConnectionStrings:Redis": "<valid redis connection string>",
+      "ConnectionStrings": {
+        "Redis": "<valid redis connection string>",
+      },
       "Require-Https": true,
       "Swagger-Client-Id": "<swagger-client-id>",
       "Validate-Issuer-Name": false

@@ -96,6 +96,8 @@ namespace Axle
 
             var sessionTimeout = TimeSpan.FromSeconds(this.configuration.GetValue<int>("SessionConfig:TimeoutInSec", 300));
 
+            services.AddSingleton<INotificationService, NotificationService>();
+
             services.AddSingleton<ISessionRepository, RedisSessionRepository>(x =>
                 new RedisSessionRepository(
                     x.GetService<IConnectionMultiplexer>(),
@@ -104,7 +106,7 @@ namespace Axle
                 new SessionLifecycleService(
                     x.GetService<ISessionRepository>(),
                     x.GetService<ITokenRevocationService>(),
-                    x.GetService<IConnectionMultiplexer>(),
+                    x.GetService<INotificationService>(),
                     sessionTimeout));
 
             services.AddSingleton(provider => new DiscoveryClient(authority)

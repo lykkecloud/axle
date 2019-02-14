@@ -15,7 +15,7 @@ namespace Axle.Services
     {
         private readonly ISessionRepository sessionRepository;
         private readonly ITokenRevocationService tokenRevocationService;
-        private readonly IConnectionMultiplexer connectionMultiplexer;
+        private readonly INotificationService notificationService;
         private readonly TimeSpan sessionTimeout;
 
         private readonly HashSet<Action<IEnumerable<string>>> closeConnectionCallbacks = new HashSet<Action<IEnumerable<string>>>();
@@ -25,28 +25,26 @@ namespace Axle.Services
         public SessionLifecycleService(
             ISessionRepository sessionRepository,
             ITokenRevocationService tokenRevocationService,
-            IConnectionMultiplexer connectionMultiplexer,
+            INotificationService notificationService,
             TimeSpan sessionTimeout)
         {
             this.sessionRepository = sessionRepository;
             this.tokenRevocationService = tokenRevocationService;
-            this.connectionMultiplexer = connectionMultiplexer;
+            this.notificationService = notificationService;
             this.sessionTimeout = sessionTimeout;
 
-            var sub = this.connectionMultiplexer.GetSubscriber();
-
-            sub.Subscribe(this.SessionTerminationNotifs, this.HandleSessionTermination);
+            this.notificationService.OnSessionTerminated += this.HandleSessionTermination;
 
             this.RefreshTimeouts();
         }
 
-        private string SessionTerminationNotifs => "axle:notifications:termsession";
-
+#pragma warning disable CA1710 // Event name should end in EventHandler
         public event Action<IEnumerable<string>> OnCloseConnections
         {
             add { this.closeConnectionCallbacks.Add(value); }
             remove { this.closeConnectionCallbacks.Remove(value); }
         }
+#pragma warning restore CA1710 // Event name should end in EventHandler
 
         public void CloseConnection(string connectionId)
         {
@@ -56,11 +54,13 @@ namespace Axle.Services
             }
         }
 
-        public void OpenConnection(string connectionId, string userId, string clientId, string accessToken)
+        public async Task OpenConnection(string connectionId, string userId, string clientId, string accessToken)
         {
+            Session userInfo;
+
             lock (this.syncObj)
             {
-                var userInfo = this.sessionRepository.GetByUser(userId);
+                userInfo = this.sessionRepository.GetByUser(userId);
 
                 if (userInfo != null && userInfo.AccessToken == accessToken)
                 {
@@ -81,14 +81,14 @@ namespace Axle.Services
 
                 this.sessionRepository.Add(sessionId, newState);
                 this.connectionSessionMap.TryAdd(connectionId, newState);
+            }
 
-                if (userInfo != null)
-                {
-                    this.sessionRepository.Remove(userInfo.SessionId);
-                    this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
+            if (userInfo != null)
+            {
+                this.sessionRepository.Remove(userInfo.SessionId);
+                await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
 
-                    this.connectionMultiplexer.GetDatabase().Publish(this.SessionTerminationNotifs, userInfo.SessionId);
-                }
+                this.notificationService.PublishSessionTermination(userInfo.SessionId);
             }
         }
 
@@ -112,10 +112,8 @@ namespace Axle.Services
             }
         }
 
-        private void HandleSessionTermination(RedisChannel channel, RedisValue message)
+        private void HandleSessionTermination(int sessionId)
         {
-            var sessionId = (int)message;
-
             lock (this.syncObj)
             {
                 // Retrieve and remove the connections to the session we're closing
