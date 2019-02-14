@@ -153,6 +153,16 @@ namespace Axle
             services.AddSingleton<IHttpStatusCodeMapper, DefaultHttpStatusCodeMapper>();
             services.AddSingleton<ILogLevelMapper, DefaultLogLevelMapper>();
 
+            var mtCoreAccountsMgmtClientGenerator = HttpClientGenerator
+                .BuildForUrl(this.configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"))
+                .WithServiceName<MtCoreHttpErrorResponse>("MT Core Account Management Service")
+                .WithoutRetries()
+                .Create();
+
+            services.AddSingleton(mtCoreAccountsMgmtClientGenerator.Generate<IAccountsMgmtApi>());
+
+            services.AddSingleton<IAccountsService, AccountsService>();
+
             services.AddSingleton<IEnumerable<SecurityGroup>>(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
             services.AddSingleton<IUserRoleToPermissionsTransformer, UserRoleToPermissionsTransformer>();
             services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
