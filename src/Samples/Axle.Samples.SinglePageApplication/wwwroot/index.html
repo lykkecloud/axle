@@ -29,6 +29,18 @@
         </div>
 
         <div class="row">
+            <div class="input-group">
+                <div class="col-sm-5" style="width: 40%; float: left">
+                    <input style="width: 95%" type="text" id="accountId" name="accountId" placeholder="Enter account id to terminate" />
+                </div>
+                <div class="col-sm-4" style="width: 33%; float: left">
+                    <button class="btn btn-info terminate">Terminate Session</button>
+                </div>
+            </div>
+            <div class="terminateResponse" style="clear: both; padding: 10px 5px; display: none"><b>Response: </b><pre id="terminateResponse"></pre></div>
+        </div>
+
+        <div class="row" style="clear: both; padding-top: 20px">
             <div class="panel panel-default">
                 <div class="panel-heading">Message</div>
                 <div class="panel-body">
@@ -182,6 +194,7 @@
             });
         });
 
+        document.querySelector(".terminate").addEventListener("click", terminateOthersSession, false);
         document.querySelector(".revoke").addEventListener("click", revoke, false);
         document.querySelector(".logout").addEventListener("click", logout, false);
 
@@ -256,6 +269,7 @@
         setUpAxleConnection();
 
         function handleCallback() {
+
             mgr.signinRedirectCallback().then(function (user) {
                 var hash = window.location.hash.substr(1);
                 var result = hash.split('&').reduce(function (result, item) {
@@ -274,6 +288,17 @@
             }, function (error) {
                 log(error);
             });
+        }
+
+        function terminateOthersSession() {
+            var accountId = document.getElementById('accountId').value;
+
+            connection.invoke("terminateSession", accountId)
+                .then(result => {
+                    document.getElementById('terminateResponse').innerText = JSON.stringify(result);
+                    var responseDiv = document.querySelector('.terminateResponse');
+                    responseDiv.style.display = 'block';
+                });
         }
     </script>
 </body>
