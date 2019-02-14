@@ -68,6 +68,7 @@ namespace Axle
                 });
 
             services.AddMvcCore()
+                .AddJsonFormatters()
                 .AddJsonOptions(
                     options =>
                     {
