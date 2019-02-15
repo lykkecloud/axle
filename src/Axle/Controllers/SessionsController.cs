@@ -55,6 +55,7 @@ namespace Axle.Controllers
         [SwaggerResponse((int)HttpStatusCode.BadRequest, typeof(TerminateSessionResponse))]
         public async Task<IActionResult> TerminateSession([BindRequired] [FromQuery] string accountId)
         {
+            // TODO: remove this call when sessions are stored by accountId
             var userId = await this.accountsService.GetAccountOwnerUserId(accountId);
 
             if (string.IsNullOrEmpty(userId))

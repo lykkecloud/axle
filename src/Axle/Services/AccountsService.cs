@@ -6,6 +6,7 @@ namespace Axle.Services
     using System.Threading.Tasks;
     using IAccountsMgmtApi = MarginTrading.AccountsManagement.Contracts.IAccountsApi;
 
+    // TODO: remove this class when sessions are stored by accountId
     public class AccountsService : IAccountsService
     {
         private readonly IAccountsMgmtApi accountsMgmtApi;
