@@ -6,6 +6,7 @@ namespace Axle.Services
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Axle.Dto;
 
     public interface ISessionLifecycleService
     {
@@ -15,5 +16,7 @@ namespace Axle.Services
         Task OpenConnection(string connectionId, string userId, string clientId, string accessToken);
 
         void CloseConnection(string connectionId);
+
+        Task<TerminateSessionResponse> TerminateSession(string userId);
     }
 }

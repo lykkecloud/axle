@@ -4,25 +4,38 @@
 namespace Axle
 {
     using System;
+    using System.Collections.Generic;
     using System.Reflection;
     using Axle.Configurators;
     using Axle.Constants;
+    using Axle.HttpClients;
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
     using IdentityModel.Client;
     using IdentityServer4.AccessTokenValidation;
+    using Lykke.HttpClientGenerator;
     using Lykke.Middlewares;
     using Lykke.Middlewares.Mappers;
     using Lykke.Snow.Common.Startup;
+    using Microsoft.AspNetCore.Authentication;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
+    using Newtonsoft.Json.Serialization;
     using NSwag.AspNetCore;
+    using PermissionsManagement.Client;
+    using PermissionsManagement.Client.Dto;
+    using PermissionsManagement.Client.Handlers;
     using StackExchange.Redis;
+    using IAccountsMgmtApi = MarginTrading.AccountsManagement.Contracts.IAccountsApi;
 
     public class Startup
     {
@@ -46,10 +59,23 @@ namespace Axle
                 });
             });
 
-            services.AddSignalR();
+            services
+                .AddSignalR()
+                .AddJsonProtocol(options => {
+                    options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() };
+                    options.PayloadSerializerSettings.Converters.Add(new StringEnumConverter());
+                    options.PayloadSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                });
 
             services.AddMvcCore()
                 .AddJsonFormatters()
+                .AddJsonOptions(
+                    options =>
+                    {
+                        options.SerializerSettings.ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() };
+                        options.SerializerSettings.Converters.Add(new StringEnumConverter());
+                        options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                    })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddApiExplorer()
                 .AddAuthorization(
@@ -57,6 +83,7 @@ namespace Axle
                     {
                         // add any authorization policy
                         options.AddPolicy(AuthorizationPolicies.System, policy => policy.RequireClaim("scope", "axle_api:server"));
+                        options.AddPolicy(PermissionsManagement.Client.Constants.AuthorizeUserPolicy, policy => policy.AddRequirements(new AuthorizeUserRequirement()));
                     });
 
             services.AddSwagger();
@@ -107,6 +134,7 @@ namespace Axle
                     x.GetService<ISessionRepository>(),
                     x.GetService<ITokenRevocationService>(),
                     x.GetService<INotificationService>(),
+                    x.GetService<ILogger<SessionLifecycleService>>(),
                     sessionTimeout));
 
             services.AddSingleton(provider => new DiscoveryClient(authority)
@@ -125,6 +153,22 @@ namespace Axle
 
             services.AddSingleton<IHttpStatusCodeMapper, DefaultHttpStatusCodeMapper>();
             services.AddSingleton<ILogLevelMapper, DefaultLogLevelMapper>();
+
+            var mtCoreAccountsMgmtClientGenerator = HttpClientGenerator
+                .BuildForUrl(this.configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"))
+                .WithServiceName<MtCoreHttpErrorResponse>("MT Core Account Management Service")
+                .WithoutRetries()
+                .Create();
+
+            services.AddSingleton(mtCoreAccountsMgmtClientGenerator.Generate<IAccountsMgmtApi>());
+
+            services.AddSingleton<IAccountsService, AccountsService>();
+
+            services.AddSingleton<IEnumerable<SecurityGroup>>(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
+            services.AddSingleton<IUserRoleToPermissionsTransformer, UserRoleToPermissionsTransformer>();
+            services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
+            services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
+            services.AddSingleton<IAuthorizationHandler, AuthorizeUserHandler>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

@@ -6,22 +6,33 @@ namespace Axle
     using System.Collections.Generic;
     using System.Security.Claims;
     using System.Threading.Tasks;
+    using IdentityModel;
     using Microsoft.AspNetCore.Authentication;
+    using PermissionsManagement.Client;
 
     public class ClaimsTransformation : IClaimsTransformation
     {
-        public Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
+        private readonly IUserRoleToPermissionsTransformer userRoleToPermissionsTransformer;
+
+        public ClaimsTransformation(IUserRoleToPermissionsTransformer userRoleToPermissionsTransformer)
         {
+            this.userRoleToPermissionsTransformer = userRoleToPermissionsTransformer;
+        }
+
+        public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
+        {
+            principal = await this.userRoleToPermissionsTransformer.AddPermissionsClaims(principal);
+
             var claims = new List<Claim>(principal.Claims);
 
-            if (!principal.HasClaim(claim => claim.Type == "name"))
+            if (!principal.HasClaim(claim => claim.Type == JwtClaimTypes.Name))
             {
-                claims.Add(new Claim("name", principal.FindFirst("client_id").Value));
+                claims.Add(new Claim(JwtClaimTypes.Name, principal.FindFirst(JwtClaimTypes.ClientId).Value));
             }
 
-            var identity = new ClaimsIdentity(claims, principal.Identity.AuthenticationType, "name", "role");
+            var identity = new ClaimsIdentity(claims, principal.Identity.AuthenticationType, JwtClaimTypes.Name, JwtClaimTypes.Role);
 
-            return Task.FromResult(new ClaimsPrincipal(identity));
+            return new ClaimsPrincipal(identity);
         }
     }
 }

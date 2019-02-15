@@ -66,6 +66,8 @@ These available variables are detailed below:
   | serilog:* | Serilog settings including output template, rolling file interval and file size limit |
   | CorsOrigins:* | Cors origins configuration |
   | SessionConfig:* | Session timeout in seconds, default value will be 300 seconds |
+  | mtCoreAccountsMgmtServiceUrl | Url for MT Core accounts management service |
+  | SecurityGroups:* | Role permissions mapping
 
 ### Log specific configuration
 
