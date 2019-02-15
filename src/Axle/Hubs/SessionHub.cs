@@ -6,8 +6,6 @@ namespace Axle.Hubs
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using Axle.Constants;
-    using Axle.Dto;
     using Axle.Persistence;
     using Axle.Services;
     using IdentityModel;
@@ -15,7 +13,6 @@ namespace Axle.Hubs
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http.Connections;
     using Microsoft.AspNetCore.SignalR;
-    using PermissionsManagement.Client.Attribute;
     using Serilog;
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -23,16 +20,14 @@ namespace Axle.Hubs
     {
         private readonly IRepository<string, HubCallerContext> connectionRepository;
         private readonly ISessionLifecycleService sessionLifecycleService;
-        private readonly IAccountsService accountsService;
 
         public SessionHub(
             IRepository<string, HubCallerContext> connectionRepository,
-            ISessionLifecycleService sessionLifecycleService,
-            IAccountsService accountsService)
+            ISessionLifecycleService sessionLifecycleService)
         {
             this.connectionRepository = connectionRepository;
             this.sessionLifecycleService = sessionLifecycleService;
-            this.accountsService = accountsService;
+
             this.sessionLifecycleService.OnCloseConnections += this.TerminateConnections;
         }
 
@@ -56,25 +51,6 @@ namespace Axle.Hubs
             this.connectionRepository.Remove(this.Context.ConnectionId);
             this.sessionLifecycleService.CloseConnection(this.Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
-        }
-
-        [AuthorizeUser(Permissions.CancelSession)]
-        public async Task<TerminateSessionResponse> TerminateSession(string accountId)
-        {
-            var userId = await this.accountsService.GetAccountOwnerUserId(accountId);
-
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                return new TerminateSessionResponse
-                {
-                    Status = TerminateSessionStatus.BadRequest,
-                    ErrorMessage = "Couldn't find account owner user id"
-                };
-            }
-
-            var result = await this.sessionLifecycleService.TerminateSession(userId);
-
-            return result;
         }
 
         private void TerminateConnections(IEnumerable<string> connections)
