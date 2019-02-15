@@ -44,6 +44,7 @@ This project requires specification of the [following user secrets](src/Axle/Pro
   | Require-Https / REQUIRE_HTTPS | Does https required by the authentication server (optional: default value is true) |
   | Swagger-Client-Id / SWAGGER_CLIENT_ID | Swagger client id for this service on authentication server (optional: default value is axle_api_swagger) |
   | Validate-Issuer-Name / VALIDATE_ISSUER_NAME | Should validate token issuer name when a secure endpoint is called (optional: default value is false) |
+  | ConnectionStrings:Redis / REDIS_CONNECTIONSTRING | Connection string to Redis which should have a valid value |
 
 As mentioned before, these secrets can also be set via ```appSettings.json``` file OR by environment variables, there is no strict requirement to provide them via secrets file
 
@@ -63,6 +64,8 @@ These available variables are detailed below:
   | --- | --- |
   | urls | Url that service will be exposed |
   | serilog:* | Serilog settings including output template, rolling file interval and file size limit |
+  | CorsOrigins:* | Cors origins configuration |
+  | SessionConfig:* | Session timeout in seconds, default value will be 300 seconds |
 
 ### Log specific configuration
 
@@ -119,6 +122,9 @@ All the configuration above can be set via ```appSettings.json```, but if you do
       "Api-Authority": "https://bouncer-dev.azurewebsite.net",
       "Api-Name": "axle_api",
       "Api-Secret": "secret",
+      "ConnectionStrings": {
+        "Redis": "<valid redis connection string>",
+      },
       "Require-Https": true,
       "Swagger-Client-Id": "<swagger-client-id>",
       "Validate-Issuer-Name": false
@@ -139,8 +145,9 @@ All the configuration above can be set via ```appSettings.json```, but if you do
       dotnet user-secrets set "Api-Authority" "https://bouncer-dev.azurewebsite.net"
       dotnet user-secrets set "Api-Name" "axle_api"
       dotnet user-secrets set "Api-Secret" "secret"
+      dotnet user-secrets set "ConnectionStrings:Redis" "<valid redis connection string>"
       dotnet user-secrets set "Require-Https" true
-      dotnet user-secrets set "Swagger-Client-Id" <swagger-client-id>
+      dotnet user-secrets set "Swagger-Client-Id" "<swagger-client-id>"
       dotnet user-secrets set "Validate-Issuer-Name" false
     ```
 
@@ -157,6 +164,7 @@ All the configuration above can be set via ```appSettings.json```, but if you do
       API_AUTHORITY=https://bouncer-dev.azurewebsite.net
       API_NAME=axle_api
       API_SECRET=secret
+      REDIS_CONNECTIONSTRING=<valid redis connection string>
       REQUIRE_HTTPS=true
       SWAGGER_CLIENT_ID=<swagger-client-id>
       VALIDATE_ISSUER_NAME=false
@@ -201,11 +209,11 @@ Configuration of secrets.json file in order to use https
 
     Example of Dockerfile
     ```
-    FROM microsoft/dotnet:2.1.5-aspnetcore-runtime AS base
+    FROM microsoft/dotnet:2.2-aspnetcore-runtime AS base
     WORKDIR /app
     EXPOSE 80
 
-    FROM microsoft/dotnet:2.1.403-sdk AS build
+    FROM microsoft/dotnet:2.2-sdk AS build
     WORKDIR /src
     COPY . ./
     WORKDIR /src/Axle

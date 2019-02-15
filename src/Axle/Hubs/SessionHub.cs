@@ -4,7 +4,7 @@
 namespace Axle.Hubs
 {
     using System;
-    using System.Linq;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Axle.Persistence;
     using Axle.Services;
@@ -27,30 +27,22 @@ namespace Axle.Hubs
         {
             this.connectionRepository = connectionRepository;
             this.sessionLifecycleService = sessionLifecycleService;
+
+            this.sessionLifecycleService.OnCloseConnections += this.TerminateConnections;
         }
 
         public static string Name => "/session";
 
-        public override Task OnConnectedAsync()
+        public override async Task OnConnectedAsync()
         {
             var sub = this.Context.User.FindFirst(JwtClaimTypes.Subject).Value;
             var clientId = this.Context.User.FindFirst("client_id").Value;
             var token = this.Context.GetHttpContext().Request.Query["access_token"];
 
-            var state = this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, clientId, token);
+            await this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, clientId, token);
 
             Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
             this.connectionRepository.Add(this.Context.ConnectionId, this.Context);
-
-            if (state != null)
-            {
-                foreach (var connection in state.Connections.ToList())
-                {
-                    this.connectionRepository.Get(connection).Abort();
-                }
-            }
-
-            return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
@@ -59,6 +51,14 @@ namespace Axle.Hubs
             this.connectionRepository.Remove(this.Context.ConnectionId);
             this.sessionLifecycleService.CloseConnection(this.Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
+        }
+
+        private void TerminateConnections(IEnumerable<string> connections)
+        {
+            foreach (var connection in connections)
+            {
+                this.connectionRepository.Get(connection).Abort();
+            }
         }
     }
 }

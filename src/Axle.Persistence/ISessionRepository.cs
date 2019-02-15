@@ -3,12 +3,12 @@
 
 namespace Axle.Persistence
 {
-    public interface ISessionRepository : IRepository<int, SessionState>
+    using System.Collections.Generic;
+
+    public interface ISessionRepository : IRepository<int, Session>
     {
-        bool TryGet(int sessionId, out SessionState sessionState);
+        Session GetByUser(string userId);
 
-        SessionState GetByUser(string userId);
-
-        SessionState GetByConnection(string connectionId);
+        void RefreshSessionTimeouts(IEnumerable<Session> sessions);
     }
 }

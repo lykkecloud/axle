@@ -3,11 +3,16 @@
 
 namespace Axle.Services
 {
-    using Axle.Persistence;
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
 
     public interface ISessionLifecycleService
     {
-        SessionState OpenConnection(string connectionId, string userId, string clientId, string accessToken);
+        #pragma warning disable CA1710 // Event name should end in EventHandler
+        event Action<IEnumerable<string>> OnCloseConnections;
+
+        Task OpenConnection(string connectionId, string userId, string clientId, string accessToken);
 
         void CloseConnection(string connectionId);
     }

@@ -3,6 +3,8 @@
 
 namespace Axle
 {
+    using System;
+    using System.Reflection;
     using Axle.Configurators;
     using Axle.Constants;
     using Axle.Hubs;
@@ -20,7 +22,7 @@ namespace Axle
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using NSwag.AspNetCore;
-    using System.Reflection;
+    using StackExchange.Redis;
 
     public class Startup
     {
@@ -37,10 +39,10 @@ namespace Axle
             {
                 o.AddPolicy("AllowCors", p =>
                 {
-                    p.AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowAnyOrigin()
-                        .AllowCredentials();
+                    p.WithOrigins(this.configuration.GetSection("CorsOrigins").Get<string[]>())
+                     .AllowAnyHeader()
+                     .AllowAnyMethod()
+                     .AllowCredentials();
                 });
             });
 
@@ -92,8 +94,20 @@ namespace Axle
             services.AddSingleton<IRepository<string, HubCallerContext>>(connectionRepository);
             services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
-            services.AddSingleton<ISessionRepository, InMemorySessionRepository>();
-            services.AddSingleton<ISessionLifecycleService, SessionLifecycleService>();
+            var sessionTimeout = TimeSpan.FromSeconds(this.configuration.GetValue<int>("SessionConfig:TimeoutInSec", 300));
+
+            services.AddSingleton<INotificationService, NotificationService>();
+
+            services.AddSingleton<ISessionRepository, RedisSessionRepository>(x =>
+                new RedisSessionRepository(
+                    x.GetService<IConnectionMultiplexer>(),
+                    sessionTimeout));
+            services.AddSingleton<ISessionLifecycleService, SessionLifecycleService>(x =>
+                new SessionLifecycleService(
+                    x.GetService<ISessionRepository>(),
+                    x.GetService<ITokenRevocationService>(),
+                    x.GetService<INotificationService>(),
+                    sessionTimeout));
 
             services.AddSingleton(provider => new DiscoveryClient(authority)
             {
@@ -103,6 +117,8 @@ namespace Axle
                     RequireHttps = requireHttps
                 }
             });
+
+            services.AddSingleton<IConnectionMultiplexer>(x => ConnectionMultiplexer.Connect(this.configuration.GetValue<string>("ConnectionStrings:Redis")));
 
             services.AddSingleton<DiscoveryCache>();
             services.AddSingleton<ITokenRevocationService, BouncerService>();

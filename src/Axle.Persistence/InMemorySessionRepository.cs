@@ -9,14 +9,14 @@ namespace Axle.Persistence
     // NOTE (Marta): This is going to be replaced in the future with a repository that persists data.
     public sealed class InMemorySessionRepository : ISessionRepository
     {
-        private readonly IDictionary<int, SessionState> sessions = new Dictionary<int, SessionState>();
+        private readonly IDictionary<int, Session> sessions = new Dictionary<int, Session>();
 
-        public void Add(int sessionId, SessionState sessionState)
+        public void Add(int sessionId, Session sessionState)
         {
             this.sessions.Add(sessionId, sessionState);
         }
 
-        public SessionState Get(int sessionId)
+        public Session Get(int sessionId)
         {
             if (this.sessions.TryGetValue(sessionId, out var entity))
             {
@@ -26,26 +26,18 @@ namespace Axle.Persistence
             return null;
         }
 
-        public bool TryGet(int sessionId, out SessionState sessionState)
-        {
-            return this.sessions.TryGetValue(sessionId, out sessionState);
-        }
-
         public void Remove(int sessionId)
         {
             this.sessions.Remove(sessionId);
         }
 
-        public SessionState GetByUser(string userId)
+        public Session GetByUser(string userId)
         {
             return this.sessions.Where(x => x.Value.UserId == userId).Select(kv => kv.Value).FirstOrDefault();
         }
 
-        public SessionState GetByConnection(string connectionId)
+        public void RefreshSessionTimeouts(IEnumerable<Session> sessions)
         {
-            return this.sessions.Where(x => x.Value.Connections.Any(id => id == connectionId))
-                                .Select(kv => kv.Value)
-                                .FirstOrDefault();
         }
     }
 }
