@@ -4,8 +4,10 @@
 namespace Axle
 {
     using System;
+    using System.Collections.Generic;
     using System.Reflection;
     using System.Runtime.InteropServices;
+    using Lykke.Snow.Common.Startup;
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -14,6 +16,18 @@ namespace Axle
 
     public static class Program
     {
+        private static readonly List<(string, string, string)> EnvironmentSecretConfig = new List<(string, string, string)>
+        {
+            /* secrets.json Key             // Environment Variable        // default value (optional) */
+            ("Api-Authority",               "API_AUTHORITY",               null),
+            ("Api-Name",                    "API_NAME",                    null),
+            ("Api-Secret",                  "API_SECRET",                  null),
+            ("ConnectionStrings:Redis",     "REDIS_CONNECTIONSTRING",      null),
+            ("Require-Https",               "REQUIRE_HTTPS",               "true"),
+            ("Swagger-Client-Id",           "SWAGGER_CLIENT_ID",           "axle_api_swagger"),
+            ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false")
+        };
+
         public static int Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
@@ -26,33 +40,35 @@ namespace Axle
             // LINK (Cameron): https://github.com/aspnet/KestrelHttpServer/issues/1334
             var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             var configuration = new ConfigurationBuilder()
+                .AddEnvironmentSecrets<Startup>(EnvironmentSecretConfig)
                 .AddJsonFile("appsettings.json")
                 .AddJsonFile($"appsettings.Custom.json", optional: true)
                 .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
+                .AddEnvironmentVariables()
                 .AddCommandLine(args)
-                .AddUserSecrets<Startup>()
                 .Build();
-
-            // LINK (Cameron): https://mitchelsellers.com/blogs/2017/10/09/real-world-aspnet-core-logging-configuration
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.Async(a => a.Console())
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                .Enrich.FromLogContext()
-                .Enrich.WithMachineName()
-                .ReadFrom.Configuration(configuration)
-                .CreateLogger();
 
             var assembly = typeof(Program).Assembly;
             var title = assembly.Attribute<AssemblyTitleAttribute>(attribute => attribute.Title);
             var version = assembly.Attribute<AssemblyInformationalVersionAttribute>(attribute => attribute.InformationalVersion);
             var copyright = assembly.Attribute<AssemblyCopyrightAttribute>(attribute => attribute.Copyright);
+
+            // LINK (Cameron): https://mitchelsellers.com/blogs/2017/10/09/real-world-aspnet-core-logging-configuration
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
+                .Enrich.WithProperty("Application", title)
+                .Enrich.WithProperty("Version", version)
+                .Enrich.WithProperty("Environment", environmentName)
+                .CreateLogger();
+
             Log.Information($"{title} [{version}] {copyright}");
             Log.Information($"Running on: {RuntimeInformation.OSDescription}");
 
             Console.Title = $"{title} [{version}]";
-
             try
             {
+                configuration.ValidateEnvironmentSecrets(EnvironmentSecretConfig, Log.Logger);
+
                 Log.Information($"Starting {title} web API");
                 BuildWebHost(args, configuration).Run();
                 Log.Information($"{title} web API stopped");
@@ -71,7 +87,8 @@ namespace Axle
 
         private static IWebHost BuildWebHost(string[] args, IConfigurationRoot configuration)
         {
-            return WebHost.CreateDefaultBuilder(args)
+            return WebHost
+                .CreateDefaultBuilder(args)
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>()
                 .UseSerilog()

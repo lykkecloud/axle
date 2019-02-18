@@ -1,4 +1,7 @@
-﻿namespace Axle.Persistence
+﻿// Copyright (c) Lykke Corp.
+// See the LICENSE file in the project root for more information.
+
+namespace Axle.Persistence
 {
     using System.Collections.Generic;
     using System.Linq;
@@ -6,31 +9,35 @@
     // NOTE (Marta): This is going to be replaced in the future with a repository that persists data.
     public sealed class InMemorySessionRepository : ISessionRepository
     {
-        private readonly IDictionary<string, string> sessions = new Dictionary<string, string>();
+        private readonly IDictionary<int, Session> sessions = new Dictionary<int, Session>();
 
-        public void Add(string sessionId, string userId)
+        public void Add(int sessionId, Session sessionState)
         {
-            this.sessions.Add(sessionId, userId);
+            this.sessions.Add(sessionId, sessionState);
         }
 
-        public string Get(string sessionId)
+        public Session Get(int sessionId)
         {
-            return this.sessions[sessionId];
+            if (this.sessions.TryGetValue(sessionId, out var entity))
+            {
+                return entity;
+            }
+
+            return null;
         }
 
-        public bool TryGet(string sessionId, out string userId)
-        {
-            return this.sessions.TryGetValue(sessionId, out userId);
-        }
-
-        public void Remove(string sessionId)
+        public void Remove(int sessionId)
         {
             this.sessions.Remove(sessionId);
         }
 
-        public IEnumerable<string> GetByUser(string userId)
+        public Session GetByUser(string userId)
         {
-            return this.sessions.Where(x => x.Value == userId).Select(kv => kv.Key).ToList();
+            return this.sessions.Where(x => x.Value.UserId == userId).Select(kv => kv.Value).FirstOrDefault();
+        }
+
+        public void RefreshSessionTimeouts(IEnumerable<Session> sessions)
+        {
         }
     }
 }

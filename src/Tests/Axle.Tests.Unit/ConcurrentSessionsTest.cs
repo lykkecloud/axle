@@ -1,31 +1,30 @@
-﻿namespace Axle.Tests.Unit
+﻿// Copyright (c) Lykke Corp.
+// See the LICENSE file in the project root for more information.
+
+namespace Axle.Tests.Unit
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Threading;
-    using Axle.Hubs;
     using Axle.Persistence;
+    using Axle.Services;
     using FakeItEasy;
     using FluentAssertions;
-    using Microsoft.AspNetCore.SignalR;
     using Xbehave;
 
     public class ConcurrentSessionsTest
     {
         private const string UserId = "abc";
 
-        [Scenario]
+        /*[Scenario]
         [Example(3)]
         public void OpeningMultipleSessionsShouldKeepOnlyOneActiveSession(int numberOfSessions)
         {
-            IHubContext<SessionHub> hubContext = null;
             ISessionRepository sessionRepository = null;
-            IReadOnlyRepository<string, HubConnectionContext> connectionRepository = null;
             Thread[] threads = null;
-            SessionHubMethods<SessionHub> hubMethods = null;
+            SessionLifecycleService lifecycleService = null;
             ConcurrentQueue<Exception> exceptions = null;
 
             "Given Axle SignalR hub"
@@ -34,13 +33,10 @@
                     exceptions = new ConcurrentQueue<Exception>();
                     threads = new Thread[numberOfSessions];
 
-                    hubContext = A.Fake<IHubContext<SessionHub>>();
                     sessionRepository = new InMemorySessionRepository();
+                    var tokenRevocationService = A.Fake<ITokenRevocationService>();
 
-                    connectionRepository = A.Fake<IReadOnlyRepository<string, HubConnectionContext>>();
-                    A.CallTo(() => connectionRepository.Get(A<string>.Ignored)).Returns(A.Fake<HubConnectionContext>());
-
-                    hubMethods = new SessionHubMethods<SessionHub>(hubContext, sessionRepository, connectionRepository);
+                    lifecycleService = new SessionLifecycleService(sessionRepository, tokenRevocationService);
                 });
 
             "When I open multiple sessions with the same user ID"
@@ -48,7 +44,7 @@
                 {
                     for (int i = 0; i < numberOfSessions; i++)
                     {
-                        threads[i] = new Thread(() => SafeExecute(() => this.StartSession(hubMethods), exceptions));
+                        threads[i] = new Thread(() => SafeExecute(() => this.StartSession(lifecycleService), exceptions));
                     }
 
                     for (int i = 0; i < numberOfSessions; i++)
@@ -64,7 +60,7 @@
                     exceptions.Should().BeEmpty();
 
                     var activeSessionsOfUser = sessionRepository.GetByUser(UserId);
-                    activeSessionsOfUser.Count().Should().Be(1);
+                    activeSessionsOfUser.Connections.Count().Should().Be(1);
                 })
                 .Teardown(() =>
                 {
@@ -90,9 +86,19 @@
             }
         }
 
-        private void StartSession(SessionHubMethods<SessionHub> hubMethods)
+        private void StartSession(SessionLifecycleService lifecycleService, string token = null)
         {
-            hubMethods.StartSession(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId);
-        }
+            token = token ?? Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
+
+            var state = lifecycleService.OpenConnection(Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture), UserId, "clientid", token);
+
+            if (state != null)
+            {
+                foreach (var connection in state.Connections.ToList())
+                {
+                    lifecycleService.CloseConnection(connection);
+                }
+            }
+        }*/
     }
 }
