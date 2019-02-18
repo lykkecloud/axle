@@ -1,4 +1,4 @@
-## Unreleased
+## 2.10.0 (February 18, 2019)
 
 * LT-391: Enhancing documentation for service requirements, including more detailed descriptions
 * LT-397: Enhancing logging with correct app version and with Lykke middleware and standards
