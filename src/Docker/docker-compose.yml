@@ -4,8 +4,8 @@ services:
 
   api:
     build:
-      context: ../
-      dockerfile: Axle/Dockerfile
+      context: ../../
+      dockerfile: src/Axle/Dockerfile
       args:
         version: ${VERSION:-0.1.0-developer}
     container_name: axle
