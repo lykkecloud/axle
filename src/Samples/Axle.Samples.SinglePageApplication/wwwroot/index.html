@@ -227,7 +227,7 @@
             mgr.getUser().then(function (user) {
                 if (user) {
                     connection = new signalR.HubConnectionBuilder()
-                        .withUrl("http://localhost:5012/session",
+                        .withUrl("http://localhost:5012/session?account_id=YOUR_ACCOUNT_HERE",
                             {
                                 accessTokenFactory: () => user.access_token,
                                 transport: signalR.HttpTransportType.WebSocket

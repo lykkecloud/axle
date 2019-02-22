@@ -8,6 +8,7 @@ namespace Axle
     using System.Reflection;
     using Axle.Configurators;
     using Axle.Constants;
+    using Axle.Contracts;
     using Axle.HttpClients;
     using Axle.Hubs;
     using Axle.Persistence;
@@ -17,6 +18,8 @@ namespace Axle
     using Lykke.HttpClientGenerator;
     using Lykke.Middlewares;
     using Lykke.Middlewares.Mappers;
+    using Lykke.RabbitMqBroker.Publisher;
+    using Lykke.RabbitMqBroker.Subscriber;
     using Lykke.Snow.Common.Startup;
     using Microsoft.AspNetCore.Authentication;
     using Microsoft.AspNetCore.Authorization;
@@ -134,8 +137,21 @@ namespace Axle
                     x.GetService<ISessionRepository>(),
                     x.GetService<ITokenRevocationService>(),
                     x.GetService<INotificationService>(),
+                    x.GetService<IActivityService>(),
                     x.GetService<ILogger<SessionLifecycleService>>(),
                     sessionTimeout));
+            services.AddSingleton<IActivityService, ActivityService>();
+
+            var rabbitMqSettings = this.configuration.GetSection("ActivityPublisherSettings").Get<RabbitMqSubscriptionSettings>().MakeDurable();
+
+#pragma warning disable CS0618 // Type or member is obsolete
+            services.AddSingleton(x => new RabbitMqPublisher<SessionActivity>(rabbitMqSettings)
+                .DisableInMemoryQueuePersistence()
+                .SetSerializer(new MessagePackMessageSerializer<SessionActivity>())
+                .SetPublishStrategy(new DefaultFanoutPublishStrategy(rabbitMqSettings))
+                .SetLogger(new LykkeLoggerAdapter<RabbitMqPublisher<SessionActivity>>(x.GetService<ILogger<RabbitMqPublisher<SessionActivity>>>()))
+                .PublishSynchronously());
+#pragma warning restore CS0618 // Type or member is obsolete
 
             services.AddSingleton(provider => new DiscoveryClient(authority)
             {

@@ -6,6 +6,7 @@ namespace Axle.Services
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Axle.Contracts;
     using Axle.Dto;
 
     public interface ISessionLifecycleService
@@ -13,10 +14,12 @@ namespace Axle.Services
         #pragma warning disable CA1710 // Event name should end in EventHandler
         event Action<IEnumerable<string>> OnCloseConnections;
 
-        Task OpenConnection(string connectionId, string userId, string clientId, string accessToken);
+        Task OpenConnection(string connectionId, string userId, string accountId, string clientId, string accessToken);
 
         void CloseConnection(string connectionId);
 
-        Task<TerminateSessionResponse> TerminateSession(string userId);
+        Task<TerminateSessionResponse> TerminateSession(
+            string userId,
+            SessionActivityType reason = SessionActivityType.ManualTermination);
     }
 }

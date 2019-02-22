@@ -13,10 +13,12 @@ namespace Axle.Persistence
         public Session(
             string userId,
             int sessionId,
+            string accountId,
             string accessToken,
             string clientId)
         {
             this.UserId = userId ?? throw new ArgumentNullException(nameof(userId));
+            this.AccountId = accountId ?? throw new ArgumentNullException(nameof(accountId));
             this.AccessToken = accessToken ?? throw new ArgumentNullException(nameof(accessToken));
             this.ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
             this.SessionId = sessionId;
@@ -29,9 +31,12 @@ namespace Axle.Persistence
         public int SessionId { get; }
 
         [Key(2)]
-        public string AccessToken { get; }
+        public string AccountId { get; }
 
         [Key(3)]
+        public string AccessToken { get; }
+
+        [Key(4)]
         public string ClientId { get; }
     }
 }

@@ -11,9 +11,9 @@ namespace Axle.Persistence
     {
         private readonly IDictionary<int, Session> sessions = new Dictionary<int, Session>();
 
-        public void Add(int sessionId, Session sessionState)
+        public void Add(Session session)
         {
-            this.sessions.Add(sessionId, sessionState);
+            this.sessions.Add(session.SessionId, session);
         }
 
         public Session Get(int sessionId)
@@ -26,7 +26,7 @@ namespace Axle.Persistence
             return null;
         }
 
-        public void Remove(int sessionId)
+        public void Remove(int sessionId, string userId)
         {
             this.sessions.Remove(sessionId);
         }
@@ -38,6 +38,11 @@ namespace Axle.Persistence
 
         public void RefreshSessionTimeouts(IEnumerable<Session> sessions)
         {
+        }
+
+        public IEnumerable<Session> GetExpiredSessions()
+        {
+            return Enumerable.Empty<Session>();
         }
     }
 }

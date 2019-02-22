@@ -8,6 +8,7 @@ namespace Axle.Services
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using Axle.Contracts;
     using Axle.Dto;
     using Axle.Persistence;
     using Microsoft.Extensions.Logging;
@@ -20,6 +21,7 @@ namespace Axle.Services
         private readonly ISessionRepository sessionRepository;
         private readonly ITokenRevocationService tokenRevocationService;
         private readonly INotificationService notificationService;
+        private readonly IActivityService activityService;
         private readonly ILogger<SessionLifecycleService> logger;
         private readonly TimeSpan sessionTimeout;
 
@@ -31,12 +33,14 @@ namespace Axle.Services
             ISessionRepository sessionRepository,
             ITokenRevocationService tokenRevocationService,
             INotificationService notificationService,
+            IActivityService activityService,
             ILogger<SessionLifecycleService> logger,
             TimeSpan sessionTimeout)
         {
             this.sessionRepository = sessionRepository;
             this.tokenRevocationService = tokenRevocationService;
             this.notificationService = notificationService;
+            this.activityService = activityService;
             this.logger = logger;
             this.sessionTimeout = sessionTimeout;
 
@@ -67,7 +71,7 @@ namespace Axle.Services
             }
         }
 
-        public async Task OpenConnection(string connectionId, string userId, string clientId, string accessToken)
+        public async Task OpenConnection(string connectionId, string userId, string accountId, string clientId, string accessToken)
         {
             Session userInfo;
 
@@ -92,14 +96,15 @@ namespace Axle.Services
                 }
                 while (this.sessionRepository.Get(sessionId) != null);
 
-                var newState = new Session(userId, sessionId, accessToken, clientId);
+                var newSession = new Session(userId, sessionId, accountId, accessToken, clientId);
 
-                this.sessionRepository.Add(sessionId, newState);
-                this.connectionSessionMap.TryAdd(connectionId, newState);
+                this.sessionRepository.Add(newSession);
+                this.connectionSessionMap.TryAdd(connectionId, newSession);
+                await this.activityService.PublishActivity(newSession, SessionActivityType.Login);
 
                 if (userInfo != null)
                 {
-                    await this.TerminateSession(userInfo);
+                    await this.TerminateSession(userInfo, SessionActivityType.DifferentDeviceTermination);
                 }
             }
             finally
@@ -108,7 +113,9 @@ namespace Axle.Services
             }
         }
 
-        public async Task<TerminateSessionResponse> TerminateSession(string userId)
+        public async Task<TerminateSessionResponse> TerminateSession(
+            string userId,
+            SessionActivityType reason = SessionActivityType.ManualTermination)
         {
             await this.slimLock.WaitAsync();
 
@@ -127,7 +134,7 @@ namespace Axle.Services
 
                 this.logger.LogInformation($"Terminating session: [{userInfo.SessionId}] for user: [{userId}]");
 
-                await this.TerminateSession(userInfo);
+                await this.TerminateSession(userInfo, reason);
 
                 this.logger.LogInformation($"Successfully terminated session: [{userInfo.SessionId}] for user: [{userId}]");
 
@@ -153,12 +160,13 @@ namespace Axle.Services
             }
         }
 
-        public async Task TerminateSession(Session userInfo)
+        public async Task TerminateSession(Session userInfo, SessionActivityType reason)
         {
-            this.sessionRepository.Remove(userInfo.SessionId);
+            this.sessionRepository.Remove(userInfo.SessionId, userInfo.UserId);
             await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
 
             this.notificationService.PublishSessionTermination(userInfo.SessionId);
+            await this.activityService.PublishActivity(userInfo, reason);
         }
 
         public void Dispose()
@@ -180,6 +188,14 @@ namespace Axle.Services
                     try
                     {
                         this.sessionRepository.RefreshSessionTimeouts(this.connectionSessionMap.Values);
+
+                        var sessionsToTerminate = this.sessionRepository.GetExpiredSessions();
+
+                        foreach (var session in sessionsToTerminate)
+                        {
+                            await this.TerminateSession(session, SessionActivityType.TimeOut);
+                            this.logger.LogInformation($"Successfully timed out session: [{session.SessionId}] for user: [{session.UserId}]");
+                        }
                     }
                     finally
                     {
