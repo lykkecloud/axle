@@ -15,7 +15,11 @@
     <NoWarn>1701;1702;1705;CA2007</NoWarn>
     <UserSecretsId>25692E6B-C123-474C-A44B-6B2C93BCF65D</UserSecretsId>
     <AssemblyName>Axle.Client</AssemblyName>
-    <Version>0.0.2-developer</Version>
+    <Version>0.0.2</Version>
+    <Authors>Axle Contributors</Authors>
+    <Copyright>Copyright (c) Donut Contributers. All rights reserved.</Copyright>
+    <Company>Lykke</Company>
+    <Product>Axle</Product>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" />
@@ -29,10 +33,6 @@
 
   <ItemGroup>
     <AdditionalFiles Include="../stylecop.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Axle.Dto\Axle.Dto.csproj" />
   </ItemGroup>
 
 </Project>
