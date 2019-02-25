@@ -3,7 +3,7 @@
 
 namespace Axle.Client
 {
-    using Axle.Dto;
+    using Axle.Client.Models;
     using JetBrains.Annotations;
     using Refit;
     using System.Threading.Tasks;
