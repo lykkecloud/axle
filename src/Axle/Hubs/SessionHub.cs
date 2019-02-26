@@ -6,6 +6,7 @@ namespace Axle.Hubs
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Axle.Authorization;
     using Axle.Persistence;
     using Axle.Services;
     using IdentityModel;
@@ -16,20 +17,18 @@ namespace Axle.Hubs
     using Serilog;
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [AccountOwnerOrSupport]
     public class SessionHub : Hub
     {
         private readonly IRepository<string, HubCallerContext> connectionRepository;
         private readonly ISessionLifecycleService sessionLifecycleService;
-        private readonly IAccountsService accountsService;
 
         public SessionHub(
             IRepository<string, HubCallerContext> connectionRepository,
-            ISessionLifecycleService sessionLifecycleService,
-            IAccountsService accountsService)
+            ISessionLifecycleService sessionLifecycleService)
         {
             this.connectionRepository = connectionRepository;
             this.sessionLifecycleService = sessionLifecycleService;
-            this.accountsService = accountsService;
 
             this.sessionLifecycleService.OnCloseConnections += this.TerminateConnections;
         }
@@ -38,7 +37,7 @@ namespace Axle.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var sub = this.Context.User.FindFirst(JwtClaimTypes.Subject).Value;
+            var sub = this.Context.User.FindFirst(JwtClaimTypes.Name).Value;
             var clientId = this.Context.User.FindFirst("client_id").Value;
 
             var query = this.Context.GetHttpContext().Request.Query;
@@ -46,23 +45,9 @@ namespace Axle.Hubs
             var token = query["access_token"];
             var accountId = query["account_id"];
 
-            if (string.IsNullOrWhiteSpace(accountId))
-            {
-                Log.Information($"User {sub} tried to connect without specifying account ID.");
-                this.Context.Abort();
-                return;
-            }
+            var isSupportUser = AccountOwnerOrSupportHandler.IsSupportUser(accountId, this.Context.User);
 
-            var accountOwnerId = await this.accountsService.GetAccountOwnerUserId(accountId);
-
-            if (sub != accountOwnerId)
-            {
-                Log.Information($"User {sub} tried to connect with account {accountId}, which he does not own");
-                this.Context.Abort();
-                return;
-            }
-
-            await this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, accountId, clientId, token);
+            await this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, accountId, clientId, token, isSupportUser);
 
             Log.Information($"New connection established. User: {sub}, ID: {this.Context.ConnectionId}.");
             this.connectionRepository.Add(this.Context.ConnectionId, this.Context);

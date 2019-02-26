@@ -43,7 +43,7 @@ namespace Axle.Persistence
         {
             var db = this.multiplexer.GetDatabase();
 
-            var lastUpdated = db.SortedSetRank(ExpirationSetKey, id);
+            var lastUpdated = db.SortedSetScore(ExpirationSetKey, id);
 
             // No information about session in the expiration set - return null
             if (!lastUpdated.HasValue)
@@ -51,7 +51,7 @@ namespace Axle.Persistence
                 return null;
             }
 
-            var lastAlive = DateTimeOffset.FromUnixTimeSeconds(lastUpdated.Value);
+            var lastAlive = DateTimeOffset.FromUnixTimeSeconds((long)lastUpdated.Value);
             var utcNow = DateTimeOffset.UtcNow;
 
             // Session has expired and will be removed on the next expiration check - return null

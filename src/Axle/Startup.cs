@@ -6,6 +6,8 @@ namespace Axle
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using Axle.Authorization;
+    using Axle.Caches;
     using Axle.Configurators;
     using Axle.Constants;
     using Axle.Contracts;
@@ -25,8 +27,10 @@ namespace Axle
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.SignalR;
+    using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
@@ -36,7 +40,6 @@ namespace Axle
     using NSwag.AspNetCore;
     using PermissionsManagement.Client;
     using PermissionsManagement.Client.Dto;
-    using PermissionsManagement.Client.Handlers;
     using StackExchange.Redis;
     using IAccountsMgmtApi = MarginTrading.AccountsManagement.Contracts.IAccountsApi;
 
@@ -87,6 +90,7 @@ namespace Axle
                         // add any authorization policy
                         options.AddPolicy(AuthorizationPolicies.System, policy => policy.RequireClaim("scope", "axle_api:server"));
                         options.AddPolicy(PermissionsManagement.Client.Constants.AuthorizeUserPolicy, policy => policy.AddRequirements(new AuthorizeUserRequirement()));
+                        options.AddPolicy(AuthorizationPolicies.AccountOwnerOrSupport, policy => policy.AddRequirements(new AccountOwnerOrSupportRequirement()));
                     });
 
             services.AddSwagger();
@@ -184,7 +188,10 @@ namespace Axle
             services.AddSingleton<IUserRoleToPermissionsTransformer, UserRoleToPermissionsTransformer>();
             services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
             services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
-            services.AddSingleton<IAuthorizationHandler, AuthorizeUserHandler>();
+            services.AddSingleton<IAuthorizationHandler, Authorization.AccountOwnerOrSupportHandler>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IAccountsCache, AccountsCache>();
+            services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

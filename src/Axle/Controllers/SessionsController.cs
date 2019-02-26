@@ -34,11 +34,11 @@ namespace Axle.Controllers
         }
 
         [Authorize(AuthorizationPolicies.System)]
-        [HttpGet("{userId}")]
+        [HttpGet("{userName}")]
         [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
-        public IActionResult Get(string userId)
+        public IActionResult Get(string userName)
         {
-            var sessionState = this.sessionRepository.GetByUser(userId);
+            var sessionState = this.sessionRepository.GetByUser(userName);
 
             if (sessionState == null)
             {

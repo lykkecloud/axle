@@ -15,13 +15,15 @@ namespace Axle.Persistence
             int sessionId,
             string accountId,
             string accessToken,
-            string clientId)
+            string clientId,
+            bool isSupportUser)
         {
             this.UserId = userId ?? throw new ArgumentNullException(nameof(userId));
             this.AccountId = accountId ?? throw new ArgumentNullException(nameof(accountId));
             this.AccessToken = accessToken ?? throw new ArgumentNullException(nameof(accessToken));
             this.ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
             this.SessionId = sessionId;
+            this.IsSupportUser = isSupportUser;
         }
 
         [Key(0)]
@@ -38,5 +40,8 @@ namespace Axle.Persistence
 
         [Key(4)]
         public string ClientId { get; }
+
+        [Key(5)]
+        public bool IsSupportUser { get; }
     }
 }

@@ -71,7 +71,13 @@ namespace Axle.Services
             }
         }
 
-        public async Task OpenConnection(string connectionId, string userId, string accountId, string clientId, string accessToken)
+        public async Task OpenConnection(
+            string connectionId,
+            string userId,
+            string accountId,
+            string clientId,
+            string accessToken,
+            bool isSupportUser)
         {
             Session userInfo;
 
@@ -96,11 +102,15 @@ namespace Axle.Services
                 }
                 while (this.sessionRepository.Get(sessionId) != null);
 
-                var newSession = new Session(userId, sessionId, accountId, accessToken, clientId);
+                var newSession = new Session(userId, sessionId, accountId, accessToken, clientId, isSupportUser);
 
                 this.sessionRepository.Add(newSession);
                 this.connectionSessionMap.TryAdd(connectionId, newSession);
-                await this.activityService.PublishActivity(newSession, SessionActivityType.Login);
+
+                if (!newSession.IsSupportUser)
+                {
+                    await this.activityService.PublishActivity(newSession, SessionActivityType.Login);
+                }
 
                 if (userInfo != null)
                 {
@@ -166,7 +176,12 @@ namespace Axle.Services
             await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
 
             this.notificationService.PublishSessionTermination(userInfo.SessionId);
-            await this.activityService.PublishActivity(userInfo, reason);
+
+            // Support user activities are not required currently
+            if (!userInfo.IsSupportUser)
+            {
+                await this.activityService.PublishActivity(userInfo, reason);
+            }
         }
 
         public void Dispose()

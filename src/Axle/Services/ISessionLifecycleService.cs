@@ -14,7 +14,13 @@ namespace Axle.Services
         #pragma warning disable CA1710 // Event name should end in EventHandler
         event Action<IEnumerable<string>> OnCloseConnections;
 
-        Task OpenConnection(string connectionId, string userId, string accountId, string clientId, string accessToken);
+        Task OpenConnection(
+            string connectionId,
+            string userId,
+            string accountId,
+            string clientId,
+            string accessToken,
+            bool isSupportUser);
 
         void CloseConnection(string connectionId);
 
