@@ -9,7 +9,5 @@ namespace Axle.Caches
     public interface IAccountsCache
     {
         Task<List<string>> GetAccountIds(string clientId);
-
-        Task<string> GetClientId(string accountId);
     }
 }

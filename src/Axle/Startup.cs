@@ -15,6 +15,7 @@ namespace Axle
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
+    using Chest.Client.AutorestClient;
     using IdentityModel.Client;
     using IdentityServer4.AccessTokenValidation;
     using Lykke.HttpClientGenerator;
@@ -40,6 +41,7 @@ namespace Axle
     using NSwag.AspNetCore;
     using PermissionsManagement.Client;
     using PermissionsManagement.Client.Dto;
+    using PermissionsManagement.Client.Handlers;
     using StackExchange.Redis;
     using IAccountsMgmtApi = MarginTrading.AccountsManagement.Contracts.IAccountsApi;
 
@@ -182,13 +184,16 @@ namespace Axle
 
             services.AddSingleton(mtCoreAccountsMgmtClientGenerator.Generate<IAccountsMgmtApi>());
 
+            services.AddSingleton<IChestClient>(provider => new ChestClient(new Uri(this.configuration.GetValue<string>("chestUrl")), new ExceptionTextWithServiceNameEnricher("Chest API")));
+
             services.AddSingleton<IAccountsService, AccountsService>();
 
             services.AddSingleton<IEnumerable<SecurityGroup>>(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
             services.AddSingleton<IUserRoleToPermissionsTransformer, UserRoleToPermissionsTransformer>();
             services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
             services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
-            services.AddSingleton<IAuthorizationHandler, Authorization.AccountOwnerOrSupportHandler>();
+            services.AddSingleton<IAuthorizationHandler, AuthorizeUserHandler>();
+            services.AddSingleton<IAuthorizationHandler, AccountOwnerOrSupportHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IAccountsCache, AccountsCache>();
             services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));

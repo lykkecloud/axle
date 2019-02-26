@@ -6,7 +6,6 @@ namespace Axle.Persistence
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
     using MessagePack;
     using StackExchange.Redis;
 
@@ -33,7 +32,7 @@ namespace Axle.Persistence
             var transaction = db.CreateTransaction();
 
             transaction.StringSetAsync(this.SessionKey(session.SessionId), serSession);
-            transaction.StringSetAsync(this.UserKey(session.UserId), session.SessionId);
+            transaction.StringSetAsync(this.UserKey(session.UserName), session.SessionId);
             transaction.SortedSetAddAsync(ExpirationSetKey, session.SessionId, unixNow);
 
             transaction.Execute();
@@ -72,14 +71,14 @@ namespace Axle.Persistence
             return MessagePackSerializer.Deserialize<Session>(serialized);
         }
 
-        public Session GetByUser(string userId)
+        public Session GetByUser(string userName)
         {
-            var userSession = this.multiplexer.GetDatabase().StringGet(this.UserKey(userId));
+            var userSession = this.multiplexer.GetDatabase().StringGet(this.UserKey(userName));
 
             return userSession.IsNull ? null : this.Get((int)userSession);
         }
 
-        public void Remove(int sessionId, string userId)
+        public void Remove(int sessionId, string userName)
         {
             var db = this.multiplexer.GetDatabase();
             db.SortedSetRemove(ExpirationSetKey, sessionId);
@@ -87,7 +86,7 @@ namespace Axle.Persistence
 
             var transaction = db.CreateTransaction();
 
-            var userKey = this.UserKey(userId);
+            var userKey = this.UserKey(userName);
 
             // Remove the user -> session ID key only if it still contains the same session ID
             transaction.AddCondition(Condition.StringEqual(userKey, sessionId));

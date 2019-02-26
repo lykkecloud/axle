@@ -5,9 +5,9 @@ namespace Axle.Authorization
 {
     using System;
     using System.Linq;
-    using System.Security.Claims;
     using System.Threading.Tasks;
     using Axle.Constants;
+    using Axle.Extensions;
     using Axle.Services;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
@@ -23,16 +23,6 @@ namespace Axle.Authorization
             this.accountsService = accountsService;
         }
 
-        public static bool IsSupportUser(string accountId, ClaimsPrincipal user)
-        {
-            var accountIdEmpty = string.IsNullOrWhiteSpace(accountId);
-
-            var isOnBehalf = !accountIdEmpty && user.HasClaim(Permissions.OnBehalfSelection, Permissions.OnBehalfSelection);
-            var isSupport = accountIdEmpty && user.HasClaim(Permissions.StartSessionWithoutAcc, Permissions.StartSessionWithoutAcc);
-
-            return isOnBehalf || isSupport;
-        }
-
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AccountOwnerOrSupportRequirement requirement)
         {
             var httpContext = this.contextAccessor.HttpContext;
@@ -42,10 +32,10 @@ namespace Axle.Authorization
 
             var isAccountOwner = !accountIdEmpty && this.IsAccountOwner(context, accountId);
 
-            if (isAccountOwner || IsSupportUser(accountId, context.User))
+            if (isAccountOwner || context.User.IsSupportUser(accountId))
             {
                 // Accounts for the case where a support user tries to connect on behalf a nonexistent account
-                if (accountIdEmpty || !string.IsNullOrEmpty(await this.accountsService.GetAccountOwnerUserId(accountId)))
+                if (accountIdEmpty || !string.IsNullOrEmpty(await this.accountsService.GetAccountOwnerUserName(accountId)))
                 {
                     context.Succeed(requirement);
                 }

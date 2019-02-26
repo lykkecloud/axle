@@ -13,12 +13,12 @@ namespace Axle.Contracts
         public SessionActivity(
             SessionActivityType type,
             int sessionId,
-            string userId,
+            string userName,
             string accountId)
         {
             this.Type = type;
             this.SessionId = sessionId;
-            this.UserId = userId ?? throw new ArgumentNullException(nameof(userId));
+            this.UserName = userName ?? throw new ArgumentNullException(nameof(userName));
             this.AccountId = accountId ?? throw new ArgumentNullException(nameof(accountId));
         }
 
@@ -29,7 +29,7 @@ namespace Axle.Contracts
         public int SessionId { get; }
 
         [Key(2)]
-        public string UserId { get; }
+        public string UserName { get; }
 
         [Key(3)]
         public string AccountId { get; }

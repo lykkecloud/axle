@@ -25,7 +25,7 @@ namespace Axle.Services
 
         public Task PublishActivity(Session session, SessionActivityType activityType)
         {
-            var activity = new SessionActivity(activityType, session.SessionId, session.UserId, session.AccountId);
+            var activity = new SessionActivity(activityType, session.SessionId, session.UserName, session.AccountId);
 
             return this.PublishActivity(activity);
         }

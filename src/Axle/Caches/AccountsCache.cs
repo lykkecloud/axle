@@ -33,20 +33,5 @@ namespace Axle.Caches
                 return userAccounts?.Select(a => a.Id).ToList();
             });
         }
-
-        public async Task<string> GetClientId(string accountId)
-        {
-            if (this.cache.TryGetValue(accountId, out string extractedValue))
-            {
-                return extractedValue;
-            }
-
-            foreach (var account in await this.accountsApi.List())
-            {
-                await this.cache.GetOrCreateAsync(account.Id, entity => Task.FromResult(account.ClientId));
-            }
-
-            return this.cache.Get<string>(accountId);
-        }
     }
 }

@@ -16,7 +16,7 @@ namespace Axle.Services
 
         Task OpenConnection(
             string connectionId,
-            string userId,
+            string userName,
             string accountId,
             string clientId,
             string accessToken,
@@ -25,7 +25,7 @@ namespace Axle.Services
         void CloseConnection(string connectionId);
 
         Task<TerminateSessionResponse> TerminateSession(
-            string userId,
+            string userName,
             SessionActivityType reason = SessionActivityType.ManualTermination);
     }
 }

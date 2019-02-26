@@ -26,14 +26,14 @@ namespace Axle.Persistence
             return null;
         }
 
-        public void Remove(int sessionId, string userId)
+        public void Remove(int sessionId, string userName)
         {
             this.sessions.Remove(sessionId);
         }
 
-        public Session GetByUser(string userId)
+        public Session GetByUser(string userName)
         {
-            return this.sessions.Where(x => x.Value.UserId == userId).Select(kv => kv.Value).FirstOrDefault();
+            return this.sessions.Where(x => x.Value.UserName == userName).Select(kv => kv.Value).FirstOrDefault();
         }
 
         public void RefreshSessionTimeouts(IEnumerable<Session> sessions)

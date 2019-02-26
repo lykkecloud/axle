@@ -12,9 +12,9 @@ namespace Axle.Persistence
 #pragma warning disable CA1716 // Identifiers should not match keywords
         Session Get(int sessionId);
 
-        Session GetByUser(string userId);
+        Session GetByUser(string userName);
 
-        void Remove(int sessionId, string userId);
+        void Remove(int sessionId, string userName);
 
         void RefreshSessionTimeouts(IEnumerable<Session> sessions);
 

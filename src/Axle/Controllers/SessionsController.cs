@@ -56,9 +56,9 @@ namespace Axle.Controllers
         public async Task<IActionResult> TerminateSession([BindRequired] [FromQuery] string accountId)
         {
             // TODO: remove this call when sessions are stored by accountId
-            var userId = await this.accountsService.GetAccountOwnerUserId(accountId);
+            var userName = await this.accountsService.GetAccountOwnerUserName(accountId);
 
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(userName))
             {
                 return this.NotFound(new TerminateSessionResponse
                 {
@@ -67,7 +67,7 @@ namespace Axle.Controllers
                 });
             }
 
-            var result = await this.sessionLifecycleService.TerminateSession(userId);
+            var result = await this.sessionLifecycleService.TerminateSession(userName);
 
             if (result.Status == TerminateSessionStatus.NotFound)
             {

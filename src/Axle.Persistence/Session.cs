@@ -11,14 +11,14 @@ namespace Axle.Persistence
     {
         [SerializationConstructor]
         public Session(
-            string userId,
+            string userName,
             int sessionId,
             string accountId,
             string accessToken,
             string clientId,
             bool isSupportUser)
         {
-            this.UserId = userId ?? throw new ArgumentNullException(nameof(userId));
+            this.UserName = userName ?? throw new ArgumentNullException(nameof(userName));
             this.AccountId = accountId ?? throw new ArgumentNullException(nameof(accountId));
             this.AccessToken = accessToken ?? throw new ArgumentNullException(nameof(accessToken));
             this.ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
@@ -27,7 +27,7 @@ namespace Axle.Persistence
         }
 
         [Key(0)]
-        public string UserId { get; }
+        public string UserName { get; }
 
         [Key(1)]
         public int SessionId { get; }
