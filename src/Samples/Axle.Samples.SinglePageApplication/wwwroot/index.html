@@ -21,6 +21,8 @@
                 <li><button class="btn btn-default request" data-scope='openid profile axle_api' data-type='id_token token'>Login</button></li>
                 <li><button class="btn btn-info revoke">Revoke Access Token</button></li>
                 <li><button class="btn btn-info logout">Logout</button></li>
+                <li>Account ID (optional): <input id="accountId" type="text"/></li>
+                <li><button id="connectBtn">Connect</button></li>
             </ul>
         </div>
 
@@ -184,6 +186,7 @@
 
         document.querySelector(".revoke").addEventListener("click", revoke, false);
         document.querySelector(".logout").addEventListener("click", logout, false);
+        document.querySelector("#connectBtn").addEventListener("click", setUpAxleConnection, false);
 
         function log(data) {
             document.getElementById('response').innerText = '';
@@ -226,8 +229,10 @@
         function setUpAxleConnection() {
             mgr.getUser().then(function (user) {
                 if (user) {
+                    let accountId = document.querySelector("#accountId").value;
+
                     connection = new signalR.HubConnectionBuilder()
-                        .withUrl("http://localhost:5012/session",
+                        .withUrl("http://localhost:5012/session?account_id=" + (accountId ? encodeURIComponent(accountId) : ""),
                             {
                                 accessTokenFactory: () => user.access_token,
                                 transport: signalR.HttpTransportType.WebSocket
@@ -253,7 +258,6 @@
         }
 
         showTokens();
-        setUpAxleConnection();
 
         function handleCallback() {
             mgr.signinRedirectCallback().then(function (user) {

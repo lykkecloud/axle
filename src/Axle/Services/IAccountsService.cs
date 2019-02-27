@@ -1,9 +1,9 @@
-﻿using System.Threading.Tasks;
-
-namespace Axle.Services
+﻿namespace Axle.Services
 {
+    using System.Threading.Tasks;
+
     public interface IAccountsService
     {
-        Task<string> GetAccountOwnerUserId(string accountId);
+        Task<string> GetAccountOwnerUserName(string accountId);
     }
 }

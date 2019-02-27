@@ -6,6 +6,8 @@ namespace Axle
     using System.Collections.Generic;
     using System.Security.Claims;
     using System.Threading.Tasks;
+    using Axle.Caches;
+    using Axle.Constants;
     using IdentityModel;
     using Microsoft.AspNetCore.Authentication;
     using PermissionsManagement.Client;
@@ -13,10 +15,14 @@ namespace Axle
     public class ClaimsTransformation : IClaimsTransformation
     {
         private readonly IUserRoleToPermissionsTransformer userRoleToPermissionsTransformer;
+        private readonly IAccountsCache accountsCache;
 
-        public ClaimsTransformation(IUserRoleToPermissionsTransformer userRoleToPermissionsTransformer)
+        public ClaimsTransformation(
+            IUserRoleToPermissionsTransformer userRoleToPermissionsTransformer,
+            IAccountsCache accountsCache)
         {
             this.userRoleToPermissionsTransformer = userRoleToPermissionsTransformer;
+            this.accountsCache = accountsCache;
         }
 
         public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
@@ -28,6 +34,18 @@ namespace Axle
             if (!principal.HasClaim(claim => claim.Type == JwtClaimTypes.Name))
             {
                 claims.Add(new Claim(JwtClaimTypes.Name, principal.FindFirst(JwtClaimTypes.ClientId).Value));
+            }
+
+            if (!principal.HasClaim(claim => claim.Type == AuthorizationClaims.Accounts))
+            {
+                var subject = principal.FindFirst(JwtClaimTypes.Subject)?.Value;
+
+                var accounts = await this.accountsCache.GetAccountIds(subject);
+
+                foreach (var account in accounts)
+                {
+                    claims.Add(new Claim(AuthorizationClaims.Accounts, account, ClaimValueTypes.String));
+                }
             }
 
             var identity = new ClaimsIdentity(claims, principal.Identity.AuthenticationType, JwtClaimTypes.Name, JwtClaimTypes.Role);

@@ -6,6 +6,8 @@ namespace Axle.Hubs
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Axle.Constants;
+    using Axle.Extensions;
     using Axle.Persistence;
     using Axle.Services;
     using IdentityModel;
@@ -15,7 +17,7 @@ namespace Axle.Hubs
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
 
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = AuthorizationPolicies.AccountOwnerOrSupport)]
     public class SessionHub : Hub
     {
         private readonly IRepository<string, HubCallerContext> connectionRepository;
@@ -35,19 +37,27 @@ namespace Axle.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var sub = this.Context.User.FindFirst(JwtClaimTypes.Subject).Value;
+            var userName = this.Context.User.FindFirst(JwtClaimTypes.Name).Value;
             var clientId = this.Context.User.FindFirst("client_id").Value;
-            var token = this.Context.GetHttpContext().Request.Query["access_token"];
 
-            await this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, sub, clientId, token);
+            var query = this.Context.GetHttpContext().Request.Query;
 
-            Log.Information($"New connection established (ID: {this.Context.ConnectionId}).");
+            var token = query["access_token"];
+            var accountId = query["account_id"];
+
+            var isSupportUser = this.Context.User.IsSupportUser(accountId);
+
+            await this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, userName, accountId, clientId, token, isSupportUser);
+
+            Log.Information($"New connection established. User: {userName}, ID: {this.Context.ConnectionId}.");
             this.connectionRepository.Add(this.Context.ConnectionId, this.Context);
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            Log.Information($"Disconnected: {this.Context.ConnectionId}).");
+            var sub = this.Context.User.FindFirst(JwtClaimTypes.Subject).Value;
+
+            Log.Information($"Connection closed. User: {sub}, ID: {this.Context.ConnectionId}.");
             this.connectionRepository.Remove(this.Context.ConnectionId);
             this.sessionLifecycleService.CloseConnection(this.Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);

@@ -42,9 +42,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Chest.Client" Version="2.2.1" />
     <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="2.7.0" />
     <PackageReference Include="Lykke.MarginTrading.AccountsManagement.Contracts" Version="1.12.1" />
     <PackageReference Include="Lykke.Middlewares" Version="2.0.0-1550072344" />
+    <PackageReference Include="Lykke.RabbitMqBroker" Version="7.8.1" />
     <PackageReference Include="Lykke.Snow.Common.Startup" Version="1.2.4" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
@@ -78,6 +80,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Axle.Contracts\Axle.Contracts.csproj" />
     <ProjectReference Include="..\Axle.Dto\Axle.Dto.csproj" />
     <ProjectReference Include="..\Axle.Persistence\Axle.Persistence.csproj" />
   </ItemGroup>
