@@ -19,7 +19,7 @@ namespace Axle.Persistence
             bool isSupportUser)
         {
             this.UserName = userName ?? throw new ArgumentNullException(nameof(userName));
-            this.AccountId = accountId ?? throw new ArgumentNullException(nameof(accountId));
+            this.AccountId = accountId;
             this.AccessToken = accessToken ?? throw new ArgumentNullException(nameof(accessToken));
             this.ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
             this.SessionId = sessionId;
