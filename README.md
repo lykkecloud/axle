@@ -45,6 +45,7 @@ This project requires specification of the [following user secrets](src/Axle/Pro
   | Swagger-Client-Id / SWAGGER_CLIENT_ID | Swagger client id for this service on authentication server (optional: default value is axle_api_swagger) |
   | Validate-Issuer-Name / VALIDATE_ISSUER_NAME | Should validate token issuer name when a secure endpoint is called (optional: default value is false) |
   | ConnectionStrings:Redis / REDIS_CONNECTIONSTRING | Connection string to Redis which should have a valid value |
+  | ConnectionStrings:RabbitMQ / RABBITMQ_CONNECTIONSTRING | Connection string to RabbitMQ which should have a valid value |
 
 As mentioned before, these secrets can also be set via ```appSettings.json``` file OR by environment variables, there is no strict requirement to provide them via secrets file
 

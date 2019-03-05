@@ -56,7 +56,6 @@
 
 ```json
 "ActivityPublisherSettings": {
-    "ConnectionString": "correct connection string",
     "ExchangeName": "lykke.axle.activities",
     "IsDurable": true
   }
@@ -71,8 +70,20 @@
 - Added reference to chest service and chest url is requiered;
 
 ```json
-  "chestUrl": "http://chest.mt.svc.cluster.local:5011",
+  "chestUrl": "chest url",
 ```
+
+  - No need to specify rabbit mq connection string on queue configuration.
+  Instead we have ConnectionStrings:RabbitMq
+  
+```json
+"ConnectionStrings": {
+	 "RabbitMq": "rabbit mq connection string"
+	}
+
+#### Secrets variables
+
+  | ConnectionStrings:RabbitMq / RABBITMQ_CONNECTIONSTRING | Connection string to RabbitMq server |
 
 All latest configuration changes that are used and working for dev environment can be found in ```appSettings.json```
 
