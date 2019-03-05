@@ -66,12 +66,15 @@ These available variables are detailed below:
   | urls | Url that service will be exposed |
   | serilog:* | Serilog settings including output template, rolling file interval and file size limit |
   | CorsOrigins:* | Cors origins configuration |
-  | SessionConfig:* | Session timeout in seconds, default value will be 300 seconds |
+  | SessionConfig:TimeoutInSec | Session timeout in seconds, default value will be 300 seconds |
   | mtCoreAccountsMgmtServiceUrl | Url for MT Core accounts management service |
-  | SecurityGroups:* | Role permissions mapping
-  | ActivityPublisherSettings:* | Activity publisher settings
+  | SecurityGroups | List of security settings with Group Name and Permissions allowed to it |
+  | SecurityGroups:Name | Name of security group |
+  | SecurityGroups:Permissions | List of permissions allowed to the security group |
+  | ActivityPublisherSettings:ExchangeName | RabbitMQ exchange name for activities
+  | ActivityPublisherSettings:IsDurable | RabbitMQ is durable value for activities publisher exchange
   | chestUrl | Url for Chest service |
-  | ConnectionStrings | RabbitMQ connection string
+  | ConnectionStrings:RabbitMq | RabbitMQ connection string
 
 ### Log specific configuration
 
