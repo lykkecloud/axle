@@ -80,7 +80,8 @@
 "ConnectionStrings": {
 	 "RabbitMq": "rabbit mq connection string"
 	}
-	
+```
+
 RabbitMq Connection string can be passed to secrets as well 
 
 ```
