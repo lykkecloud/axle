@@ -68,6 +68,8 @@ These available variables are detailed below:
   | SessionConfig:* | Session timeout in seconds, default value will be 300 seconds |
   | mtCoreAccountsMgmtServiceUrl | Url for MT Core accounts management service |
   | SecurityGroups:* | Role permissions mapping
+  | ActivityPublisherSettings:* | Activity publisher settings
+  | chestUrl | Url for Chest service |
 
 ### Log specific configuration
 
