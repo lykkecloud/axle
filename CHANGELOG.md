@@ -73,13 +73,21 @@
   "chestUrl": "chest url",
 ```
 
-  - No need to specify rabbit mq connection string on queue configuration.
+- No need to specify rabbit mq connection string on exchange configuration.
   Instead we have ConnectionStrings:RabbitMq
   
 ```json
 "ConnectionStrings": {
 	 "RabbitMq": "rabbit mq connection string"
 	}
+	
+RabbitMq Connection string can be passed to secrets as well 
+
+```
+ConnectionStrings:RabbitMQ / RABBITMQ_CONNECTIONSTRING | Connection string to RabbitMQ which should have a valid value 
+```
+
+
 
 #### Secrets variables
 

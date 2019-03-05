@@ -71,6 +71,7 @@ These available variables are detailed below:
   | SecurityGroups:* | Role permissions mapping
   | ActivityPublisherSettings:* | Activity publisher settings
   | chestUrl | Url for Chest service |
+  | ConnectionStrings | RabbitMQ connection string
 
 ### Log specific configuration
 
