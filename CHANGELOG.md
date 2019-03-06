@@ -61,13 +61,13 @@
   }
 ```
 
-- Added reference to mt core service and MT core account management url is requiered;
+- Added reference to mt core service and MT core account management url is required;
 
 ```json
   "mtCoreAccountsMgmtServiceUrl": "mtcore account url",
 ```
 
-- Added reference to chest service and chest url is requiered;
+- Added reference to chest service and chest url is required;
 
 ```json
   "chestUrl": "chest url",
@@ -88,8 +88,6 @@ RabbitMq Connection string can be passed to secrets as well
 ConnectionStrings:RabbitMQ / RABBITMQ_CONNECTIONSTRING | Connection string to RabbitMQ which should have a valid value 
 ```
 
-
-
 #### Secrets variables
 
   | ConnectionStrings:RabbitMq / RABBITMQ_CONNECTIONSTRING | Connection string to RabbitMq server |
@@ -98,7 +96,7 @@ All latest configuration changes that are used and working for dev environment c
 
 ### Axle.Client
 
-Axle client which can be used by otehr services in order to call endpoint from axle service
+Axle client which can be used by other services in order to call endpoint from axle service
 
 ### Axle.Contracts
 
