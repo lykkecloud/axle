@@ -69,7 +69,8 @@ namespace Axle
 
             services
                 .AddSignalR()
-                .AddJsonProtocol(options => {
+                .AddJsonProtocol(options =>
+                {
                     options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() };
                     options.PayloadSerializerSettings.Converters.Add(new StringEnumConverter());
                     options.PayloadSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
@@ -149,6 +150,7 @@ namespace Axle
             services.AddSingleton<IActivityService, ActivityService>();
 
             var rabbitMqSettings = this.configuration.GetSection("ActivityPublisherSettings").Get<RabbitMqSubscriptionSettings>().MakeDurable();
+            rabbitMqSettings.ConnectionString = this.configuration["ConnectionStrings:RabbitMq"];
 
 #pragma warning disable CS0618 // Type or member is obsolete
             services.AddSingleton(x => new RabbitMqPublisher<SessionActivity>(rabbitMqSettings)
