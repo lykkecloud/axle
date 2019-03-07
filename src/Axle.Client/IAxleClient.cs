@@ -3,7 +3,7 @@
 
 namespace Axle.Client
 {
-    using Axle.Dto;
+    using Axle.Client.Models;
     using JetBrains.Annotations;
     using Refit;
     using System.Threading.Tasks;
@@ -12,7 +12,7 @@ namespace Axle.Client
     [Headers("Authorization: Bearer")]
     public interface IAxleClient
     {
-        [Get("/api/sessions/{userId}")]
-        Task<UserSessionResponse> GetUserSession([AliasAs("userId")]string userId);
+        [Get("/api/sessions/{userName}")]
+        Task<UserSessionResponse> GetUserSession([AliasAs("userName")]string userName);
     }
 }

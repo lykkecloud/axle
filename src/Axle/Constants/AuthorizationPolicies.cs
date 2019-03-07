@@ -6,5 +6,7 @@ namespace Axle.Constants
     public static class AuthorizationPolicies
     {
         public const string System = "system";
+
+        public const string AccountOwnerOrSupport = "accownerorsupport";
     }
 }

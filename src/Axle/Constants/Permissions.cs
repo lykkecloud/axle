@@ -6,5 +6,9 @@ namespace Axle.Constants
     public static class Permissions
     {
         public const string CancelSession = "cancel-session";
+
+        public const string StartSessionWithoutAcc = "start-session-without-account";
+
+        public const string OnBehalfSelection = "on-behalf-account-selection";
     }
 }

@@ -1,17 +1,21 @@
-FROM microsoft/dotnet:2.2-aspnetcore-runtime AS base
-WORKDIR /app
-EXPOSE 80
-
-FROM microsoft/dotnet:2.2-sdk AS build
-WORKDIR /src
+FROM microsoft/dotnet:2.2.104-sdk-alpine3.8 AS build
 COPY . ./
+RUN apk add --no-cache icu-libs \
+ && mkdir cert -p \
+ && cp cert/*.crt /usr/local/share/ca-certificates/ 2>/dev/null \
+ && update-ca-certificates \
+ || echo "No specific certificate given."
+RUN cp [nN]u[gG]et.[cC]onfig /usr/local/share/NuGet.Config 2>/dev/null \
+ || echo "No specific Nuget configuration given."
 WORKDIR /src/Axle
-RUN dotnet build -c Release -r linux-x64 -o /app
+RUN dotnet publish -c Release -o /app
 
-FROM build AS publish
-RUN dotnet publish -c Release -r linux-x64 -o /app
-
-FROM base AS final
+FROM microsoft/dotnet:2.2-aspnetcore-runtime-alpine3.8 AS final
+COPY --from=build cert ./cert
+RUN apk add --no-cache icu-libs \
+ && cp cert/*.crt /usr/local/share/ca-certificates/ 2>/dev/null \
+ && update-ca-certificates \
+ || echo "No specific certificate given."
 WORKDIR /app
-COPY --from=publish /app .
+COPY --from=build /app .
 ENTRYPOINT ["dotnet", "Axle.dll"]

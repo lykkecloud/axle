@@ -6,24 +6,32 @@ namespace Axle
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using Axle.Authorization;
+    using Axle.Caches;
     using Axle.Configurators;
     using Axle.Constants;
+    using Axle.Contracts;
     using Axle.HttpClients;
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
+    using Chest.Client.AutorestClient;
     using IdentityModel.Client;
     using IdentityServer4.AccessTokenValidation;
     using Lykke.HttpClientGenerator;
     using Lykke.Middlewares;
     using Lykke.Middlewares.Mappers;
+    using Lykke.RabbitMqBroker.Publisher;
+    using Lykke.RabbitMqBroker.Subscriber;
     using Lykke.Snow.Common.Startup;
     using Microsoft.AspNetCore.Authentication;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.SignalR;
+    using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
@@ -61,7 +69,8 @@ namespace Axle
 
             services
                 .AddSignalR()
-                .AddJsonProtocol(options => {
+                .AddJsonProtocol(options =>
+                {
                     options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() };
                     options.PayloadSerializerSettings.Converters.Add(new StringEnumConverter());
                     options.PayloadSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
@@ -84,6 +93,7 @@ namespace Axle
                         // add any authorization policy
                         options.AddPolicy(AuthorizationPolicies.System, policy => policy.RequireClaim("scope", "axle_api:server"));
                         options.AddPolicy(PermissionsManagement.Client.Constants.AuthorizeUserPolicy, policy => policy.AddRequirements(new AuthorizeUserRequirement()));
+                        options.AddPolicy(AuthorizationPolicies.AccountOwnerOrSupport, policy => policy.AddRequirements(new AccountOwnerOrSupportRequirement()));
                     });
 
             services.AddSwagger();
@@ -134,8 +144,22 @@ namespace Axle
                     x.GetService<ISessionRepository>(),
                     x.GetService<ITokenRevocationService>(),
                     x.GetService<INotificationService>(),
+                    x.GetService<IActivityService>(),
                     x.GetService<ILogger<SessionLifecycleService>>(),
                     sessionTimeout));
+            services.AddSingleton<IActivityService, ActivityService>();
+
+            var rabbitMqSettings = this.configuration.GetSection("ActivityPublisherSettings").Get<RabbitMqSubscriptionSettings>().MakeDurable();
+            rabbitMqSettings.ConnectionString = this.configuration["ConnectionStrings:RabbitMq"];
+
+#pragma warning disable CS0618 // Type or member is obsolete
+            services.AddSingleton(x => new RabbitMqPublisher<SessionActivity>(rabbitMqSettings)
+                .DisableInMemoryQueuePersistence()
+                .SetSerializer(new MessagePackMessageSerializer<SessionActivity>())
+                .SetPublishStrategy(new DefaultFanoutPublishStrategy(rabbitMqSettings))
+                .SetLogger(new LykkeLoggerAdapter<RabbitMqPublisher<SessionActivity>>(x.GetService<ILogger<RabbitMqPublisher<SessionActivity>>>()))
+                .PublishSynchronously());
+#pragma warning restore CS0618 // Type or member is obsolete
 
             services.AddSingleton(provider => new DiscoveryClient(authority)
             {
@@ -162,6 +186,8 @@ namespace Axle
 
             services.AddSingleton(mtCoreAccountsMgmtClientGenerator.Generate<IAccountsMgmtApi>());
 
+            services.AddSingleton<IChestClient>(provider => new ChestClient(new Uri(this.configuration.GetValue<string>("chestUrl")), new ExceptionTextWithServiceNameEnricher("Chest API")));
+
             services.AddSingleton<IAccountsService, AccountsService>();
 
             services.AddSingleton<IEnumerable<SecurityGroup>>(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
@@ -169,6 +195,10 @@ namespace Axle
             services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
             services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
             services.AddSingleton<IAuthorizationHandler, AuthorizeUserHandler>();
+            services.AddSingleton<IAuthorizationHandler, AccountOwnerOrSupportHandler>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IAccountsCache, AccountsCache>();
+            services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

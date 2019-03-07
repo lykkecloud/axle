@@ -45,6 +45,7 @@ This project requires specification of the [following user secrets](src/Axle/Pro
   | Swagger-Client-Id / SWAGGER_CLIENT_ID | Swagger client id for this service on authentication server (optional: default value is axle_api_swagger) |
   | Validate-Issuer-Name / VALIDATE_ISSUER_NAME | Should validate token issuer name when a secure endpoint is called (optional: default value is false) |
   | ConnectionStrings:Redis / REDIS_CONNECTIONSTRING | Connection string to Redis which should have a valid value |
+  | ConnectionStrings:RabbitMQ / RABBITMQ_CONNECTIONSTRING | Connection string to RabbitMQ which should have a valid value |
 
 As mentioned before, these secrets can also be set via ```appSettings.json``` file OR by environment variables, there is no strict requirement to provide them via secrets file
 
@@ -65,9 +66,15 @@ These available variables are detailed below:
   | urls | Url that service will be exposed |
   | serilog:* | Serilog settings including output template, rolling file interval and file size limit |
   | CorsOrigins:* | Cors origins configuration |
-  | SessionConfig:* | Session timeout in seconds, default value will be 300 seconds |
+  | SessionConfig:TimeoutInSec | Session timeout in seconds, default value will be 300 seconds |
   | mtCoreAccountsMgmtServiceUrl | Url for MT Core accounts management service |
-  | SecurityGroups:* | Role permissions mapping
+  | SecurityGroups | List of security settings with Group Name and Permissions allowed to it |
+  | SecurityGroups:Name | Name of security group |
+  | SecurityGroups:Permissions | List of permissions allowed to the security group |
+  | ActivityPublisherSettings:ExchangeName | RabbitMQ exchange name for activities
+  | ActivityPublisherSettings:IsDurable | RabbitMQ is durable value for activities publisher exchange
+  | chestUrl | Url for Chest service |
+  | ConnectionStrings:RabbitMq | RabbitMQ connection string
 
 ### Log specific configuration
 
@@ -216,8 +223,8 @@ Configuration of secrets.json file in order to use https
     EXPOSE 80
 
     FROM microsoft/dotnet:2.2-sdk AS build
-    WORKDIR /src
     COPY . ./
+    RUN cp NuGet.*onfig /usr/local/share/NuGet.Config 2>/dev/null || :
     WORKDIR /src/Axle
     RUN dotnet build -c Release -r linux-x64 -o /app
 
@@ -252,3 +259,27 @@ This will run the project inside a docker container running behind nginx. Nginx 
 Navigate to ```src/Axle``` folder and type ```dotnet run```.
 You can also launch it with docker-compose command: Navigate to ```src/Docker``` and type ```docker-compose up```.
 This will run the project directly using dotnet.exe without attaching the debugger. You will need to use your debugger of choice to attach to the dotnet.exe process.
+
+# How to build docker image
+
+This project contains a set of required files for a complete Docker image build, ready for usage. Only required input is a valid NuGet.config file with source for dependent libraries.
+
+  Example of valid NuGet.config
+  ```xml
+  <?xml version="1.0" encoding="utf-8"?>
+  <configuration>
+    <packageSources>
+      <add key="private-source" value="http://private-source.url/nuget/" />
+    </packageSources>
+  </configuration>
+  ```
+
+  With valid NuGet.config on your hands, you can simply copy it to workspace folder and run `./src/build`.
+
+  Example of automation script
+  ```cmd
+  cd workspace/folder/
+  cp original/path/for/NuGet.config .
+  cd src/
+  ./build
+  ```
