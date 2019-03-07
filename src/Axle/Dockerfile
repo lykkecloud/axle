@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.2-sdk-alpine AS build
+FROM microsoft/dotnet:2.2.104-sdk-alpine3.8 AS build
 COPY . ./
 RUN apk add --no-cache icu-libs \
  && cp cert/*.crt /usr/local/share/ca-certificates/ 2>/dev/null \
@@ -9,7 +9,7 @@ RUN cp [nN]u[gG]et.[cC]onfig /usr/local/share/NuGet.Config 2>/dev/null \
 WORKDIR /src/Axle
 RUN dotnet publish -c Release -o /app
 
-FROM microsoft/dotnet:2.2-aspnetcore-runtime-alpine AS final
+FROM microsoft/dotnet:2.2-aspnetcore-runtime-alpine3.8 AS final
 WORKDIR /app
 COPY --from=build /app .
 ENTRYPOINT ["dotnet", "Axle.dll"]
