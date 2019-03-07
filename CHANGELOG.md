@@ -9,7 +9,7 @@
 
 #### Configuration changes:
 
--Added roles and permissions;
+- Added roles and permissions;
 
 ```json
  "SecurityGroups": [
@@ -22,31 +22,79 @@
       ]
     },
     {
-      "Name": "read-only01",
+      "Name": "read-only",
       "Permissions": [
         "start-session-without-account",
         "on-behalf-account-selection"
       ]
     },
     {
-      "Name": "credit01",
+      "Name": "credit",
       "Permissions": [
         "start-session-without-account",
         "on-behalf-account-selection"
       ]
     },
     {
-      "Name": "backoffice-trading01",
+      "Name": "backoffice-trading",
       "Permissions": [
         "start-session-without-account",
         "on-behalf-account-selection"
       ]
     },
     {
-      "Name": "backoffice-administration01",
+      "Name": "backoffice-administration",
       "Permissions": [
         "start-session-without-account",
         "on-behalf-account-selection"
+      ]
+    },
+    {
+      "Name": "consors-user-admin",
+      "Permissions": [
+        "start-session-without-account"
+      ]
+    },
+    {
+      "Name": "role1",
+      "Permissions": [
+        "start-session-without-account"
+      ]
+    },
+    {
+      "Name": "role2",
+      "Permissions": [
+        "start-session-without-account"
+      ]
+    },
+    {
+      "Name": "role3",
+      "Permissions": [
+        "start-session-without-account"
+      ]
+    },
+    {
+      "Name": "role4",
+      "Permissions": [
+        "start-session-without-account"
+      ]
+    },
+    {
+      "Name": "role5",
+      "Permissions": [
+        "start-session-without-account"
+      ]
+    },
+    {
+      "Name": "role6",
+      "Permissions": [
+        "start-session-without-account"
+      ]
+    },
+    {
+      "Name": "bnp-user-admin",
+      "Permissions": [
+        "start-session-without-account"
       ]
     }
   ]
