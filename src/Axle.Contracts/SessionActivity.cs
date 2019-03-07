@@ -19,7 +19,7 @@ namespace Axle.Contracts
             this.Type = type;
             this.SessionId = sessionId;
             this.UserName = userName ?? throw new ArgumentNullException(nameof(userName));
-            this.AccountId = accountId ?? throw new ArgumentNullException(nameof(accountId));
+            this.AccountId = accountId;
         }
 
         [Key(0)]
