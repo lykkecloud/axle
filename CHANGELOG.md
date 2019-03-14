@@ -4,6 +4,7 @@
 * AXLE-56: removed account id check when creating session object
 * AXLE-53: fixed nuget client
 * AXLE-31: Publish session activities in RabbitMQ
+* CONGA-4: Implement Login Error Messages
 
 ### Axle Service
 
