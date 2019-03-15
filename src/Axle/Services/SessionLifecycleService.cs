@@ -10,9 +10,8 @@ namespace Axle.Services
     using System.Threading.Tasks;
     using Axle.Contracts;
     using Axle.Dto;
-    using Axle.Hubs;
+    using Axle.Extensions;
     using Axle.Persistence;
-    using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Logging;
     using Serilog;
 
@@ -115,10 +114,10 @@ namespace Axle.Services
                 if (userInfo != null)
                 {
                     await this.TerminateSession(userInfo, SessionActivityType.DifferentDeviceTermination);
-                    this.logger.LogError(Error.ToErrorMessage(Error.Code.IF_ATH_502));
+                    this.logger.LogWarning(StatusCode.IF_ATH_502.ToMessage());
                 }
 
-                this.logger.LogError(Error.ToErrorMessage(Error.Code.IF_ATH_501));
+                this.logger.LogWarning(StatusCode.IF_ATH_501.ToMessage());
             }
             finally
             {
@@ -149,7 +148,7 @@ namespace Axle.Services
 
                 await this.TerminateSession(userInfo, reason);
 
-                this.logger.LogError(Error.ToErrorMessage(Error.Code.WN_ATH_701));
+                this.logger.LogWarning(StatusCode.WN_ATH_701.ToMessage());
 
                 this.logger.LogInformation($"Successfully terminated session: [{userInfo.SessionId}] for user: [{userName}]");
 
