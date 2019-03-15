@@ -73,7 +73,7 @@ namespace Axle.Hubs
                 if (reason == SessionActivityType.DifferentDeviceTermination)
                 {
                     this.sessionHubContext.Clients.Clients(connection)
-                                       .SendAsync("concurrentSessionTermination", Error.Code.IF_ATH_502, Error.ToErrorMessage(Error.Code.IF_ATH_502)).Wait();
+                                       .SendAsync("concurrentSessionTermination", StatusCode.IF_ATH_502, StatusCode.IF_ATH_502.ToMessage()).Wait();
                 }
 
                 this.connectionRepository.Get(connection).Abort();
