@@ -41,9 +41,10 @@ namespace Axle.Services
 
         private void HandleSessionTermination(RedisChannel channel, RedisValue message)
         {
+            var result = MessagePackSerializer.Deserialize<TerminateSessionNotification>(message);
+
             foreach (var callback in this.callbacks)
             {
-                var result = MessagePackSerializer.Deserialize<TerminateSessionNotification>(message);
                 callback(result);
             }
         }
