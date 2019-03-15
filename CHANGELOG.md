@@ -1,4 +1,4 @@
-## 2.11.1 (March 13, 2019)
+## UNRELEASED
 
 * LT-1120: Fixed warnings for packages version and misusage, which also led to app crash in first web request
 
