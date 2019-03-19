@@ -92,14 +92,7 @@ namespace Axle.Services
                     return;
                 }
 
-                var rand = new Random();
-                var sessionId = 0;
-
-                do
-                {
-                    sessionId = rand.Next(int.MinValue, int.MaxValue);
-                }
-                while (this.sessionRepository.Get(sessionId) != null);
+                var sessionId = this.GenerateSessionId();
 
                 var newSession = new Session(userName, sessionId, accountId, accessToken, clientId, isSupportUser);
 
@@ -186,6 +179,20 @@ namespace Axle.Services
             {
                 await this.activityService.PublishActivity(userInfo, reason);
             }
+        }
+
+        public int GenerateSessionId()
+        {
+            var rand = new Random();
+            var sessionId = 0;
+
+            do
+            {
+                sessionId = rand.Next(int.MinValue, int.MaxValue);
+            }
+            while (this.sessionRepository.Get(sessionId) != null);
+
+            return sessionId;
         }
 
         public void Dispose()

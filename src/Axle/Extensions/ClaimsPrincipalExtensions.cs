@@ -5,6 +5,7 @@ namespace Axle.Extensions
 {
     using System.Security.Claims;
     using Axle.Constants;
+    using IdentityModel;
 
     public static class ClaimsPrincipalExtensions
     {
@@ -17,5 +18,8 @@ namespace Axle.Extensions
 
             return isOnBehalf || isSupport;
         }
+
+        public static string GetUsername(this ClaimsPrincipal principal) =>
+            principal.FindFirst(JwtClaimTypes.Name).Value;
     }
 }

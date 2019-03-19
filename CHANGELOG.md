@@ -2,6 +2,7 @@
 
 * CONGA-4: Implement Login Error Messages
 * LT-1120: Fixed warnings for packages version and misusage, which also led to app crash in first web request
+* LT-1086: Exposed endpoint to manually publish login activity (only for mobile clients)
 
 ## 2.11.0 (March 8, 2019)
 
