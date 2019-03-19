@@ -1,5 +1,6 @@
-## UNRELEASED
+##UNRELEASED
 
+* CONGA-4: Implement Login Error Messages
 * LT-1120: Fixed warnings for packages version and misusage, which also led to app crash in first web request
 
 ## 2.11.0 (March 8, 2019)
@@ -8,7 +9,7 @@
 * AXLE-56: removed account id check when creating session object
 * AXLE-53: fixed nuget client
 * AXLE-31: Publish session activities in RabbitMQ
-
+ 
 ### Axle Service
 
 #### Configuration changes:

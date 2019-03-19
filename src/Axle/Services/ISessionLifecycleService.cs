@@ -12,7 +12,7 @@ namespace Axle.Services
     public interface ISessionLifecycleService
     {
         #pragma warning disable CA1710 // Event name should end in EventHandler
-        event Action<IEnumerable<string>> OnCloseConnections;
+        event Action<IEnumerable<string>, SessionActivityType> OnCloseConnections;
 
         Task OpenConnection(
             string connectionId,

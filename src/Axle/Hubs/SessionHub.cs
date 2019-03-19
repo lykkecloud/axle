@@ -7,13 +7,14 @@ namespace Axle.Hubs
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Axle.Constants;
+    using Axle.Contracts;
+    using Axle.Dto;
     using Axle.Extensions;
     using Axle.Persistence;
     using Axle.Services;
     using IdentityModel;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Http.Connections;
     using Microsoft.AspNetCore.SignalR;
     using Serilog;
 
@@ -22,14 +23,16 @@ namespace Axle.Hubs
     {
         private readonly IRepository<string, HubCallerContext> connectionRepository;
         private readonly ISessionLifecycleService sessionLifecycleService;
+        private readonly IHubContext<SessionHub> sessionHubContext;
 
         public SessionHub(
             IRepository<string, HubCallerContext> connectionRepository,
-            ISessionLifecycleService sessionLifecycleService)
+            ISessionLifecycleService sessionLifecycleService,
+            IHubContext<SessionHub> sessionHubContext)
         {
             this.connectionRepository = connectionRepository;
             this.sessionLifecycleService = sessionLifecycleService;
-
+            this.sessionHubContext = sessionHubContext;
             this.sessionLifecycleService.OnCloseConnections += this.TerminateConnections;
         }
 
@@ -63,10 +66,16 @@ namespace Axle.Hubs
             return base.OnDisconnectedAsync(exception);
         }
 
-        private void TerminateConnections(IEnumerable<string> connections)
+        private void TerminateConnections(IEnumerable<string> connections, SessionActivityType reason)
         {
             foreach (var connection in connections)
             {
+                if (reason == SessionActivityType.DifferentDeviceTermination)
+                {
+                    this.sessionHubContext.Clients.Clients(connection)
+                                       .SendAsync("concurrentSessionTermination", StatusCode.IF_ATH_502, StatusCode.IF_ATH_502.ToMessage()).Wait();
+                }
+
                 this.connectionRepository.Get(connection).Abort();
             }
         }

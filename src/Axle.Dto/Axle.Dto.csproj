@@ -28,4 +28,8 @@
     <AdditionalFiles Include="../stylecop.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Axle.Contracts\Axle.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>
