@@ -24,7 +24,7 @@ namespace Axle.Authorization
             var routeData = this.contextAccessor.HttpContext.GetRouteData();
             var accountId = routeData.Values["accountId"]?.ToString();
 
-            var isMobileClient = context.User.HasClaim(JwtClaimTypes.ClientId, "nova_mobile");
+            var isMobileClient = context.User.HasClaim(JwtClaimTypes.ClientId, "axle_api:mobile");
 
             var isAccountOwner = context.User.HasClaim(AuthorizationClaims.Accounts, accountId);
 
