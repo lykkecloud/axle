@@ -7,6 +7,8 @@ namespace Axle.Constants
     {
         public const string System = "system";
 
+        public const string Mobile = "mobile";
+
         public const string AccountOwnerOrSupport = "accownerorsupport";
     }
 }
