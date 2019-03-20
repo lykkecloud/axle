@@ -40,7 +40,8 @@ namespace Axle.Configurators
                     Scopes = new Dictionary<string, string>
                     {
                         { apiName, "CFD Platform (Nova)" },
-                        { $"{apiName}:server", "CFD Platform (Nova) server side methods" }
+                        { $"{apiName}:server", "CFD Platform (Nova) server side methods" },
+                        { $"{apiName}:mobile", "CFD Platform (Nova) mobile side methods" }
                     }
                 };
 
