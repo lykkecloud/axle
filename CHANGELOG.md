@@ -1,4 +1,4 @@
-##UNRELEASED
+## 2.12.0 (March 27, 2019)
 
 * CONGA-4: Implement Login Error Messages
 * LT-1120: Fixed warnings for packages version and misusage, which also led to app crash in first web request
