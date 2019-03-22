@@ -7,12 +7,13 @@ namespace Axle
     using System.Collections.Generic;
     using System.Reflection;
     using System.Runtime.InteropServices;
+    using System.Threading.Tasks;
+    using Axle.Settings;
     using Lykke.Snow.Common.Startup;
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Serilog;
-    using Serilog.Events;
 
     public static class Program
     {
@@ -29,7 +30,7 @@ namespace Axle
             ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false")
         };
 
-        public static int Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
@@ -69,6 +70,8 @@ namespace Axle
             try
             {
                 configuration.ValidateEnvironmentSecrets(EnvironmentSecretConfig, Log.Logger);
+
+                await configuration.ValidateSettings<AppSettings>();
 
                 Log.Information($"Starting {title} web API");
                 BuildWebHost(args, configuration).Run();

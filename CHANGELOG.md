@@ -1,10 +1,26 @@
+## 2.12.0 (March 27, 2019)
+
+* CONGA-4: Implement Login Error Messages
+* LT-1120: Fixed warnings for packages version and misusage, which also led to app crash in first web request
+* LT-1086: Exposed endpoint to manually publish login activity (only for mobile clients)
+
+### Configuration changes:
+
+  - Added `axle_api:mobile` scope to `axle_api`. Run following commands on bouncer console to remove and recreate `axle_api` api
+
+```cmd
+auth apis remove axle_api -v
+
+auth apis add axle_api secret -d "Session Management API (AXLE)" -c name -c role -c username -a axle_api -a axle_api:server -a axle_api:mobile -v
+```
+
 ## 2.11.0 (March 8, 2019)
 
 * LT-907: Removing private nuget sources from Nuget.config
 * AXLE-56: removed account id check when creating session object
 * AXLE-53: fixed nuget client
 * AXLE-31: Publish session activities in RabbitMQ
-
+ 
 ### Axle Service
 
 #### Configuration changes:

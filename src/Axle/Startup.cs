@@ -16,6 +16,7 @@ namespace Axle
     using Axle.Persistence;
     using Axle.Services;
     using Chest.Client.AutorestClient;
+    using IdentityModel;
     using IdentityModel.Client;
     using IdentityServer4.AccessTokenValidation;
     using Lykke.HttpClientGenerator;
@@ -91,7 +92,8 @@ namespace Axle
                     options =>
                     {
                         // add any authorization policy
-                        options.AddPolicy(AuthorizationPolicies.System, policy => policy.RequireClaim("scope", "axle_api:server"));
+                        options.AddPolicy(AuthorizationPolicies.System, policy => policy.RequireClaim(JwtClaimTypes.Scope, "axle_api:server"));
+                        options.AddPolicy(AuthorizationPolicies.Mobile, policy => policy.AddRequirements(new MobileClientAndAccountOwnerRequirement()));
                         options.AddPolicy(PermissionsManagement.Client.Constants.AuthorizeUserPolicy, policy => policy.AddRequirements(new AuthorizeUserRequirement()));
                         options.AddPolicy(AuthorizationPolicies.AccountOwnerOrSupport, policy => policy.AddRequirements(new AccountOwnerOrSupportRequirement()));
                     });
@@ -196,6 +198,7 @@ namespace Axle
             services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
             services.AddSingleton<IAuthorizationHandler, AuthorizeUserHandler>();
             services.AddSingleton<IAuthorizationHandler, AccountOwnerOrSupportHandler>();
+            services.AddSingleton<IAuthorizationHandler, MobileClientAndAccountOwnerHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IAccountsCache, AccountsCache>();
             services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));

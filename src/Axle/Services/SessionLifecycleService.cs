@@ -10,11 +10,10 @@ namespace Axle.Services
     using System.Threading.Tasks;
     using Axle.Contracts;
     using Axle.Dto;
+    using Axle.Extensions;
     using Axle.Persistence;
     using Microsoft.Extensions.Logging;
-    using Nito.AsyncEx;
     using Serilog;
-    using StackExchange.Redis;
 
     public sealed class SessionLifecycleService : ISessionLifecycleService, IDisposable
     {
@@ -25,7 +24,7 @@ namespace Axle.Services
         private readonly ILogger<SessionLifecycleService> logger;
         private readonly TimeSpan sessionTimeout;
 
-        private readonly HashSet<Action<IEnumerable<string>>> closeConnectionCallbacks = new HashSet<Action<IEnumerable<string>>>();
+        private readonly HashSet<Action<IEnumerable<string>, SessionActivityType>> closeConnectionCallbacks = new HashSet<Action<IEnumerable<string>, SessionActivityType>>();
         private readonly Dictionary<string, Session> connectionSessionMap = new Dictionary<string, Session>();
         private readonly SemaphoreSlim slimLock = new SemaphoreSlim(1, 1);
 
@@ -50,7 +49,7 @@ namespace Axle.Services
         }
 
 #pragma warning disable CA1710 // Event name should end in EventHandler
-        public event Action<IEnumerable<string>> OnCloseConnections
+        public event Action<IEnumerable<string>, SessionActivityType> OnCloseConnections
         {
             add { this.closeConnectionCallbacks.Add(value); }
             remove { this.closeConnectionCallbacks.Remove(value); }
@@ -93,14 +92,7 @@ namespace Axle.Services
                     return;
                 }
 
-                var rand = new Random();
-                var sessionId = 0;
-
-                do
-                {
-                    sessionId = rand.Next(int.MinValue, int.MaxValue);
-                }
-                while (this.sessionRepository.Get(sessionId) != null);
+                var sessionId = this.GenerateSessionId();
 
                 var newSession = new Session(userName, sessionId, accountId, accessToken, clientId, isSupportUser);
 
@@ -115,7 +107,10 @@ namespace Axle.Services
                 if (userInfo != null)
                 {
                     await this.TerminateSession(userInfo, SessionActivityType.DifferentDeviceTermination);
+                    this.logger.LogWarning(StatusCode.IF_ATH_502.ToMessage());
                 }
+
+                this.logger.LogWarning(StatusCode.IF_ATH_501.ToMessage());
             }
             finally
             {
@@ -146,6 +141,8 @@ namespace Axle.Services
 
                 await this.TerminateSession(userInfo, reason);
 
+                this.logger.LogWarning(StatusCode.WN_ATH_701.ToMessage());
+
                 this.logger.LogInformation($"Successfully terminated session: [{userInfo.SessionId}] for user: [{userName}]");
 
                 return new TerminateSessionResponse
@@ -175,13 +172,27 @@ namespace Axle.Services
             this.sessionRepository.Remove(userInfo.SessionId, userInfo.UserName);
             await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
 
-            this.notificationService.PublishSessionTermination(userInfo.SessionId);
+            this.notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });
 
             // Support user activities are not required currently
             if (!userInfo.IsSupportUser)
             {
                 await this.activityService.PublishActivity(userInfo, reason);
             }
+        }
+
+        public int GenerateSessionId()
+        {
+            var rand = new Random();
+            var sessionId = 0;
+
+            do
+            {
+                sessionId = rand.Next(int.MinValue, int.MaxValue);
+            }
+            while (this.sessionRepository.Get(sessionId) != null);
+
+            return sessionId;
         }
 
         public void Dispose()
@@ -224,14 +235,14 @@ namespace Axle.Services
             }
         }
 
-        private void HandleSessionTermination(int sessionId)
+        private void HandleSessionTermination(TerminateSessionNotification terminateSessionNotification)
         {
             this.slimLock.Wait();
 
             try
             {
                 // Retrieve and remove the connections to the session we're closing
-                var kvps = this.connectionSessionMap.Where(x => x.Value.SessionId == sessionId).ToArray();
+                var kvps = this.connectionSessionMap.Where(x => x.Value.SessionId == terminateSessionNotification.SessionId).ToArray();
 
                 foreach (var kvp in kvps)
                 {
@@ -242,7 +253,7 @@ namespace Axle.Services
 
                 foreach (var callback in this.closeConnectionCallbacks)
                 {
-                    callback(connections);
+                    callback(connections, terminateSessionNotification.Reason);
                 }
             }
             finally

@@ -21,7 +21,7 @@
                 <li><button class="btn btn-default request" data-scope='openid profile axle_api' data-type='id_token token'>Login</button></li>
                 <li><button class="btn btn-info revoke">Revoke Access Token</button></li>
                 <li><button class="btn btn-info logout">Logout</button></li>
-                <li>Account ID (optional): <input id="accountId" type="text"/></li>
+                <li>Account ID (optional): <input id="accountId" type="text" /></li>
                 <li><button id="connectBtn">Connect</button></li>
             </ul>
         </div>
@@ -129,11 +129,6 @@
             showTokens();
         });
 
-        mgr.events.addUserUnloaded(function () {
-            log("User logged out locally");
-            showTokens();
-        });
-
         mgr.events.addAccessTokenExpiring(function () {
             log("Access token expiring...");
         });
@@ -221,7 +216,16 @@
                     display("#id-token", user);
                 }
                 else {
-                    log("Not logged in");
+                    if (localStorage.getItem("errorCode") && localStorage.getItem("errorMessage")) {
+
+                        log(localStorage.getItem("errorCode") + ": " + localStorage.getItem("errorMessage"));
+
+                        localStorage.removeItem("errorCode");
+                        localStorage.removeItem("errorMessage");
+
+                    } else {
+                        log("Not logged in");
+                    }
                 }
             });
         }
@@ -252,6 +256,13 @@
                         mgr.signoutRedirect();
                         showTokens();
                         log("The connection was closed.");
+                    });
+
+                    connection.on("concurrentSessionTermination", (errorCode, errorMessage) => {
+                        localStorage.setItem("errorCode", errorCode);
+                        localStorage.setItem("errorMessage", errorMessage);
+                        mgr.signoutRedirect();
+                        showTokens();
                     });
                 }
             });

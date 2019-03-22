@@ -40,11 +40,14 @@ namespace Axle
             {
                 var subject = principal.FindFirst(JwtClaimTypes.Subject)?.Value;
 
-                var accounts = await this.accountsCache.GetAccountIds(subject);
-
-                foreach (var account in accounts)
+                if (!string.IsNullOrWhiteSpace(subject))
                 {
-                    claims.Add(new Claim(AuthorizationClaims.Accounts, account, ClaimValueTypes.String));
+                    var accounts = await this.accountsCache.GetAccountIds(subject);
+
+                    foreach (var account in accounts)
+                    {
+                        claims.Add(new Claim(AuthorizationClaims.Accounts, account, ClaimValueTypes.String));
+                    }
                 }
             }
 
