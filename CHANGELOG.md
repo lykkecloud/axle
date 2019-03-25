@@ -3,6 +3,14 @@
 * CONGA-4: Implement Login Error Messages
 * LT-1120: Fixed warnings for packages version and misusage, which also led to app crash in first web request
 * LT-1086: Exposed endpoint to manually publish login activity (only for mobile clients)
+* LT-1193: Validate api authority url and tested api/isAlive endpoint. Thrown proper error message on failure
+* LT-1210: Removed wrong error message when secrets provided from appsettings.json instead of user secrets
+
+### Lykke.Snow.Common.Startup
+
+Lykke.Snow.Common.Startup was updated and a new nuget version is published (Version 1.2.6)
+
+Missing secret wrong error message is removed and a few more improvements made while adding environment variables and secrets
 
 ### Configuration changes:
 
