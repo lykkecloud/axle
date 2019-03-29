@@ -1,3 +1,7 @@
+## Unreleased
+
+* LT-1240: Update Licenses
+
 ## 2.12.0 (March 27, 2019)
 
 * CONGA-4: Implement Login Error Messages
