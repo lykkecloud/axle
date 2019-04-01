@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿<!--(c) Lykke Corporation 2019 - All rights reserved. No copying, adaptation, decompiling, distribution or any other form of use permitted.-->
+
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -9,7 +11,7 @@
     <script>
         new Oidc.UserManager({
             loadUserInfo: true, filterProtocolClaims: true
-            ,userStore: new Oidc.WebStorageStateStore({ store: window.localStorage })
+            , userStore: new Oidc.WebStorageStateStore({ store: window.localStorage })
 
         }).signinRedirectCallback().then(function (user) {
             console.log(user);
