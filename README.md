@@ -66,6 +66,9 @@ These available variables are detailed below:
   | urls | Url that service will be exposed |
   | serilog:* | Serilog settings including output template, rolling file interval and file size limit |
   | CorsOrigins:* | Cors origins configuration |
+  | IntrospectionCache:Enabled | Whether the reference token introspection cache is enabled. Default true |
+  | IntrospectionCache:DurationInSeconds | How long items in the cache should live for in seconds. Default 600 |
+  | IntrospectionCache:ExpirationScanFrequencyInSeconds | Duration between each scan for expired items in the cache in seconds. Default 60 |
   | SessionConfig:TimeoutInSec | Session timeout in seconds, default value will be 300 seconds |
   | mtCoreAccountsMgmtServiceUrl | Url for MT Core accounts management service |
   | SecurityGroups | List of security settings with Group Name and Permissions allowed to it |
