@@ -1,4 +1,4 @@
-## Unreleased
+## 2.13.0 (April 10, 2019)
 
 * LT-1240: Update Licenses
 * LT-1264: Enabled introspection cache

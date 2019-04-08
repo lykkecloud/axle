@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>2.12.0</Version>
+    <Version>2.13.0</Version>
     <Authors>Axle Contributors</Authors>
     <Company>Lykke</Company>
     <Copyright>Copyright (c) Axle Contributors. All rights reserved.</Copyright>
@@ -47,7 +47,7 @@
     <PackageReference Include="Lykke.MarginTrading.AccountsManagement.Contracts" Version="1.12.1" />
     <PackageReference Include="Lykke.Middlewares" Version="2.0.0-1550072344" />
     <PackageReference Include="Lykke.RabbitMqBroker" Version="7.8.1" />
-    <PackageReference Include="Lykke.Snow.Common.Startup" Version="1.2.6" />
+    <PackageReference Include="Lykke.Snow.Common.Startup" Version="1.2.4" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.6.2">
