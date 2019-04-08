@@ -1,3 +1,20 @@
+## 2.13.0 (April 10, 2019)
+
+* LT-1240: Update Licenses
+* LT-1264: Enabled introspection cache
+
+### Configuration changes
+
+  - Added configuration for reference token introspection cache
+
+```json
+  "IntrospectionCache": {
+    "Enabled": true,
+    "DurationInSeconds": 600,
+    "ExpirationScanFrequencyInSeconds": 60
+  }
+```
+
 ## 2.12.0 (March 27, 2019)
 
 * CONGA-4: Implement Login Error Messages

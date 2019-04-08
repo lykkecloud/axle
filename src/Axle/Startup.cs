@@ -1,5 +1,4 @@
-﻿// Copyright (c) Lykke Corp.
-// See the LICENSE file in the project root for more information.
+﻿// (c) Lykke Corporation 2019 - All rights reserved. No copying, adaptation, decompiling, distribution or any other form of use permitted.
 
 namespace Axle
 {
@@ -126,6 +125,9 @@ namespace Axle
                         options.IntrospectionDiscoveryPolicy.ValidateIssuerName = validateIssuerName;
 
                         options.TokenRetriever = BearerTokenRetriever.FromHeaderAndQueryString;
+
+                        options.EnableCaching = this.configuration.GetValue("IntrospectionCache:Enabled", true);
+                        options.CacheDuration = TimeSpan.FromSeconds(this.configuration.GetValue("IntrospectionCache:DurationInSeconds", 600));
                     });
 
             var connectionRepository = new InMemoryRepository<string, HubCallerContext>();
@@ -201,7 +203,11 @@ namespace Axle
             services.AddSingleton<IAuthorizationHandler, MobileClientAndAccountOwnerHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IAccountsCache, AccountsCache>();
+
             services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));
+            services.AddDistributedMemoryCache(
+                options => options.ExpirationScanFrequency = TimeSpan.FromSeconds(
+                    this.configuration.GetValue("IntrospectionCache:ExpirationScanFrequencyInSeconds", 60)));
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
