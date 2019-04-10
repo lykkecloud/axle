@@ -83,7 +83,7 @@ namespace Axle.Services
 
             try
             {
-                userInfo = this.sessionRepository.GetByUser(userName);
+                userInfo = isSupportUser ? this.sessionRepository.GetByUser(userName) : this.sessionRepository.GetByAccount(accountId);
 
                 if (userInfo != null && userInfo.AccessToken == accessToken)
                 {
@@ -119,6 +119,8 @@ namespace Axle.Services
 
         public async Task<TerminateSessionResponse> TerminateSession(
             string userName,
+            string accountId,
+            bool isSupportUser,
             SessionActivityType reason = SessionActivityType.ManualTermination)
         {
             await this.slimLock.WaitAsync();
@@ -127,22 +129,27 @@ namespace Axle.Services
             {
                 var userInfo = this.sessionRepository.GetByUser(userName);
 
+                if (userInfo == null && !isSupportUser && !string.IsNullOrEmpty(accountId))
+                {
+                    userInfo = this.sessionRepository.GetByAccount(accountId);
+                }
+
                 if (userInfo == null)
                 {
                     return new TerminateSessionResponse
                     {
                         Status = TerminateSessionStatus.NotFound,
-                        ErrorMessage = $"No session found for the user: [{userName}]"
+                        ErrorMessage = $"No session found for the user: [{userName}] and account: [{accountId}]"
                     };
                 }
 
-                this.logger.LogInformation($"Terminating session: [{userInfo.SessionId}] for user: [{userName}]");
+                this.logger.LogInformation($"Terminating session: [{userInfo.SessionId}] for user: [{userName}] and account: [{accountId}]");
 
                 await this.TerminateSession(userInfo, reason);
 
                 this.logger.LogWarning(StatusCode.WN_ATH_701.ToMessage());
 
-                this.logger.LogInformation($"Successfully terminated session: [{userInfo.SessionId}] for user: [{userName}]");
+                this.logger.LogInformation($"Successfully terminated session: [{userInfo.SessionId}] for user: [{userName}] and account: [{accountId}]");
 
                 return new TerminateSessionResponse
                 {
@@ -152,7 +159,7 @@ namespace Axle.Services
             }
             catch (Exception error)
             {
-                this.logger.LogError(error, $"An unexpected error occurred while terminating session for user [{userName}]");
+                this.logger.LogError(error, $"An unexpected error occurred while terminating session for user [{userName}] and account: [{accountId}]");
 
                 return new TerminateSessionResponse
                 {
@@ -168,7 +175,7 @@ namespace Axle.Services
 
         public async Task TerminateSession(Session userInfo, SessionActivityType reason)
         {
-            this.sessionRepository.Remove(userInfo.SessionId, userInfo.UserName);
+            this.sessionRepository.Remove(userInfo.SessionId, userInfo.UserName, userInfo.AccountId);
             await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
 
             this.notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });

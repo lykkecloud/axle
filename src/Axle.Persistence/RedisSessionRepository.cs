@@ -31,7 +31,16 @@ namespace Axle.Persistence
             var transaction = db.CreateTransaction();
 
             transaction.StringSetAsync(this.SessionKey(session.SessionId), serSession);
-            transaction.StringSetAsync(this.UserKey(session.UserName), session.SessionId);
+
+            if (session.IsSupportUser)
+            {
+                transaction.StringSetAsync(this.UserKey(session.UserName), session.SessionId);
+            }
+            else
+            {
+                transaction.StringSetAsync(this.AccountKey(session.AccountId), session.SessionId);
+            }
+
             transaction.SortedSetAddAsync(ExpirationSetKey, session.SessionId, unixNow);
 
             transaction.Execute();
@@ -72,26 +81,26 @@ namespace Axle.Persistence
 
         public Session GetByUser(string userName)
         {
-            var userSession = this.multiplexer.GetDatabase().StringGet(this.UserKey(userName));
-
-            return userSession.IsNull ? null : this.Get((int)userSession);
+            return this.GetBySessionKey(this.UserKey(userName));
         }
 
-        public void Remove(int sessionId, string userName)
+        public Session GetByAccount(string accountId)
+        {
+            return this.GetBySessionKey(this.AccountKey(accountId));
+        }
+
+        public void Remove(int sessionId, string userName, string accountId)
         {
             var db = this.multiplexer.GetDatabase();
             db.SortedSetRemove(ExpirationSetKey, sessionId);
             db.KeyDelete(this.SessionKey(sessionId));
 
-            var transaction = db.CreateTransaction();
-
             var userKey = this.UserKey(userName);
+            var accountKey = this.AccountKey(accountId);
 
-            // Remove the user -> session ID key only if it still contains the same session ID
-            transaction.AddCondition(Condition.StringEqual(userKey, sessionId));
-            transaction.KeyDeleteAsync(userKey);
-
-            transaction.Execute();
+            // Remove the user/account -> session ID key only if it still contains the same session ID
+            this.RemoveKeyIfEquals(db, userKey, sessionId);
+            this.RemoveKeyIfEquals(db, accountKey, sessionId);
         }
 
         public void RefreshSessionTimeouts(IEnumerable<Session> sessions)
@@ -125,7 +134,26 @@ namespace Axle.Persistence
             return serializedSessions.Where(x => !x.IsNull).Select(x => MessagePackSerializer.Deserialize<Session>(x));
         }
 
+        private Session GetBySessionKey(RedisKey sessionKey)
+        {
+            var sessionId = this.multiplexer.GetDatabase().StringGet(sessionKey);
+
+            return sessionId.IsNull ? null : this.Get((int)sessionId);
+        }
+
+        private void RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
+        {
+            var transaction = db.CreateTransaction();
+
+            transaction.AddCondition(Condition.StringEqual(key, value));
+            transaction.KeyDeleteAsync(key);
+
+            transaction.Execute();
+        }
+
         private string UserKey(string user) => $"axle:users:{user}";
+
+        private string AccountKey(string account) => $"axle:accounts:{account}";
 
         private string SessionKey(int session) => $"axle:sessions:{session}";
     }

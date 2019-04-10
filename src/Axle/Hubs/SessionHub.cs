@@ -65,6 +65,17 @@ namespace Axle.Hubs
             return base.OnDisconnectedAsync(exception);
         }
 
+        public async Task<bool> SignOut()
+        {
+            var userName = this.Context.User.FindFirst(JwtClaimTypes.Name).Value;
+            var accountId = this.Context.GetHttpContext().Request.Query["account_id"];
+            var isSupportUser = this.Context.User.IsSupportUser(accountId);
+
+            var response = await this.sessionLifecycleService.TerminateSession(userName, accountId, isSupportUser, SessionActivityType.SignOut);
+
+            return response.Status == TerminateSessionStatus.Terminated;
+        }
+
         private void TerminateConnections(IEnumerable<string> connections, SessionActivityType reason)
         {
             foreach (var connection in connections)

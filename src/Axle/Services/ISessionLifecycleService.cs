@@ -25,6 +25,8 @@ namespace Axle.Services
 
         Task<TerminateSessionResponse> TerminateSession(
             string userName,
+            string accountId,
+            bool isSupportUser,
             SessionActivityType reason = SessionActivityType.ManualTermination);
 
         int GenerateSessionId();

@@ -23,6 +23,7 @@
                 <li><button class="btn btn-default request" data-scope='openid profile axle_api' data-type='id_token token'>Login</button></li>
                 <li><button class="btn btn-info revoke">Revoke Access Token</button></li>
                 <li><button class="btn btn-info logout">Logout</button></li>
+                <li><button class="btn btn-info logoutAxle">Logout through Axle</button></li>
                 <li>Account ID (optional): <input id="accountId" type="text" /></li>
                 <li><button id="connectBtn">Connect</button></li>
             </ul>
@@ -165,6 +166,14 @@
             terminateSession();
         }
 
+        function logoutAxle() {
+            if (connection != null && connection.connection.connectionState === 1) {
+                connection.invoke('signOut').done(function (result) {
+                    console.log('logout result: ' + result);
+                });
+            }
+        }
+
         function terminateSession() {
             if (connection != null) {
                 connection.stop();
@@ -183,6 +192,7 @@
 
         document.querySelector(".revoke").addEventListener("click", revoke, false);
         document.querySelector(".logout").addEventListener("click", logout, false);
+        document.querySelector(".logoutAxle").addEventListener("click", logoutAxle, false);
         document.querySelector("#connectBtn").addEventListener("click", setUpAxleConnection, false);
 
         function log(data) {
