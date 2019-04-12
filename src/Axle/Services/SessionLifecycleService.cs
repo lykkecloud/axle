@@ -147,7 +147,10 @@ namespace Axle.Services
 
                 await this.TerminateSession(userInfo, reason);
 
-                this.logger.LogWarning(StatusCode.WN_ATH_701.ToMessage());
+                if (reason == SessionActivityType.ManualTermination)
+                {
+                    this.logger.LogWarning(StatusCode.WN_ATH_701.ToMessage());
+                }
 
                 this.logger.LogInformation($"Successfully terminated session: [{userInfo.SessionId}] for user: [{userName}] and account: [{accountId}]");
 
