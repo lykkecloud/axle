@@ -4,6 +4,7 @@ namespace Axle.Hubs
 {
     using System;
     using System.Collections.Generic;
+    using System.Net;
     using System.Threading.Tasks;
     using Axle.Constants;
     using Axle.Contracts;
@@ -76,6 +77,13 @@ namespace Axle.Hubs
             return response.Status == TerminateSessionStatus.Terminated;
         }
 
+        public Task<OnBehalfChangeResponse> SetOnBehalfAccount(string accountId)
+        {
+            this.ThrowIfUnauthorized(matchAllPermissions: true, Permissions.OnBehalfSelection);
+
+            return this.sessionLifecycleService.UpdateOnBehalfState(this.Context.ConnectionId, accountId);
+        }
+
         private void TerminateConnections(IEnumerable<string> connections, SessionActivityType reason)
         {
             foreach (var connection in connections)
@@ -87,6 +95,16 @@ namespace Axle.Hubs
                 }
 
                 this.connectionRepository.Get(connection).Abort();
+            }
+        }
+
+        private void ThrowIfUnauthorized(bool matchAllPermissions = false, params string[] permissions)
+        {
+            if (!this.Context.User.IsAuthorized(matchAllPermissions, permissions))
+            {
+                throw new HubException(
+                    $"Action Forbidden ({(int)HttpStatusCode.Forbidden}). " +
+                    "The user does not have the required permissions.");
             }
         }
     }

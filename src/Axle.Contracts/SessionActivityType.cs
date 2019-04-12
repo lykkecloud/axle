@@ -8,6 +8,8 @@ namespace Axle.Contracts
         SignOut,
         TimeOut,
         DifferentDeviceTermination,
-        ManualTermination
+        ManualTermination,
+        OnBehalfSupportConnected,
+        OnBehalfSupportDisconnected
     }
 }

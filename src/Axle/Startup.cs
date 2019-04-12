@@ -149,6 +149,7 @@ namespace Axle
                     x.GetService<ITokenRevocationService>(),
                     x.GetService<INotificationService>(),
                     x.GetService<IActivityService>(),
+                    x.GetService<IAccountsService>(),
                     x.GetService<ILogger<SessionLifecycleService>>(),
                     sessionTimeout));
             services.AddSingleton<IActivityService, ActivityService>();

@@ -23,6 +23,8 @@ namespace Axle.Services
 
         void CloseConnection(string connectionId);
 
+        Task<OnBehalfChangeResponse> UpdateOnBehalfState(string connectionId, string onBehalfAccount);
+
         Task<TerminateSessionResponse> TerminateSession(
             string userName,
             string accountId,

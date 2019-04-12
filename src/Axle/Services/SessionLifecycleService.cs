@@ -20,6 +20,7 @@ namespace Axle.Services
         private readonly ITokenRevocationService tokenRevocationService;
         private readonly INotificationService notificationService;
         private readonly IActivityService activityService;
+        private readonly IAccountsService accountsService;
         private readonly ILogger<SessionLifecycleService> logger;
         private readonly TimeSpan sessionTimeout;
 
@@ -32,6 +33,7 @@ namespace Axle.Services
             ITokenRevocationService tokenRevocationService,
             INotificationService notificationService,
             IActivityService activityService,
+            IAccountsService accountsService,
             ILogger<SessionLifecycleService> logger,
             TimeSpan sessionTimeout)
         {
@@ -39,10 +41,12 @@ namespace Axle.Services
             this.tokenRevocationService = tokenRevocationService;
             this.notificationService = notificationService;
             this.activityService = activityService;
+            this.accountsService = accountsService;
             this.logger = logger;
             this.sessionTimeout = sessionTimeout;
 
             this.notificationService.OnSessionTerminated += this.HandleSessionTermination;
+            this.notificationService.OnBehalfChanged += this.HandleOnBehalfChange;
 
             this.RefreshTimeouts();
         }
@@ -110,6 +114,66 @@ namespace Axle.Services
                 }
 
                 this.logger.LogWarning(StatusCode.IF_ATH_501.ToMessage());
+            }
+            finally
+            {
+                this.slimLock.Release();
+            }
+        }
+
+        public async Task<OnBehalfChangeResponse> UpdateOnBehalfState(string connectionId, string onBehalfAccount)
+        {
+            this.slimLock.Wait();
+
+            try
+            {
+                if (!this.connectionSessionMap.TryGetValue(connectionId, out Session session))
+                {
+                    return OnBehalfChangeResponse.Fail($"Unknown connection ID [{connectionId}]");
+                }
+
+                if (!session.IsSupportUser)
+                {
+                    return OnBehalfChangeResponse.Fail($"User [{session.UserName}] is not a support user");
+                }
+
+                if (session.AccountId == onBehalfAccount)
+                {
+                    return OnBehalfChangeResponse.Fail($"Cannot switch to the same on behalf account");
+                }
+
+                string onBehalfOwner = null;
+
+                if (!string.IsNullOrEmpty(onBehalfAccount))
+                {
+                    onBehalfOwner = await this.accountsService.GetAccountOwnerUserName(onBehalfAccount);
+
+                    if (string.IsNullOrEmpty(onBehalfOwner))
+                    {
+                        return OnBehalfChangeResponse.Fail($"Account [{onBehalfAccount}] was not found");
+                    }
+                }
+
+                var newSession = new Session(session.UserName, session.SessionId, onBehalfAccount, session.AccessToken, session.ClientId, session.IsSupportUser);
+
+                this.sessionRepository.Update(newSession);
+
+                if (!string.IsNullOrEmpty(session.AccountId))
+                {
+                    var accountOwner = await this.accountsService.GetAccountOwnerUserName(session.AccountId);
+                    var sessionActivity = new SessionActivity(SessionActivityType.OnBehalfSupportDisconnected, session.SessionId, accountOwner, session.AccountId);
+
+                    await this.activityService.PublishActivity(sessionActivity);
+                }
+
+                if (!string.IsNullOrEmpty(onBehalfAccount))
+                {
+                    await this.activityService.PublishActivity(new SessionActivity(SessionActivityType.OnBehalfSupportConnected, session.SessionId, onBehalfOwner, onBehalfOwner));
+                }
+
+                this.notificationService.PublishOnBehalfChange(session.SessionId);
+
+                return OnBehalfChangeResponse.Success();
             }
             finally
             {
@@ -267,6 +331,32 @@ namespace Axle.Services
                 foreach (var callback in this.closeConnectionCallbacks)
                 {
                     callback(connections, terminateSessionNotification.Reason);
+                }
+            }
+            finally
+            {
+                this.slimLock.Release();
+            }
+        }
+
+        private void HandleOnBehalfChange(int sessionId)
+        {
+            this.slimLock.Wait();
+
+            try
+            {
+                var session = this.sessionRepository.Get(sessionId);
+
+                if (session == null)
+                {
+                    return;
+                }
+
+                var kvps = this.connectionSessionMap.Where(x => x.Value.SessionId == sessionId).ToArray();
+
+                foreach (var kvp in kvps)
+                {
+                    this.connectionSessionMap[kvp.Key] = session;
                 }
             }
             finally

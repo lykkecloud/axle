@@ -2,12 +2,30 @@
 
 namespace Axle.Extensions
 {
+    using System.Linq;
     using System.Security.Claims;
     using Axle.Constants;
     using IdentityModel;
 
     public static class ClaimsPrincipalExtensions
     {
+        public static bool IsAuthorized(this ClaimsPrincipal claimsPrincipal, bool matchAllPermissions, params string[] permissions)
+        {
+            if (!claimsPrincipal.Identity.IsAuthenticated)
+            {
+                return false;
+            }
+
+            if (permissions != null && permissions.Any())
+            {
+                return matchAllPermissions
+                    ? permissions.All(permission => claimsPrincipal.HasClaim(permission, permission))
+                    : permissions.Any(permission => claimsPrincipal.HasClaim(permission, permission));
+            }
+
+            return true;
+        }
+
         public static bool IsSupportUser(this ClaimsPrincipal principal, string accountId)
         {
             var accountIdEmpty = string.IsNullOrWhiteSpace(accountId);
