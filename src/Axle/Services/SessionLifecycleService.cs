@@ -179,7 +179,11 @@ namespace Axle.Services
         public async Task TerminateSession(Session userInfo, SessionActivityType reason)
         {
             this.sessionRepository.Remove(userInfo.SessionId, userInfo.UserName, userInfo.AccountId);
-            await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
+
+            if (reason != SessionActivityType.SignOut)
+            {
+                await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
+            }
 
             this.notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });
 
