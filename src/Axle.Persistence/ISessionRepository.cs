@@ -13,7 +13,9 @@ namespace Axle.Persistence
 
         Session GetByUser(string userName);
 
-        void Remove(int sessionId, string userName);
+        Session GetByAccount(string accountId);
+
+        void Remove(int sessionId, string userName, string accountId);
 
         void RefreshSessionTimeouts(IEnumerable<Session> sessions);
 

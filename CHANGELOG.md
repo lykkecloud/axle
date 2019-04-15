@@ -1,3 +1,8 @@
+## UNRELEASED
+
+* AXLE-61: Modified storage to keep investor sessions per account
+* Axle-62: Added hub method for logging out
+
 ## 2.13.0 (April 10, 2019)
 
 * LT-1240: Update Licenses
