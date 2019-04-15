@@ -168,7 +168,7 @@ namespace Axle.Services
 
                 if (!string.IsNullOrEmpty(onBehalfAccount))
                 {
-                    await this.activityService.PublishActivity(new SessionActivity(SessionActivityType.OnBehalfSupportConnected, session.SessionId, onBehalfOwner, onBehalfOwner));
+                    await this.activityService.PublishActivity(new SessionActivity(SessionActivityType.OnBehalfSupportConnected, session.SessionId, onBehalfOwner, onBehalfAccount));
                 }
 
                 this.notificationService.PublishOnBehalfChange(session.SessionId);
@@ -349,6 +349,7 @@ namespace Axle.Services
 
                 if (session == null)
                 {
+                    this.logger.LogWarning($"Session with ID [{sessionId}] was not found while trying to update on behalf state");
                     return;
                 }
 

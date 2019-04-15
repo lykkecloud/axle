@@ -16,6 +16,7 @@ namespace Axle.Hubs
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.SignalR;
+    using PermissionsManagement.Client.Extensions;
     using Serilog;
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = AuthorizationPolicies.AccountOwnerOrSupport)]
