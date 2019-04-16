@@ -24,17 +24,13 @@ namespace Axle.Hubs
     {
         private readonly IRepository<string, HubCallerContext> connectionRepository;
         private readonly ISessionLifecycleService sessionLifecycleService;
-        private readonly IHubContext<SessionHub> sessionHubContext;
 
         public SessionHub(
             IRepository<string, HubCallerContext> connectionRepository,
-            ISessionLifecycleService sessionLifecycleService,
-            IHubContext<SessionHub> sessionHubContext)
+            ISessionLifecycleService sessionLifecycleService)
         {
             this.connectionRepository = connectionRepository;
             this.sessionLifecycleService = sessionLifecycleService;
-            this.sessionHubContext = sessionHubContext;
-            this.sessionLifecycleService.OnCloseConnections += this.TerminateConnections;
         }
 
         public static string Name => "/session";
@@ -83,20 +79,6 @@ namespace Axle.Hubs
             this.ThrowIfUnauthorized(matchAllPermissions: true, Permissions.OnBehalfSelection);
 
             return this.sessionLifecycleService.UpdateOnBehalfState(this.Context.ConnectionId, accountId);
-        }
-
-        private void TerminateConnections(IEnumerable<string> connections, SessionActivityType reason)
-        {
-            foreach (var connection in connections)
-            {
-                if (reason == SessionActivityType.DifferentDeviceTermination)
-                {
-                    this.sessionHubContext.Clients.Clients(connection)
-                                       .SendAsync("concurrentSessionTermination", StatusCode.IF_ATH_502, StatusCode.IF_ATH_502.ToMessage()).Wait();
-                }
-
-                this.connectionRepository.Get(connection).Abort();
-            }
         }
 
         private void ThrowIfUnauthorized(bool matchAllPermissions = false, params string[] permissions)

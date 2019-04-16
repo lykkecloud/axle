@@ -11,6 +11,7 @@ namespace Axle.Services
     using Axle.Dto;
     using Axle.Extensions;
     using Axle.Persistence;
+    using Axle.Settings;
     using Microsoft.Extensions.Logging;
     using Serilog;
 
@@ -21,10 +22,10 @@ namespace Axle.Services
         private readonly INotificationService notificationService;
         private readonly IActivityService activityService;
         private readonly IAccountsService accountsService;
+        private readonly IHubConnectionService hubConnectionService;
         private readonly ILogger<SessionLifecycleService> logger;
         private readonly TimeSpan sessionTimeout;
 
-        private readonly HashSet<Action<IEnumerable<string>, SessionActivityType>> closeConnectionCallbacks = new HashSet<Action<IEnumerable<string>, SessionActivityType>>();
         private readonly Dictionary<string, Session> connectionSessionMap = new Dictionary<string, Session>();
         private readonly SemaphoreSlim slimLock = new SemaphoreSlim(1, 1);
 
@@ -34,30 +35,24 @@ namespace Axle.Services
             INotificationService notificationService,
             IActivityService activityService,
             IAccountsService accountsService,
+            IHubConnectionService hubConnectionService,
             ILogger<SessionLifecycleService> logger,
-            TimeSpan sessionTimeout)
+            SessionSettings sessionSettings)
         {
             this.sessionRepository = sessionRepository;
             this.tokenRevocationService = tokenRevocationService;
             this.notificationService = notificationService;
             this.activityService = activityService;
             this.accountsService = accountsService;
+            this.hubConnectionService = hubConnectionService;
             this.logger = logger;
-            this.sessionTimeout = sessionTimeout;
+            this.sessionTimeout = sessionSettings.Timeout;
 
             this.notificationService.OnSessionTerminated += this.HandleSessionTermination;
             this.notificationService.OnBehalfChanged += this.HandleOnBehalfChange;
 
             this.RefreshTimeouts();
         }
-
-#pragma warning disable CA1710 // Event name should end in EventHandler
-        public event Action<IEnumerable<string>, SessionActivityType> OnCloseConnections
-        {
-            add { this.closeConnectionCallbacks.Add(value); }
-            remove { this.closeConnectionCallbacks.Remove(value); }
-        }
-#pragma warning restore CA1710 // Event name should end in EventHandler
 
         public void CloseConnection(string connectionId)
         {
@@ -328,10 +323,7 @@ namespace Axle.Services
 
                 var connections = kvps.Select(x => x.Key).ToArray();
 
-                foreach (var callback in this.closeConnectionCallbacks)
-                {
-                    callback(connections, terminateSessionNotification.Reason);
-                }
+                this.hubConnectionService.TerminateConnections(terminateSessionNotification.Reason, connections);
             }
             finally
             {
