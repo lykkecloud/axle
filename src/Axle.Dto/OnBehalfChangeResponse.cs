@@ -4,18 +4,18 @@ namespace Axle.Dto
 {
     public class OnBehalfChangeResponse
     {
-        public bool Successful { get; set; }
+        public bool IsSuccessful { get; set; }
 
         public string ErrorMessage { get; set; }
 
         public static OnBehalfChangeResponse Success()
         {
-            return new OnBehalfChangeResponse { Successful = true };
+            return new OnBehalfChangeResponse { IsSuccessful = true };
         }
 
         public static OnBehalfChangeResponse Fail(string errorMessage)
         {
-            return new OnBehalfChangeResponse { Successful = false, ErrorMessage = errorMessage };
+            return new OnBehalfChangeResponse { IsSuccessful = false, ErrorMessage = errorMessage };
         }
     }
 }

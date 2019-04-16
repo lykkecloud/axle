@@ -182,7 +182,7 @@
                 connection.invoke('setOnBehalfAccount', accountId).then(function (result) {
                     let responseElem = document.getElementById('response');
 
-                    responseElem.innerHTML = 'Success: ' + result.successful;
+                    responseElem.innerHTML = 'Success: ' + result.isSuccessful;
 
                     if (result.errorMessage) {
                         responseElem.innerHTML += '<br/>Error Message: ' + result.errorMessage;
