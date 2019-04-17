@@ -11,6 +11,7 @@ namespace Axle.Services
     using Axle.Dto;
     using Axle.Extensions;
     using Axle.Persistence;
+    using Axle.Settings;
     using Microsoft.Extensions.Logging;
     using Serilog;
 
@@ -20,10 +21,11 @@ namespace Axle.Services
         private readonly ITokenRevocationService tokenRevocationService;
         private readonly INotificationService notificationService;
         private readonly IActivityService activityService;
+        private readonly IAccountsService accountsService;
+        private readonly IHubConnectionService hubConnectionService;
         private readonly ILogger<SessionLifecycleService> logger;
         private readonly TimeSpan sessionTimeout;
 
-        private readonly HashSet<Action<IEnumerable<string>, SessionActivityType>> closeConnectionCallbacks = new HashSet<Action<IEnumerable<string>, SessionActivityType>>();
         private readonly Dictionary<string, Session> connectionSessionMap = new Dictionary<string, Session>();
         private readonly SemaphoreSlim slimLock = new SemaphoreSlim(1, 1);
 
@@ -32,28 +34,25 @@ namespace Axle.Services
             ITokenRevocationService tokenRevocationService,
             INotificationService notificationService,
             IActivityService activityService,
+            IAccountsService accountsService,
+            IHubConnectionService hubConnectionService,
             ILogger<SessionLifecycleService> logger,
-            TimeSpan sessionTimeout)
+            SessionSettings sessionSettings)
         {
             this.sessionRepository = sessionRepository;
             this.tokenRevocationService = tokenRevocationService;
             this.notificationService = notificationService;
             this.activityService = activityService;
+            this.accountsService = accountsService;
+            this.hubConnectionService = hubConnectionService;
             this.logger = logger;
-            this.sessionTimeout = sessionTimeout;
+            this.sessionTimeout = sessionSettings.Timeout;
 
             this.notificationService.OnSessionTerminated += this.HandleSessionTermination;
+            this.notificationService.OnBehalfChanged += this.HandleOnBehalfChange;
 
             this.RefreshTimeouts();
         }
-
-#pragma warning disable CA1710 // Event name should end in EventHandler
-        public event Action<IEnumerable<string>, SessionActivityType> OnCloseConnections
-        {
-            add { this.closeConnectionCallbacks.Add(value); }
-            remove { this.closeConnectionCallbacks.Remove(value); }
-        }
-#pragma warning restore CA1710 // Event name should end in EventHandler
 
         public void CloseConnection(string connectionId)
         {
@@ -110,6 +109,66 @@ namespace Axle.Services
                 }
 
                 this.logger.LogWarning(StatusCode.IF_ATH_501.ToMessage());
+            }
+            finally
+            {
+                this.slimLock.Release();
+            }
+        }
+
+        public async Task<OnBehalfChangeResponse> UpdateOnBehalfState(string connectionId, string onBehalfAccount)
+        {
+            this.slimLock.Wait();
+
+            try
+            {
+                if (!this.connectionSessionMap.TryGetValue(connectionId, out Session session))
+                {
+                    return OnBehalfChangeResponse.Fail($"Unknown connection ID [{connectionId}]");
+                }
+
+                if (!session.IsSupportUser)
+                {
+                    return OnBehalfChangeResponse.Fail($"User [{session.UserName}] is not a support user");
+                }
+
+                if (session.AccountId == onBehalfAccount)
+                {
+                    return OnBehalfChangeResponse.Fail($"Cannot switch to the same on behalf account");
+                }
+
+                string onBehalfOwner = null;
+
+                if (!string.IsNullOrEmpty(onBehalfAccount))
+                {
+                    onBehalfOwner = await this.accountsService.GetAccountOwnerUserName(onBehalfAccount);
+
+                    if (string.IsNullOrEmpty(onBehalfOwner))
+                    {
+                        return OnBehalfChangeResponse.Fail($"Account [{onBehalfAccount}] was not found");
+                    }
+                }
+
+                var newSession = new Session(session.UserName, session.SessionId, onBehalfAccount, session.AccessToken, session.ClientId, session.IsSupportUser);
+
+                this.sessionRepository.Update(newSession);
+
+                if (!string.IsNullOrEmpty(session.AccountId))
+                {
+                    var accountOwner = await this.accountsService.GetAccountOwnerUserName(session.AccountId);
+                    var sessionActivity = new SessionActivity(SessionActivityType.OnBehalfSupportDisconnected, session.SessionId, accountOwner, session.AccountId);
+
+                    await this.activityService.PublishActivity(sessionActivity);
+                }
+
+                if (!string.IsNullOrEmpty(onBehalfAccount))
+                {
+                    await this.activityService.PublishActivity(new SessionActivity(SessionActivityType.OnBehalfSupportConnected, session.SessionId, onBehalfOwner, onBehalfAccount));
+                }
+
+                this.notificationService.PublishOnBehalfChange(session.SessionId);
+
+                return OnBehalfChangeResponse.Success();
             }
             finally
             {
@@ -264,9 +323,33 @@ namespace Axle.Services
 
                 var connections = kvps.Select(x => x.Key).ToArray();
 
-                foreach (var callback in this.closeConnectionCallbacks)
+                this.hubConnectionService.TerminateConnections(terminateSessionNotification.Reason, connections);
+            }
+            finally
+            {
+                this.slimLock.Release();
+            }
+        }
+
+        private void HandleOnBehalfChange(int sessionId)
+        {
+            this.slimLock.Wait();
+
+            try
+            {
+                var session = this.sessionRepository.Get(sessionId);
+
+                if (session == null)
                 {
-                    callback(connections, terminateSessionNotification.Reason);
+                    this.logger.LogWarning($"Session with ID [{sessionId}] was not found while trying to update on behalf state");
+                    return;
+                }
+
+                var kvps = this.connectionSessionMap.Where(x => x.Value.SessionId == sessionId).ToArray();
+
+                foreach (var kvp in kvps)
+                {
+                    this.connectionSessionMap[kvp.Key] = session;
                 }
             }
             finally

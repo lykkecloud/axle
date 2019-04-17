@@ -2,6 +2,7 @@
 
 namespace Axle.Extensions
 {
+    using System.Linq;
     using System.Security.Claims;
     using Axle.Constants;
     using IdentityModel;

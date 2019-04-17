@@ -46,6 +46,11 @@ namespace Axle.Persistence
             transaction.Execute();
         }
 
+        public void Update(Session session)
+        {
+            this.Add(session);
+        }
+
         public Session Get(int id)
         {
             var db = this.multiplexer.GetDatabase();

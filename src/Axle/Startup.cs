@@ -14,6 +14,7 @@ namespace Axle
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
+    using Axle.Settings;
     using Chest.Client.AutorestClient;
     using IdentityModel;
     using IdentityModel.Client;
@@ -135,22 +136,17 @@ namespace Axle
             services.AddSingleton<IRepository<string, HubCallerContext>>(connectionRepository);
             services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
-            var sessionTimeout = TimeSpan.FromSeconds(this.configuration.GetValue<int>("SessionConfig:TimeoutInSec", 300));
+            var sessionSettings = this.configuration.GetSection("SessionConfig").Get<SessionSettings>() ?? new SessionSettings();
 
+            services.AddSingleton(sessionSettings);
             services.AddSingleton<INotificationService, NotificationService>();
 
             services.AddSingleton<ISessionRepository, RedisSessionRepository>(x =>
                 new RedisSessionRepository(
                     x.GetService<IConnectionMultiplexer>(),
-                    sessionTimeout));
-            services.AddSingleton<ISessionLifecycleService, SessionLifecycleService>(x =>
-                new SessionLifecycleService(
-                    x.GetService<ISessionRepository>(),
-                    x.GetService<ITokenRevocationService>(),
-                    x.GetService<INotificationService>(),
-                    x.GetService<IActivityService>(),
-                    x.GetService<ILogger<SessionLifecycleService>>(),
-                    sessionTimeout));
+                    sessionSettings.Timeout));
+            services.AddSingleton<ISessionLifecycleService, SessionLifecycleService>();
+            services.AddSingleton<IHubConnectionService, HubConnectionService>();
             services.AddSingleton<IActivityService, ActivityService>();
 
             var rabbitMqSettings = this.configuration.GetSection("ActivityPublisherSettings").Get<RabbitMqSubscriptionSettings>().MakeDurable();

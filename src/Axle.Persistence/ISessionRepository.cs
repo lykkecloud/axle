@@ -8,6 +8,8 @@ namespace Axle.Persistence
     {
         void Add(Session entity);
 
+        void Update(Session entity);
+
 #pragma warning disable CA1716 // Identifiers should not match keywords
         Session Get(int sessionId);
 

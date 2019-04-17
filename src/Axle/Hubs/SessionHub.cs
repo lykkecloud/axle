@@ -4,6 +4,7 @@ namespace Axle.Hubs
 {
     using System;
     using System.Collections.Generic;
+    using System.Net;
     using System.Threading.Tasks;
     using Axle.Constants;
     using Axle.Contracts;
@@ -15,6 +16,7 @@ namespace Axle.Hubs
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.SignalR;
+    using PermissionsManagement.Client.Extensions;
     using Serilog;
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = AuthorizationPolicies.AccountOwnerOrSupport)]
@@ -22,17 +24,13 @@ namespace Axle.Hubs
     {
         private readonly IRepository<string, HubCallerContext> connectionRepository;
         private readonly ISessionLifecycleService sessionLifecycleService;
-        private readonly IHubContext<SessionHub> sessionHubContext;
 
         public SessionHub(
             IRepository<string, HubCallerContext> connectionRepository,
-            ISessionLifecycleService sessionLifecycleService,
-            IHubContext<SessionHub> sessionHubContext)
+            ISessionLifecycleService sessionLifecycleService)
         {
             this.connectionRepository = connectionRepository;
             this.sessionLifecycleService = sessionLifecycleService;
-            this.sessionHubContext = sessionHubContext;
-            this.sessionLifecycleService.OnCloseConnections += this.TerminateConnections;
         }
 
         public static string Name => "/session";
@@ -76,17 +74,20 @@ namespace Axle.Hubs
             return response.Status == TerminateSessionStatus.Terminated;
         }
 
-        private void TerminateConnections(IEnumerable<string> connections, SessionActivityType reason)
+        public Task<OnBehalfChangeResponse> SetOnBehalfAccount(string accountId)
         {
-            foreach (var connection in connections)
-            {
-                if (reason == SessionActivityType.DifferentDeviceTermination)
-                {
-                    this.sessionHubContext.Clients.Clients(connection)
-                                       .SendAsync("concurrentSessionTermination", StatusCode.IF_ATH_502, StatusCode.IF_ATH_502.ToMessage()).Wait();
-                }
+            this.ThrowIfUnauthorized(matchAllPermissions: true, Permissions.OnBehalfSelection);
 
-                this.connectionRepository.Get(connection).Abort();
+            return this.sessionLifecycleService.UpdateOnBehalfState(this.Context.ConnectionId, accountId);
+        }
+
+        private void ThrowIfUnauthorized(bool matchAllPermissions = false, params string[] permissions)
+        {
+            if (!this.Context.User.IsAuthorized(matchAllPermissions, permissions))
+            {
+                throw new HubException(
+                    $"Action Forbidden ({(int)HttpStatusCode.Forbidden}). " +
+                    "The user does not have the required permissions.");
             }
         }
     }
