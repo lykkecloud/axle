@@ -13,6 +13,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <TrimUnusedDependencies>true</TrimUnusedDependencies>
+    <Version>2.14.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
