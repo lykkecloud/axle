@@ -4,6 +4,83 @@
 * AXLE-62: Added hub method for logging out
 * AXLE-59: Allow only one tab to be open by a given user
 * LT-1378: Fix on behalf activities not generating when support session is started or terminated
+* LT-1320: Enable Audit logs
+
+### Configuration changes
+
+  - Added following section for Audit log settings. It enables Audit logs and sets which roles/routes will be tracked by [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs).
+  ```json
+  {
+    "AuditSettings":{
+      "Enabled": true,
+      "RolesToAudit": [
+        "customer-care",
+        "credit",
+        "backoffice-trading",
+        "backoffice-administration",
+        "role1",
+        "role2",
+        "role3",
+        "role4",
+        "role5",
+        "role6"
+      ],
+      "RoutesToAudit": [
+        { "Method": "DELETE", "Template": "/api/Sessions" }
+      ]
+    },
+  }
+  ```
+  - Changed following section of Serilog config which filters out Audit specific logs from general log file.
+  ```json
+  {
+    "Name": "Logger",
+    "Args": {
+      "configureLogger": {
+        "filter": [{ 
+          "Name": "ByExcluding", 
+          "Args": { "expression": "Contains(SourceContext, 'AuditHandlerMiddleware')" }
+        }],
+        "writeTo": [
+          {
+            "Name": "File",
+            "Args": {
+              "outputTemplate": "[{Timestamp:u}] [{Application}:{Version}:{Environment}] [{Level:u3}] [{RequestId}] [{CorrelationId}] [{ExceptionId}] {Message:lj} {NewLine}{Exception}",
+              "path": "logs/Axle/Axle-developer.log",
+              "rollingInterval": "Day",
+              "fileSizeLimitBytes": null
+            }
+          }
+        ]
+      }
+    }
+  }
+  ```
+  - Added following section to Serilog config which specifies different place for Audit logs file. It pipes data using filter based on scope variables (`SourceContext`, `ShouldAuditRequest`) defined by [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs). This variable `ShouldAuditRequest` is calculated based on AuditSettings section.
+  ```json
+  {
+    "Name": "Logger",
+    "Args": {
+      "configureLogger": {
+        "filter": [{ 
+          "Name": "ByIncludingOnly", 
+          "Args": { "expression": "Contains(SourceContext, 'AuditHandlerMiddleware') and ShouldAuditRequest = True" }
+        }],
+        "writeTo": [
+          {
+            "Name": "File",
+            "Args": {
+              "outputTemplate": "[{Timestamp:u}] [{Application}:{Version}:{Environment}] [{Level:u3}] [{RequestId}] [{CorrelationId}] [{ExceptionId}] {Message:lj} {NewLine}",
+              "path": "logs/Axle/Axle-audit-developer.log",
+              "rollingInterval": "Day",
+              "fileSizeLimitBytes": null
+            }
+          }
+        ]
+      }
+    }
+  }
+  ```
 
 ## 2.13.0 (April 10, 2019)
 

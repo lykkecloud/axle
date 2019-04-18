@@ -179,6 +179,7 @@ namespace Axle
 
             services.AddSingleton<IHttpStatusCodeMapper, DefaultHttpStatusCodeMapper>();
             services.AddSingleton<ILogLevelMapper, DefaultLogLevelMapper>();
+            services.AddSingleton<AuditSettings>(this.configuration.GetSection("AuditSettings")?.Get<AuditSettings>() ?? new AuditSettings());
 
             var mtCoreAccountsMgmtClientGenerator = HttpClientGenerator
                 .BuildForUrl(this.configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"))
@@ -227,6 +228,7 @@ namespace Axle
             app.UseCors("AllowCors");
 
             app.UseAuthentication();
+            app.UseMiddleware<AuditHandlerMiddleware>();
 
             app.UseSignalR(routes =>
             {
