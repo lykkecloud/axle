@@ -64,7 +64,7 @@ These available variables are detailed below:
   | Parameter | Description |
   | --- | --- |
   | urls | Url that service will be exposed |
-  | serilog:* | Serilog settings including output template, rolling file interval and file size limit |
+  | serilog:* | Serilog settings including output template, rolling file interval, file size limit and audit file configuration |
   | CorsOrigins:* | Cors origins configuration |
   | IntrospectionCache:Enabled | Whether the reference token introspection cache is enabled. Default true |
   | IntrospectionCache:DurationInSeconds | How long items in the cache should live for in seconds. Default 600 |
@@ -75,23 +75,33 @@ These available variables are detailed below:
   | SecurityGroups:Name | Name of security group |
   | SecurityGroups:Permissions | List of permissions allowed to the security group |
   | ActivityPublisherSettings:ExchangeName | RabbitMQ exchange name for activities
-  | ActivityPublisherSettings:IsDurable | RabbitMQ is durable value for activities publisher exchange
+  | ActivityPublisherSettings:IsDurable | RabbitMQ is durable value for activities publisher exchange |
   | chestUrl | Url for Chest service |
-  | ConnectionStrings:RabbitMq | RabbitMQ connection string
+  | ConnectionStrings:RabbitMq | RabbitMQ connection string |
+  | AuditSettings | List of audit settings, which will be used by [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs) to process requests and include data inside Logger scope. Whole section is optional |
+  | AuditSettings:Enabled | Sets Audit as enabled = true or disabled = false. It's passed to [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs) |
+  | AuditSettings:RolesToAudit | List of Roles to audit, that are passed to [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs) which checks if User roles match any of the roles provided. This is an optional parameter that when not provided or provided empty means ALL roles should be audited. |
+  | AuditSettings:RoutesToAudit | List of Routes to audit that are passed to [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs) which checks if Request matches any of the routes provided.  This is an optional parameter that when not provided or provided empty means ALL routes should be audited. |
 
 ### Log specific configuration
 
 - Logging mechanism in place uses Serilog with some enrichers to exposed better and more detailed logs (i.e [FromLogContext](https://github.com/serilog/serilog/wiki/Enrichment), [WithMachineName](https://github.com/serilog/serilog-enrichers-environment), [WithThreadId](https://github.com/serilog/serilog-enrichers-thread), [WithDemystifiedStackTraces](https://github.com/nblumhardt/serilog-enrichers-demystify)).
 
-- There are two custom [middleware](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-2.1) injected in the application's request pipeline to enhance logs:
+- There are three custom [middlewares](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-2.1) injected in the application's request pipeline to enhance logs:
   
   1) [ExceptionHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/ExceptionHandlerMiddleware.cs) providing a global `Try/Catch` for unhandled [Exceptions](https://docs.microsoft.com/en-us/dotnet/api/system.exception?view=netcore-2.1)
   2) [LogHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/LogHandlerMiddleware.cs) providing a global `Logging` for [HttpRequests](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httprequest?view=aspnetcore-2.1)
+  3) [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs) which provides a global `Audit` control for [HttpRequests](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httprequest?view=aspnetcore-2.1). It acts based on settings defined via `appsettings.json`.
 
   For more info please check [Lykke.Middlewares](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/) repository.
 
-- Default configuration outputs log for [Console](https://github.com/serilog/serilog-sinks-console) and [File](https://github.com/serilog/serilog-sinks-file) with message format being the same for both:
+- Default configuration outputs log in three ways:
 
+  1) [Console](https://github.com/serilog/serilog-sinks-console)
+  2) General [File](https://github.com/serilog/serilog-sinks-file) without Audit specific logs, using serilog [Filters Expressions](https://github.com/serilog/serilog-filters-expressions)
+  3) Audit [File](https://github.com/serilog/serilog-sinks-file) with Audit specific logs only, using serilog [Filters Expressions](https://github.com/serilog/serilog-filters-expressions) and Scope State value `ShouldAuditRequest` defined by [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs)
+  
+  The message format is the same for all:
   ```json
   {
     "Args": {
