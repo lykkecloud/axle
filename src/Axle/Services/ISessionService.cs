@@ -5,26 +5,26 @@ namespace Axle.Services
     using System.Threading.Tasks;
     using Axle.Contracts;
     using Axle.Dto;
+    using Axle.Persistence;
 
-    public interface ISessionLifecycleService
+    public interface ISessionService
     {
-        Task OpenConnection(
-            string connectionId,
+        Task<Session> BeginSession(
             string userName,
             string accountId,
             string clientId,
             string accessToken,
             bool isSupportUser);
 
-        void CloseConnection(string connectionId);
-
-        Task<OnBehalfChangeResponse> UpdateOnBehalfState(string connectionId, string onBehalfAccount);
+        Task<OnBehalfChangeResponse> UpdateOnBehalfState(int sessionId, string onBehalfAccount);
 
         Task<TerminateSessionResponse> TerminateSession(
             string userName,
             string accountId,
             bool isSupportUser,
             SessionActivityType reason = SessionActivityType.ManualTermination);
+
+        Task TerminateSession(Session userInfo, SessionActivityType reason);
 
         int GenerateSessionId();
     }

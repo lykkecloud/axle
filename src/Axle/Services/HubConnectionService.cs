@@ -2,6 +2,8 @@
 
 namespace Axle.Services
 {
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
     using Axle.Contracts;
     using Axle.Dto;
@@ -14,17 +16,55 @@ namespace Axle.Services
     public class HubConnectionService : IHubConnectionService
     {
         private readonly IRepository<string, HubCallerContext> connectionRepository;
+        private readonly IRepository<string, int> sessionIdRepository;
         private readonly IHubContext<SessionHub> sessionHubContext;
+        private readonly ISessionService sessionService;
         private readonly ILogger<HubConnectionService> logger;
 
         public HubConnectionService(
             IRepository<string, HubCallerContext> connectionRepository,
+            IRepository<string, int> sessionIdRepository,
             IHubContext<SessionHub> sessionHubContext,
+            ISessionService sessionService,
             ILogger<HubConnectionService> logger)
         {
             this.connectionRepository = connectionRepository;
+            this.sessionIdRepository = sessionIdRepository;
             this.sessionHubContext = sessionHubContext;
+            this.sessionService = sessionService;
             this.logger = logger;
+        }
+
+        public async Task OpenConnection(
+            HubCallerContext context,
+            string userName,
+            string accountId,
+            string clientId,
+            string accessToken,
+            bool isSupportUser)
+        {
+            var session = await this.sessionService.BeginSession(userName, accountId, clientId, accessToken, isSupportUser);
+
+            this.connectionRepository.Add(context.ConnectionId, context);
+            this.sessionIdRepository.Add(context.ConnectionId, session.SessionId);
+        }
+
+        public void CloseConnection(string connectionId)
+        {
+            this.connectionRepository.Remove(connectionId);
+            this.sessionIdRepository.Remove(connectionId);
+        }
+
+        public IEnumerable<int> GetAllConnectedSessions()
+        {
+            return this.sessionIdRepository.GetAll().Select(x => x.Value).Distinct();
+        }
+
+        public bool TryGetSessionId(string connectionId, out int sessionId) => this.sessionIdRepository.TryGet(connectionId, out sessionId);
+
+        public IEnumerable<string> FindBySessionId(int sessionId)
+        {
+            return this.sessionIdRepository.Find(id => id == sessionId).Select(x => x.Key);
         }
 
         public async Task TerminateConnections(SessionActivityType reason, params string[] connectionIds)

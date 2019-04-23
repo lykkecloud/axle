@@ -3,14 +3,12 @@
 namespace Axle.Hubs
 {
     using System;
-    using System.Collections.Generic;
     using System.Net;
     using System.Threading.Tasks;
     using Axle.Constants;
     using Axle.Contracts;
     using Axle.Dto;
     using Axle.Extensions;
-    using Axle.Persistence;
     using Axle.Services;
     using IdentityModel;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -22,15 +20,15 @@ namespace Axle.Hubs
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = AuthorizationPolicies.AccountOwnerOrSupport)]
     public class SessionHub : Hub
     {
-        private readonly IRepository<string, HubCallerContext> connectionRepository;
-        private readonly ISessionLifecycleService sessionLifecycleService;
+        private readonly IHubConnectionService hubConnectionService;
+        private readonly ISessionService sessionService;
 
         public SessionHub(
-            IRepository<string, HubCallerContext> connectionRepository,
-            ISessionLifecycleService sessionLifecycleService)
+            IHubConnectionService hubConnectionService,
+            ISessionService sessionService)
         {
-            this.connectionRepository = connectionRepository;
-            this.sessionLifecycleService = sessionLifecycleService;
+            this.hubConnectionService = hubConnectionService;
+            this.sessionService = sessionService;
         }
 
         public static string Name => "/session";
@@ -47,19 +45,18 @@ namespace Axle.Hubs
 
             var isSupportUser = this.Context.User.IsSupportUser(accountId);
 
-            await this.sessionLifecycleService.OpenConnection(this.Context.ConnectionId, userName, accountId, clientId, token, isSupportUser);
+            await this.hubConnectionService.OpenConnection(this.Context, userName, accountId, clientId, token, isSupportUser);
 
             Log.Information($"New connection established. User: {userName}, ID: {this.Context.ConnectionId}.");
-            this.connectionRepository.Add(this.Context.ConnectionId, this.Context);
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            var sub = this.Context.User.FindFirst(JwtClaimTypes.Subject).Value;
+            var userName = this.Context.User.FindFirst(JwtClaimTypes.Name).Value;
 
-            Log.Information($"Connection closed. User: {sub}, ID: {this.Context.ConnectionId}.");
-            this.connectionRepository.Remove(this.Context.ConnectionId);
-            this.sessionLifecycleService.CloseConnection(this.Context.ConnectionId);
+            Log.Information($"Connection closed. User: {userName}, ID: {this.Context.ConnectionId}.");
+            this.hubConnectionService.CloseConnection(this.Context.ConnectionId);
+
             return base.OnDisconnectedAsync(exception);
         }
 
@@ -69,7 +66,7 @@ namespace Axle.Hubs
             var accountId = this.Context.GetHttpContext().Request.Query["account_id"];
             var isSupportUser = this.Context.User.IsSupportUser(accountId);
 
-            var response = await this.sessionLifecycleService.TerminateSession(userName, accountId, isSupportUser, SessionActivityType.SignOut);
+            var response = await this.sessionService.TerminateSession(userName, accountId, isSupportUser, SessionActivityType.SignOut);
 
             return response.Status == TerminateSessionStatus.Terminated;
         }
@@ -78,7 +75,12 @@ namespace Axle.Hubs
         {
             this.ThrowIfUnauthorized(matchAllPermissions: true, Permissions.OnBehalfSelection);
 
-            return this.sessionLifecycleService.UpdateOnBehalfState(this.Context.ConnectionId, accountId);
+            if (!this.hubConnectionService.TryGetSessionId(this.Context.ConnectionId, out int sessionId))
+            {
+                throw new HubException("The current connection has not been registered");
+            }
+
+            return this.sessionService.UpdateOnBehalfState(sessionId, accountId);
         }
 
         private void ThrowIfUnauthorized(bool matchAllPermissions = false, params string[] permissions)
