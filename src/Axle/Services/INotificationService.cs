@@ -7,5 +7,7 @@ namespace Axle.Services
     public interface INotificationService
     {
         void PublishSessionTermination(TerminateSessionNotification terminateSessionNotification);
+
+        void PublishOtherTabsTermination(TerminateOtherTabsNotification terminateOtherTabsNotification);
     }
 }

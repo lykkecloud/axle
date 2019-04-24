@@ -2,6 +2,7 @@
 
 namespace Axle.Services
 {
+    using Axle.Constants;
     using Axle.Dto;
     using MessagePack;
     using StackExchange.Redis;
@@ -15,12 +16,16 @@ namespace Axle.Services
             this.multiplexer = multiplexer;
         }
 
-        private static string SessionTerminationNotifs => "axle:notifications:termsession";
-
         public void PublishSessionTermination(TerminateSessionNotification terminateSessionNotification)
         {
             var serTerminationSessionNotif = MessagePackSerializer.Serialize(terminateSessionNotification);
-            this.multiplexer.GetDatabase().Publish(SessionTerminationNotifs, serTerminationSessionNotif);
+            this.multiplexer.GetDatabase().Publish(RedisChannels.SessionTermination, serTerminationSessionNotif);
+        }
+
+        public void PublishOtherTabsTermination(TerminateOtherTabsNotification terminateOtherTabsNotification)
+        {
+            var serializedNotif = MessagePackSerializer.Serialize(terminateOtherTabsNotification);
+            this.multiplexer.GetDatabase().Publish(RedisChannels.OtherTabsTermination, serializedNotif);
         }
     }
 }

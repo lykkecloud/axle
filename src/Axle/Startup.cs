@@ -204,6 +204,7 @@ namespace Axle
 
             services.AddHostedService<SessionExpirationService>();
             services.AddHostedService<SessionTerminationListener>();
+            services.AddHostedService<OtherTabTerminationListener>();
 
             services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));
             services.AddDistributedMemoryCache(

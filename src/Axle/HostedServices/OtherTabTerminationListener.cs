@@ -7,18 +7,17 @@ namespace Axle.HostedServices
     using System.Threading.Tasks;
     using Axle.Constants;
     using Axle.Dto;
-    using Axle.Extensions;
     using Axle.Services;
     using MessagePack;
     using Microsoft.Extensions.Hosting;
     using StackExchange.Redis;
 
-    public class SessionTerminationListener : IHostedService
+    public class OtherTabTerminationListener : IHostedService
     {
         private readonly ISubscriber subscriber;
         private readonly IHubConnectionService hubConnectionService;
 
-        public SessionTerminationListener(
+        public OtherTabTerminationListener(
             IConnectionMultiplexer multiplexer,
             IHubConnectionService hubConnectionService)
         {
@@ -28,21 +27,26 @@ namespace Axle.HostedServices
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.SubscribeAsync(RedisChannels.SessionTermination, this.HandleSessionTermination);
+            return this.subscriber.SubscribeAsync(RedisChannels.OtherTabsTermination, this.HandleSessionTermination);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.UnsubscribeAsync(RedisChannels.SessionTermination, this.HandleSessionTermination);
+            return this.subscriber.UnsubscribeAsync(RedisChannels.OtherTabsTermination, this.HandleSessionTermination);
         }
 
         private void HandleSessionTermination(RedisChannel channel, RedisValue value)
         {
-            var terminateSessionNotification = MessagePackSerializer.Deserialize<TerminateSessionNotification>(value);
+            var otherTabsNotif = MessagePackSerializer.Deserialize<TerminateOtherTabsNotification>(value);
 
-            var connections = this.hubConnectionService.FindBySessionId(terminateSessionNotification.SessionId);
+            var connections = this.hubConnectionService.FindByAccessToken(otherTabsNotif.AccessToken);
 
-            this.hubConnectionService.TerminateConnections(terminateSessionNotification.Reason.ToTerminateConnectionReason(), connections.ToArray());
+            if (otherTabsNotif.OriginatingServiceId == AxleConstants.ServiceId)
+            {
+                connections = connections.Where(id => id != otherTabsNotif.OriginatingConnectionId);
+            }
+
+            this.hubConnectionService.TerminateConnections(TerminateConnectionReason.DifferentTab, connections.ToArray());
         }
     }
 }
