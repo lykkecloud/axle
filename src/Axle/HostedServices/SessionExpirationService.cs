@@ -11,10 +11,11 @@ namespace Axle.HostedServices
     using Axle.Settings;
     using Lykke.Middlewares;
     using Lykke.Middlewares.Mappers;
+    using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
     using Serilog;
 
-    public sealed class SessionExpirationService : HostedServiceMiddleware, IDisposable
+    public sealed class SessionExpirationService : HostedServiceMiddleware, IHostedService, IDisposable
     {
         private readonly ISessionRepository sessionRepository;
         private readonly ISessionService sessionLifecycleService;
