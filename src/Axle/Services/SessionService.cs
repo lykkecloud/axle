@@ -68,7 +68,7 @@ namespace Axle.Services
                 {
                     await this.activityService.PublishActivity(newSession, SessionActivityType.Login);
                 }
-                else
+                else if (!string.IsNullOrEmpty(newSession.AccountId))
                 {
                     await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportConnected, newSession);
                 }
