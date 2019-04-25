@@ -17,12 +17,12 @@ namespace Axle.Controllers
     public class ActivitiesController : Controller
     {
         private readonly IActivityService activityService;
-        private readonly ISessionLifecycleService sessionLifecycleService;
+        private readonly ISessionService sessionService;
 
-        public ActivitiesController(IActivityService activityService, ISessionLifecycleService sessionLifecycleService)
+        public ActivitiesController(IActivityService activityService, ISessionService sessionService)
         {
             this.activityService = activityService;
-            this.sessionLifecycleService = sessionLifecycleService;
+            this.sessionService = sessionService;
         }
 
         [HttpPost("login")]
@@ -30,7 +30,7 @@ namespace Axle.Controllers
         public async Task<IActionResult> Login(string accountId)
         {
             var userName = this.User.GetUsername();
-            var sessionId = this.sessionLifecycleService.GenerateSessionId();
+            var sessionId = this.sessionService.GenerateSessionId();
 
             var activity = new SessionActivity(SessionActivityType.Login, sessionId, userName, accountId);
 

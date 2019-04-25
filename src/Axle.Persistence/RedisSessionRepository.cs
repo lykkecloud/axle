@@ -108,12 +108,12 @@ namespace Axle.Persistence
             this.RemoveKeyIfEquals(db, accountKey, sessionId);
         }
 
-        public void RefreshSessionTimeouts(IEnumerable<Session> sessions)
+        public void RefreshSessionTimeouts(IEnumerable<int> sessions)
         {
             var db = this.multiplexer.GetDatabase();
 
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var entriesToUpdate = sessions.Select(x => new SortedSetEntry(x.SessionId, unixNow)).ToArray();
+            var entriesToUpdate = sessions.Select(session => new SortedSetEntry(session, unixNow)).ToArray();
 
             db.SortedSetAdd(ExpirationSetKey, entriesToUpdate);
         }

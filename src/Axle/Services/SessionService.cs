@@ -3,73 +3,42 @@
 namespace Axle.Services
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Axle.Contracts;
     using Axle.Dto;
     using Axle.Extensions;
     using Axle.Persistence;
-    using Axle.Settings;
     using Microsoft.Extensions.Logging;
-    using Serilog;
 
-    public sealed class SessionLifecycleService : ISessionLifecycleService, IDisposable
+    public sealed class SessionService : ISessionService, IDisposable
     {
         private readonly ISessionRepository sessionRepository;
         private readonly ITokenRevocationService tokenRevocationService;
         private readonly INotificationService notificationService;
         private readonly IActivityService activityService;
         private readonly IAccountsService accountsService;
-        private readonly IHubConnectionService hubConnectionService;
-        private readonly ILogger<SessionLifecycleService> logger;
-        private readonly TimeSpan sessionTimeout;
+        private readonly ILogger<SessionService> logger;
 
-        private readonly Dictionary<string, Session> connectionSessionMap = new Dictionary<string, Session>();
         private readonly SemaphoreSlim slimLock = new SemaphoreSlim(1, 1);
 
-        public SessionLifecycleService(
+        public SessionService(
             ISessionRepository sessionRepository,
             ITokenRevocationService tokenRevocationService,
             INotificationService notificationService,
             IActivityService activityService,
             IAccountsService accountsService,
-            IHubConnectionService hubConnectionService,
-            ILogger<SessionLifecycleService> logger,
-            SessionSettings sessionSettings)
+            ILogger<SessionService> logger)
         {
             this.sessionRepository = sessionRepository;
             this.tokenRevocationService = tokenRevocationService;
             this.notificationService = notificationService;
             this.activityService = activityService;
             this.accountsService = accountsService;
-            this.hubConnectionService = hubConnectionService;
             this.logger = logger;
-            this.sessionTimeout = sessionSettings.Timeout;
-
-            this.notificationService.OnSessionTerminated += this.HandleSessionTermination;
-            this.notificationService.OnBehalfChanged += this.HandleOnBehalfChange;
-
-            this.RefreshTimeouts();
         }
 
-        public void CloseConnection(string connectionId)
-        {
-            this.slimLock.Wait();
-
-            try
-            {
-                this.connectionSessionMap.Remove(connectionId);
-            }
-            finally
-            {
-                this.slimLock.Release();
-            }
-        }
-
-        public async Task OpenConnection(
-            string connectionId,
+        public async Task<Session> BeginSession(
             string userName,
             string accountId,
             string clientId,
@@ -86,8 +55,7 @@ namespace Axle.Services
 
                 if (userInfo != null && userInfo.AccessToken == accessToken)
                 {
-                    this.connectionSessionMap.TryAdd(connectionId, userInfo);
-                    return;
+                    return userInfo;
                 }
 
                 var sessionId = this.GenerateSessionId();
@@ -95,11 +63,14 @@ namespace Axle.Services
                 var newSession = new Session(userName, sessionId, accountId, accessToken, clientId, isSupportUser);
 
                 this.sessionRepository.Add(newSession);
-                this.connectionSessionMap.TryAdd(connectionId, newSession);
 
                 if (!newSession.IsSupportUser)
                 {
                     await this.activityService.PublishActivity(newSession, SessionActivityType.Login);
+                }
+                else if (!string.IsNullOrEmpty(newSession.AccountId))
+                {
+                    await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportConnected, newSession);
                 }
 
                 if (userInfo != null)
@@ -109,6 +80,8 @@ namespace Axle.Services
                 }
 
                 this.logger.LogWarning(StatusCode.IF_ATH_501.ToMessage());
+
+                return newSession;
             }
             finally
             {
@@ -116,15 +89,17 @@ namespace Axle.Services
             }
         }
 
-        public async Task<OnBehalfChangeResponse> UpdateOnBehalfState(string connectionId, string onBehalfAccount)
+        public async Task<OnBehalfChangeResponse> UpdateOnBehalfState(int sessionId, string onBehalfAccount)
         {
             this.slimLock.Wait();
 
             try
             {
-                if (!this.connectionSessionMap.TryGetValue(connectionId, out Session session))
+                var session = this.sessionRepository.Get(sessionId);
+
+                if (session == null)
                 {
-                    return OnBehalfChangeResponse.Fail($"Unknown connection ID [{connectionId}]");
+                    return OnBehalfChangeResponse.Fail($"Unknown session ID [{sessionId}]");
                 }
 
                 if (!session.IsSupportUser)
@@ -155,18 +130,13 @@ namespace Axle.Services
 
                 if (!string.IsNullOrEmpty(session.AccountId))
                 {
-                    var accountOwner = await this.accountsService.GetAccountOwnerUserName(session.AccountId);
-                    var sessionActivity = new SessionActivity(SessionActivityType.OnBehalfSupportDisconnected, session.SessionId, accountOwner, session.AccountId);
-
-                    await this.activityService.PublishActivity(sessionActivity);
+                    await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportDisconnected, session);
                 }
 
                 if (!string.IsNullOrEmpty(onBehalfAccount))
                 {
                     await this.activityService.PublishActivity(new SessionActivity(SessionActivityType.OnBehalfSupportConnected, session.SessionId, onBehalfOwner, onBehalfAccount));
                 }
-
-                this.notificationService.PublishOnBehalfChange(session.SessionId);
 
                 return OnBehalfChangeResponse.Success();
             }
@@ -246,17 +216,20 @@ namespace Axle.Services
 
             this.notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });
 
-            // Support user activities are not required currently
             if (!userInfo.IsSupportUser)
             {
                 await this.activityService.PublishActivity(userInfo, reason);
+            }
+            else if (!string.IsNullOrEmpty(userInfo.AccountId))
+            {
+                await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportDisconnected, userInfo);
             }
         }
 
         public int GenerateSessionId()
         {
             var rand = new Random();
-            var sessionId = 0;
+            int sessionId;
 
             do
             {
@@ -273,89 +246,12 @@ namespace Axle.Services
             GC.SuppressFinalize(this);
         }
 
-        private async void RefreshTimeouts()
+        private async Task MakeAndPublishOnBehalfActivity(SessionActivityType type, Session session)
         {
-            while (true)
-            {
-                try
-                {
-                    await Task.Delay(this.sessionTimeout / 4);
+            var accountOwner = await this.accountsService.GetAccountOwnerUserName(session.AccountId);
+            var sessionActivity = new SessionActivity(type, session.SessionId, accountOwner, session.AccountId);
 
-                    await this.slimLock.WaitAsync();
-
-                    try
-                    {
-                        this.sessionRepository.RefreshSessionTimeouts(this.connectionSessionMap.Values);
-
-                        var sessionsToTerminate = this.sessionRepository.GetExpiredSessions();
-
-                        foreach (var session in sessionsToTerminate)
-                        {
-                            await this.TerminateSession(session, SessionActivityType.TimeOut);
-                            this.logger.LogInformation($"Successfully timed out session: [{session.SessionId}] for user: [{session.UserName}]");
-                        }
-                    }
-                    finally
-                    {
-                        this.slimLock.Release();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e, "An error occured while trying to update session timeouts");
-                }
-            }
-        }
-
-        private void HandleSessionTermination(TerminateSessionNotification terminateSessionNotification)
-        {
-            this.slimLock.Wait();
-
-            try
-            {
-                // Retrieve and remove the connections to the session we're closing
-                var kvps = this.connectionSessionMap.Where(x => x.Value.SessionId == terminateSessionNotification.SessionId).ToArray();
-
-                foreach (var kvp in kvps)
-                {
-                    this.connectionSessionMap.Remove(kvp.Key);
-                }
-
-                var connections = kvps.Select(x => x.Key).ToArray();
-
-                this.hubConnectionService.TerminateConnections(terminateSessionNotification.Reason, connections);
-            }
-            finally
-            {
-                this.slimLock.Release();
-            }
-        }
-
-        private void HandleOnBehalfChange(int sessionId)
-        {
-            this.slimLock.Wait();
-
-            try
-            {
-                var session = this.sessionRepository.Get(sessionId);
-
-                if (session == null)
-                {
-                    this.logger.LogWarning($"Session with ID [{sessionId}] was not found while trying to update on behalf state");
-                    return;
-                }
-
-                var kvps = this.connectionSessionMap.Where(x => x.Value.SessionId == sessionId).ToArray();
-
-                foreach (var kvp in kvps)
-                {
-                    this.connectionSessionMap[kvp.Key] = session;
-                }
-            }
-            finally
-            {
-                this.slimLock.Release();
-            }
+            await this.activityService.PublishActivity(sessionActivity);
         }
     }
 }

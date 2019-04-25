@@ -274,18 +274,9 @@
                         .configureLogging(signalR.LogLevel.Trace)
                         .build();
 
-                    connection.start().catch(function (err) {
-                        if (err.statusCode === 401) {
-                            mgr.signoutRedirect();
-                            return;
-                        }
-                        throw err.message;
-                    });
-
                     connection.onclose(function () {
-                        mgr.signoutRedirect();
                         showTokens();
-                        log("The connection was closed.");
+                        console.log("The connection was closed.");
                     });
 
                     connection.on("concurrentSessionTermination", (errorCode, errorMessage) => {
@@ -293,6 +284,18 @@
                         localStorage.setItem("errorMessage", errorMessage);
                         mgr.signoutRedirect();
                         showTokens();
+                    });
+
+                    connection.on("concurrentTabTermination", () => {
+                        log("Signing in from more than one tab is not allowed");
+                    });
+
+                    connection.start().catch(function (err) {
+                        if (err.statusCode === 401) {
+                            mgr.signoutRedirect();
+                            return;
+                        }
+                        throw err.message;
                     });
                 }
             });

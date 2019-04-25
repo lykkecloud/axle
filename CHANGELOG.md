@@ -1,7 +1,9 @@
 ## UNRELEASED
 
 * AXLE-61: Modified storage to keep investor sessions per account
-* Axle-62: Added hub method for logging out
+* AXLE-62: Added hub method for logging out
+* AXLE-59: Allow only one tab to be open by a given user
+* LT-1378: Fix on behalf activities not generating when support session is started or terminated
 
 ## 2.13.0 (April 10, 2019)
 

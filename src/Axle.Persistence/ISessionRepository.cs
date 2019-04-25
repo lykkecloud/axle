@@ -19,7 +19,7 @@ namespace Axle.Persistence
 
         void Remove(int sessionId, string userName, string accountId);
 
-        void RefreshSessionTimeouts(IEnumerable<Session> sessions);
+        void RefreshSessionTimeouts(IEnumerable<int> sessions);
 
         IEnumerable<Session> GetExpiredSessions();
     }

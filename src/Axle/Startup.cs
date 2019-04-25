@@ -10,6 +10,7 @@ namespace Axle
     using Axle.Configurators;
     using Axle.Constants;
     using Axle.Contracts;
+    using Axle.HostedServices;
     using Axle.HttpClients;
     using Axle.Hubs;
     using Axle.Persistence;
@@ -134,6 +135,7 @@ namespace Axle
             var connectionRepository = new InMemoryRepository<string, HubCallerContext>();
 
             services.AddSingleton<IRepository<string, HubCallerContext>>(connectionRepository);
+            services.AddSingleton<IRepository<string, int>>(new InMemoryRepository<string, int>());
             services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
             var sessionSettings = this.configuration.GetSection("SessionConfig").Get<SessionSettings>() ?? new SessionSettings();
@@ -145,7 +147,7 @@ namespace Axle
                 new RedisSessionRepository(
                     x.GetService<IConnectionMultiplexer>(),
                     sessionSettings.Timeout));
-            services.AddSingleton<ISessionLifecycleService, SessionLifecycleService>();
+            services.AddSingleton<ISessionService, SessionService>();
             services.AddSingleton<IHubConnectionService, HubConnectionService>();
             services.AddSingleton<IActivityService, ActivityService>();
 
@@ -190,7 +192,7 @@ namespace Axle
 
             services.AddSingleton<IAccountsService, AccountsService>();
 
-            services.AddSingleton<IEnumerable<SecurityGroup>>(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
+            services.AddSingleton(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
             services.AddSingleton<IUserRoleToPermissionsTransformer, UserRoleToPermissionsTransformer>();
             services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
             services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
@@ -199,6 +201,10 @@ namespace Axle
             services.AddSingleton<IAuthorizationHandler, MobileClientAndAccountOwnerHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IAccountsCache, AccountsCache>();
+
+            services.AddHostedService<SessionExpirationService>();
+            services.AddHostedService<SessionTerminationListener>();
+            services.AddHostedService<OtherTabTerminationListener>();
 
             services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));
             services.AddDistributedMemoryCache(

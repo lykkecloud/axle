@@ -19,17 +19,14 @@ namespace Axle.Controllers
     public class SessionsController : Controller
     {
         private readonly ISessionRepository sessionRepository;
-        private readonly IAccountsService accountsService;
-        private readonly ISessionLifecycleService sessionLifecycleService;
+        private readonly ISessionService sessionService;
 
         public SessionsController(
             ISessionRepository sessionRepository,
-            IAccountsService accountsService,
-            ISessionLifecycleService sessionLifecycleService)
+            ISessionService sessionService)
         {
             this.sessionRepository = sessionRepository;
-            this.accountsService = accountsService;
-            this.sessionLifecycleService = sessionLifecycleService;
+            this.sessionService = sessionService;
         }
 
         [Authorize(AuthorizationPolicies.System)]
@@ -54,7 +51,7 @@ namespace Axle.Controllers
         [SwaggerResponse((int)HttpStatusCode.BadRequest, typeof(TerminateSessionResponse))]
         public async Task<IActionResult> TerminateSession([BindRequired] [FromQuery] string accountId)
         {
-            var result = await this.sessionLifecycleService.TerminateSession(null, accountId, false);
+            var result = await this.sessionService.TerminateSession(null, accountId, false);
 
             if (result.Status == TerminateSessionStatus.NotFound)
             {
