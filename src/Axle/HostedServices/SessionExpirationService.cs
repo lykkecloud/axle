@@ -9,11 +9,13 @@ namespace Axle.HostedServices
     using Axle.Persistence;
     using Axle.Services;
     using Axle.Settings;
+    using Lykke.Middlewares;
+    using Lykke.Middlewares.Mappers;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
     using Serilog;
 
-    public sealed class SessionExpirationService : IHostedService, IDisposable
+    public sealed class SessionExpirationService : HostedServiceMiddleware, IHostedService, IDisposable
     {
         private readonly ISessionRepository sessionRepository;
         private readonly ISessionService sessionLifecycleService;
@@ -25,11 +27,13 @@ namespace Axle.HostedServices
         private CancellationTokenSource cancellationTokenSource;
 
         public SessionExpirationService(
+            ILogLevelMapper logLevelMapper,
             ISessionRepository sessionRepository,
             ISessionService sessionLifecycleService,
             IHubConnectionService hubConnectionService,
             ILogger<SessionExpirationService> logger,
             SessionSettings sessionSettings)
+            : base(logLevelMapper, logger)
         {
             this.sessionRepository = sessionRepository;
             this.sessionLifecycleService = sessionLifecycleService;
@@ -41,23 +45,23 @@ namespace Axle.HostedServices
         public Task StartAsync(CancellationToken cancellationToken)
         {
             this.cancellationTokenSource?.Dispose();
-            this.cancellationTokenSource = new CancellationTokenSource();
+            this.cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-            this.expirationJob = this.RefreshTimeouts(this.cancellationTokenSource.Token);
+            this.expirationJob = this.DecorateAndHandle(() => this.RefreshTimeouts(this.cancellationTokenSource.Token));
 
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            this.cancellationTokenSource.Cancel();
-            return this.expirationJob;
+            this.cancellationTokenSource?.Cancel();
+            return this.expirationJob ?? Task.CompletedTask;
         }
 
         public void Dispose()
         {
+            this.cancellationTokenSource?.Cancel();
             this.cancellationTokenSource?.Dispose();
-            this.expirationJob?.Dispose();
         }
 
         private async Task RefreshTimeouts(CancellationToken cancellationToken)

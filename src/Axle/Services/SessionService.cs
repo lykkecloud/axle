@@ -68,6 +68,10 @@ namespace Axle.Services
                 {
                     await this.activityService.PublishActivity(newSession, SessionActivityType.Login);
                 }
+                else if (!string.IsNullOrEmpty(newSession.AccountId))
+                {
+                    await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportConnected, newSession);
+                }
 
                 if (userInfo != null)
                 {
@@ -126,10 +130,7 @@ namespace Axle.Services
 
                 if (!string.IsNullOrEmpty(session.AccountId))
                 {
-                    var accountOwner = await this.accountsService.GetAccountOwnerUserName(session.AccountId);
-                    var sessionActivity = new SessionActivity(SessionActivityType.OnBehalfSupportDisconnected, session.SessionId, accountOwner, session.AccountId);
-
-                    await this.activityService.PublishActivity(sessionActivity);
+                    await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportDisconnected, session);
                 }
 
                 if (!string.IsNullOrEmpty(onBehalfAccount))
@@ -215,10 +216,13 @@ namespace Axle.Services
 
             this.notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });
 
-            // Support user activities are not required currently
             if (!userInfo.IsSupportUser)
             {
                 await this.activityService.PublishActivity(userInfo, reason);
+            }
+            else if (!string.IsNullOrEmpty(userInfo.AccountId))
+            {
+                await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportDisconnected, userInfo);
             }
         }
 
@@ -240,6 +244,14 @@ namespace Axle.Services
         {
             this.slimLock?.Dispose();
             GC.SuppressFinalize(this);
+        }
+
+        private async Task MakeAndPublishOnBehalfActivity(SessionActivityType type, Session session)
+        {
+            var accountOwner = await this.accountsService.GetAccountOwnerUserName(session.AccountId);
+            var sessionActivity = new SessionActivity(type, session.SessionId, accountOwner, session.AccountId);
+
+            await this.activityService.PublishActivity(sessionActivity);
         }
     }
 }
