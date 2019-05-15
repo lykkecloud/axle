@@ -4,6 +4,9 @@
 * AXLE-62: Added hub method for logging out
 * AXLE-59: Allow only one tab to be open by a given user
 * LT-1378: Fix on behalf activities not generating when support session is started or terminated
+
+## 2.13.1 (May 15, 2019)
+
 * LT-1320: Enable Audit logs
 
 ### Configuration changes
