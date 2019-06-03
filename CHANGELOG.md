@@ -4,6 +4,7 @@
 * AXLE-62: Added hub method for logging out
 * AXLE-59: Allow only one tab to be open by a given user
 * LT-1378: Fix on behalf activities not generating when support session is started or terminated
+* MTC-824: Add optional ApiKey to client generation
 
 ## 2.13.1 (May 15, 2019)
 
