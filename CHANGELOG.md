@@ -11,7 +11,7 @@
 * LT-1320: Enable Audit logs
 
 ### Configuration changes
-  - Added variables for MT Core services API keys. It any variable is left unset or empty API call will be performed without API key.
+  - Added variables for MT Core services API keys. If any variable is left unset or empty API call will be performed without API key.
 ```none
   mtCoreAccountsApiKey / MTCOREACCOUNTSAPIKEY
 ```
