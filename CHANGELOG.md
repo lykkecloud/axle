@@ -11,7 +11,10 @@
 * LT-1320: Enable Audit logs
 
 ### Configuration changes
-
+  - Added variables for MT Core services API keys. It any variable is left unset or empty API call will be performed without API key.
+```none
+  mtCoreAccountsApiKey / MTCOREACCOUNTSAPIKEY
+```
   - Added following section for Audit log settings. It enables Audit logs and sets which roles/routes will be tracked by [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs).
   ```json
   {
