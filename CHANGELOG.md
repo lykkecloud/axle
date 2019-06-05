@@ -4,13 +4,17 @@
 * AXLE-62: Added hub method for logging out
 * AXLE-59: Allow only one tab to be open by a given user
 * LT-1378: Fix on behalf activities not generating when support session is started or terminated
+* MTC-824: Add optional ApiKey to client generation
 
 ## 2.13.1 (May 15, 2019)
 
 * LT-1320: Enable Audit logs
 
 ### Configuration changes
-
+  - Added variables for MT Core services API keys. If any variable is left unset or empty API call will be performed without API key.
+```none
+  mtCoreAccountsApiKey / MTCOREACCOUNTSAPIKEY
+```
   - Added following section for Audit log settings. It enables Audit logs and sets which roles/routes will be tracked by [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs).
   ```json
   {
