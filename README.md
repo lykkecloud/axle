@@ -41,6 +41,7 @@ This project requires specification of the [following user secrets](src/Axle/Pro
   | Api-Authority / API_AUTHORITY | Authentication server url |
   | Api-Name / API_NAME | API name for this service on authentication server |
   | Api-Secret / API_SECRET | API secret for this service on authentication server |
+  | mtCoreAccountsApiKey / MTCOREACCOUNTSAPIKEY | Api key for mt core accounts management service |
   | Require-Https / REQUIRE_HTTPS | Does https required by the authentication server (optional: default value is true) |
   | Swagger-Client-Id / SWAGGER_CLIENT_ID | Swagger client id for this service on authentication server (optional: default value is axle_api_swagger) |
   | Validate-Issuer-Name / VALIDATE_ISSUER_NAME | Should validate token issuer name when a secure endpoint is called (optional: default value is false) |
