@@ -1,10 +1,16 @@
-## UNRELEASED
+## 2.13.2 (June 14, 2019)
 
 * AXLE-61: Modified storage to keep investor sessions per account
 * AXLE-62: Added hub method for logging out
 * AXLE-59: Allow only one tab to be open by a given user
 * LT-1378: Fix on behalf activities not generating when support session is started or terminated
 * MTC-824: Add optional ApiKey to client generation
+
+### Configuration changes
+  - Added variables for MT Core services API keys. If any variable is left unset or empty API call will be performed without API key.
+```none
+  mtCoreAccountsApiKey / MTCOREACCOUNTSAPIKEY
+```
 
 ## 2.13.1 (May 15, 2019)
 
