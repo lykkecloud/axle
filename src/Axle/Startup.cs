@@ -11,7 +11,6 @@ namespace Axle
     using Axle.Constants;
     using Axle.Contracts;
     using Axle.Extensions;
-    using Axle.HostedServices;
     using Axle.HttpClients;
     using Axle.Hubs;
     using Axle.Persistence;
