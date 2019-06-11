@@ -10,6 +10,8 @@ namespace Axle
     using Axle.Configurators;
     using Axle.Constants;
     using Axle.Contracts;
+    using Axle.Extensions;
+    using Axle.HostedServices;
     using Axle.HttpClients;
     using Axle.Hubs;
     using Axle.Persistence;
@@ -43,7 +45,6 @@ namespace Axle
     using PermissionsManagement.Client.Dto;
     using PermissionsManagement.Client.Handlers;
     using StackExchange.Redis;
-    using IAccountsMgmtApi = MarginTrading.AccountsManagement.Contracts.IAccountsApi;
 
     public class Startup
     {
@@ -183,13 +184,9 @@ namespace Axle
             services.AddSingleton<ILogLevelMapper, DefaultLogLevelMapper>();
             services.AddSingleton<AuditSettings>(this.configuration.GetSection("AuditSettings")?.Get<AuditSettings>() ?? new AuditSettings());
 
-            var mtCoreAccountsMgmtClientGenerator = HttpClientGenerator
-                .BuildForUrl(this.configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"))
-                .WithServiceName<MtCoreHttpErrorResponse>("MT Core Account Management Service")
-                .WithoutRetries()
-                .Create();
-
-            services.AddSingleton(mtCoreAccountsMgmtClientGenerator.Generate<IAccountsMgmtApi>());
+            services.AddMtCoreDalRepositories(
+                this.configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"),
+                this.configuration.GetValue<string>("mtCoreAccountsApiKey"));
 
             services.AddSingleton<IChestClient>(provider => new ChestClient(new Uri(this.configuration.GetValue<string>("chestUrl")), new ExceptionTextWithServiceNameEnricher("Chest API")));
 
