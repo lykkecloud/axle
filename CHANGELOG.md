@@ -17,8 +17,7 @@
 * LT-1320: Enable Audit logs
 
 ### Configuration changes
- 
-- Added following section for Audit log settings. It enables Audit logs and sets which roles/routes will be tracked by [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs).
+  - Added following section for Audit log settings. It enables Audit logs and sets which roles/routes will be tracked by [AuditHandlerMiddleware](https://bitbucket.org/lykke-snow/lykke.middlewares/src/dev/src/Lykke.Middlewares/AuditHandlerMiddleware.cs).
   ```json
   {
     "AuditSettings":{
