@@ -8,14 +8,18 @@ namespace Axle.Persistence
     {
         void Add(Session entity);
 
+        void Update(Session entity);
+
 #pragma warning disable CA1716 // Identifiers should not match keywords
         Session Get(int sessionId);
 
         Session GetByUser(string userName);
 
-        void Remove(int sessionId, string userName);
+        Session GetByAccount(string accountId);
 
-        void RefreshSessionTimeouts(IEnumerable<Session> sessions);
+        void Remove(int sessionId, string userName, string accountId);
+
+        void RefreshSessionTimeouts(IEnumerable<int> sessions);
 
         IEnumerable<Session> GetExpiredSessions();
     }

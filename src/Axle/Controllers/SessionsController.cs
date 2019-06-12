@@ -19,17 +19,14 @@ namespace Axle.Controllers
     public class SessionsController : Controller
     {
         private readonly ISessionRepository sessionRepository;
-        private readonly IAccountsService accountsService;
-        private readonly ISessionLifecycleService sessionLifecycleService;
+        private readonly ISessionService sessionService;
 
         public SessionsController(
             ISessionRepository sessionRepository,
-            IAccountsService accountsService,
-            ISessionLifecycleService sessionLifecycleService)
+            ISessionService sessionService)
         {
             this.sessionRepository = sessionRepository;
-            this.accountsService = accountsService;
-            this.sessionLifecycleService = sessionLifecycleService;
+            this.sessionService = sessionService;
         }
 
         [Authorize(AuthorizationPolicies.System)]
@@ -54,19 +51,7 @@ namespace Axle.Controllers
         [SwaggerResponse((int)HttpStatusCode.BadRequest, typeof(TerminateSessionResponse))]
         public async Task<IActionResult> TerminateSession([BindRequired] [FromQuery] string accountId)
         {
-            // TODO: remove this call when sessions are stored by accountId
-            var userName = await this.accountsService.GetAccountOwnerUserName(accountId);
-
-            if (string.IsNullOrEmpty(userName))
-            {
-                return this.NotFound(new TerminateSessionResponse
-                {
-                    Status = TerminateSessionStatus.BadRequest,
-                    ErrorMessage = "Couldn't find account owner user id"
-                });
-            }
-
-            var result = await this.sessionLifecycleService.TerminateSession(userName);
+            var result = await this.sessionService.TerminateSession(null, accountId, false);
 
             if (result.Status == TerminateSessionStatus.NotFound)
             {

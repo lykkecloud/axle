@@ -11,10 +11,12 @@ namespace Axle
     using Axle.Constants;
     using Axle.Contracts;
     using Axle.Extensions;
+    using Axle.HostedServices;
     using Axle.HttpClients;
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
+    using Axle.Settings;
     using Chest.Client.AutorestClient;
     using IdentityModel;
     using IdentityModel.Client;
@@ -133,24 +135,20 @@ namespace Axle
             var connectionRepository = new InMemoryRepository<string, HubCallerContext>();
 
             services.AddSingleton<IRepository<string, HubCallerContext>>(connectionRepository);
+            services.AddSingleton<IRepository<string, int>>(new InMemoryRepository<string, int>());
             services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
-            var sessionTimeout = TimeSpan.FromSeconds(this.configuration.GetValue<int>("SessionConfig:TimeoutInSec", 300));
+            var sessionSettings = this.configuration.GetSection("SessionConfig").Get<SessionSettings>() ?? new SessionSettings();
 
+            services.AddSingleton(sessionSettings);
             services.AddSingleton<INotificationService, NotificationService>();
 
             services.AddSingleton<ISessionRepository, RedisSessionRepository>(x =>
                 new RedisSessionRepository(
                     x.GetService<IConnectionMultiplexer>(),
-                    sessionTimeout));
-            services.AddSingleton<ISessionLifecycleService, SessionLifecycleService>(x =>
-                new SessionLifecycleService(
-                    x.GetService<ISessionRepository>(),
-                    x.GetService<ITokenRevocationService>(),
-                    x.GetService<INotificationService>(),
-                    x.GetService<IActivityService>(),
-                    x.GetService<ILogger<SessionLifecycleService>>(),
-                    sessionTimeout));
+                    sessionSettings.Timeout));
+            services.AddSingleton<ISessionService, SessionService>();
+            services.AddSingleton<IHubConnectionService, HubConnectionService>();
             services.AddSingleton<IActivityService, ActivityService>();
 
             var rabbitMqSettings = this.configuration.GetSection("ActivityPublisherSettings").Get<RabbitMqSubscriptionSettings>().MakeDurable();
@@ -191,7 +189,7 @@ namespace Axle
 
             services.AddSingleton<IAccountsService, AccountsService>();
 
-            services.AddSingleton<IEnumerable<SecurityGroup>>(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
+            services.AddSingleton(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
             services.AddSingleton<IUserRoleToPermissionsTransformer, UserRoleToPermissionsTransformer>();
             services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
             services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
@@ -200,6 +198,10 @@ namespace Axle
             services.AddSingleton<IAuthorizationHandler, MobileClientAndAccountOwnerHandler>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<IAccountsCache, AccountsCache>();
+
+            services.AddHostedService<SessionExpirationService>();
+            services.AddHostedService<SessionTerminationListener>();
+            services.AddHostedService<OtherTabTerminationListener>();
 
             services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));
             services.AddDistributedMemoryCache(

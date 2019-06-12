@@ -2,7 +2,10 @@
 
 namespace Axle.Persistence
 {
+    using System;
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Linq;
 
     public class InMemoryRepository<TId, TEntity> : IRepository<TId, TEntity>
     {
@@ -20,7 +23,19 @@ namespace Axle.Persistence
                 return entity;
             }
 
-            return default(TEntity);
+            return default;
+        }
+
+        public bool TryGet(TId id, out TEntity entity) => this.repo.TryGetValue(id, out entity);
+
+        public IReadOnlyList<KeyValuePair<TId, TEntity>> GetAll()
+        {
+            return this.repo.ToArray();
+        }
+
+        public IEnumerable<KeyValuePair<TId, TEntity>> Find(Func<TEntity, bool> filter)
+        {
+            return this.repo.Where(x => filter(x.Value));
         }
 
         public void Remove(TId id)

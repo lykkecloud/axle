@@ -2,15 +2,12 @@
 
 namespace Axle.Services
 {
-    using System;
-    using Axle.Contracts;
     using Axle.Dto;
 
     public interface INotificationService
     {
-#pragma warning disable CA1710 // Event name should end in EventHandler
-        event Action<TerminateSessionNotification> OnSessionTerminated;
-
         void PublishSessionTermination(TerminateSessionNotification terminateSessionNotification);
+
+        void PublishOtherTabsTermination(TerminateOtherTabsNotification terminateOtherTabsNotification);
     }
 }

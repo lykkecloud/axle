@@ -23,8 +23,10 @@
                 <li><button class="btn btn-default request" data-scope='openid profile axle_api' data-type='id_token token'>Login</button></li>
                 <li><button class="btn btn-info revoke">Revoke Access Token</button></li>
                 <li><button class="btn btn-info logout">Logout</button></li>
+                <li><button class="btn btn-info logoutAxle">Logout through Axle</button></li>
                 <li>Account ID (optional): <input id="accountId" type="text" /></li>
                 <li><button id="connectBtn">Connect</button></li>
+                <li><button id="switchOnBehalf">Switch On Behalf Account</button></li>
             </ul>
         </div>
 
@@ -165,6 +167,30 @@
             terminateSession();
         }
 
+        function logoutAxle() {
+            if (connection != null && connection.connection.connectionState === 1) {
+                connection.invoke('signOut').done(function (result) {
+                    console.log('logout result: ' + result);
+                });
+            }
+        }
+
+        function switchOnBehalfAccount() {
+            if (connection != null && connection.connection.connectionState === 1) {
+                let accountId = document.querySelector("#accountId").value;
+
+                connection.invoke('setOnBehalfAccount', accountId).then(function (result) {
+                    let responseElem = document.getElementById('response');
+
+                    responseElem.innerHTML = 'Success: ' + result.isSuccessful;
+
+                    if (result.errorMessage) {
+                        responseElem.innerHTML += '<br/>Error Message: ' + result.errorMessage;
+                    }
+                });
+            }
+        }
+
         function terminateSession() {
             if (connection != null) {
                 connection.stop();
@@ -183,7 +209,9 @@
 
         document.querySelector(".revoke").addEventListener("click", revoke, false);
         document.querySelector(".logout").addEventListener("click", logout, false);
+        document.querySelector(".logoutAxle").addEventListener("click", logoutAxle, false);
         document.querySelector("#connectBtn").addEventListener("click", setUpAxleConnection, false);
+        document.querySelector("#switchOnBehalf").addEventListener("click", switchOnBehalfAccount, false);
 
         function log(data) {
             document.getElementById('response').innerText = '';
@@ -246,18 +274,9 @@
                         .configureLogging(signalR.LogLevel.Trace)
                         .build();
 
-                    connection.start().catch(function (err) {
-                        if (err.statusCode === 401) {
-                            mgr.signoutRedirect();
-                            return;
-                        }
-                        throw err.message;
-                    });
-
                     connection.onclose(function () {
-                        mgr.signoutRedirect();
                         showTokens();
-                        log("The connection was closed.");
+                        console.log("The connection was closed.");
                     });
 
                     connection.on("concurrentSessionTermination", (errorCode, errorMessage) => {
@@ -265,6 +284,18 @@
                         localStorage.setItem("errorMessage", errorMessage);
                         mgr.signoutRedirect();
                         showTokens();
+                    });
+
+                    connection.on("concurrentTabTermination", () => {
+                        log("Signing in from more than one tab is not allowed");
+                    });
+
+                    connection.start().catch(function (err) {
+                        if (err.statusCode === 401) {
+                            mgr.signoutRedirect();
+                            return;
+                        }
+                        throw err.message;
                     });
                 }
             });

@@ -9,6 +9,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <TrimUnusedDependencies>true</TrimUnusedDependencies>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   
   <ItemGroup>

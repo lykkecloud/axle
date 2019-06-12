@@ -2,19 +2,15 @@
 
 namespace Axle.Services
 {
-    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using Axle.Contracts;
     using Axle.Dto;
+    using Microsoft.AspNetCore.SignalR;
 
-    public interface ISessionLifecycleService
+    public interface IHubConnectionService
     {
-        #pragma warning disable CA1710 // Event name should end in EventHandler
-        event Action<IEnumerable<string>, SessionActivityType> OnCloseConnections;
-
         Task OpenConnection(
-            string connectionId,
+            HubCallerContext context,
             string userName,
             string accountId,
             string clientId,
@@ -23,10 +19,14 @@ namespace Axle.Services
 
         void CloseConnection(string connectionId);
 
-        Task<TerminateSessionResponse> TerminateSession(
-            string userName,
-            SessionActivityType reason = SessionActivityType.ManualTermination);
+        bool TryGetSessionId(string connectionId, out int sessionId);
 
-        int GenerateSessionId();
+        IEnumerable<int> GetAllConnectedSessions();
+
+        IEnumerable<string> FindBySessionId(int sessionId);
+
+        IEnumerable<string> FindByAccessToken(string accessToken);
+
+        Task TerminateConnections(TerminateConnectionReason reason, params string[] connectionIds);
     }
 }
