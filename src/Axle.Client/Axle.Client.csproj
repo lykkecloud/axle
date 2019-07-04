@@ -17,7 +17,7 @@
     <AssemblyName>Axle.Client</AssemblyName>
     <Version>0.0.2</Version>
     <Authors>Axle Contributors</Authors>
-    <Copyright>Copyright (c) Donut Contributers. All rights reserved.</Copyright>
+    <Copyright>Copyright (c) 2019 Lykke Corp.</Copyright>
     <Company>Lykke</Company>
     <Product>Axle</Product>
   </PropertyGroup>

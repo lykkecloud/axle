@@ -7,8 +7,8 @@
       "allowedHungarianPrefixes": []
     },
     "documentationRules": {
-      "companyName": "Lykke Corporation",
-      "copyrightText": "(c) {companyName} 2019 - All rights reserved. No copying, adaptation, decompiling, distribution or any other form of use permitted.",
+      "companyName": "Lykke Corp",
+      "copyrightText": "Copyright (c) 2019 {companyName}.\nSee the LICENSE file in the project root for more information.",
       "xmlHeader": false,
       "documentInternalElements": false
     }
