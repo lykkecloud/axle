@@ -1,4 +1,4 @@
-## 2.14.0 (July 05, 2019)
+## 2.14.0 (July 08, 2019)
 
 * LT-1541: Update licenses headers and add LICENSE  file
 
