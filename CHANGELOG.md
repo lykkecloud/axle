@@ -1,3 +1,7 @@
+## 2.14.0 (July 08, 2019)
+
+* LT-1541: Update licenses headers and add LICENSE  file
+
 ## 2.13.2 (June 14, 2019)
 
 * AXLE-61: Modified storage to keep investor sessions per account
