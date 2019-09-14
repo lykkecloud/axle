@@ -80,9 +80,9 @@ namespace Axle.HostedServices
                         break;
                     }
 
-                    this.sessionRepository.RefreshSessionTimeouts(this.hubConnectionService.GetAllConnectedSessions());
+                    await this.sessionRepository.RefreshSessionTimeouts(this.hubConnectionService.GetAllConnectedSessions());
 
-                    var sessionsToTerminate = this.sessionRepository.GetExpiredSessions();
+                    var sessionsToTerminate = await this.sessionRepository.GetExpiredSessions();
 
                     foreach (var session in sessionsToTerminate)
                     {

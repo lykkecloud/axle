@@ -59,7 +59,7 @@ namespace Axle.Services
                 OriginatingServiceId = AxleConstants.ServiceId
             };
 
-            this.notificationService.PublishOtherTabsTermination(terminateOtherTabs);
+            await this.notificationService.PublishOtherTabsTermination(terminateOtherTabs);
         }
 
         public void CloseConnection(string connectionId)

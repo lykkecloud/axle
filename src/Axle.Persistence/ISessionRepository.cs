@@ -1,27 +1,29 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System.Threading.Tasks;
+
 namespace Axle.Persistence
 {
     using System.Collections.Generic;
 
     public interface ISessionRepository
     {
-        void Add(Session entity);
+        Task Add(Session entity);
 
-        void Update(Session entity);
+        Task Update(Session entity);
 
 #pragma warning disable CA1716 // Identifiers should not match keywords
-        Session Get(int sessionId);
+        Task<Session> Get(int sessionId);
 
-        Session GetByUser(string userName);
+        Task<Session> GetByUser(string userName);
 
-        Session GetByAccount(string accountId);
+        Task<Session> GetByAccount(string accountId);
 
-        void Remove(int sessionId, string userName, string accountId);
+        Task Remove(int sessionId, string userName, string accountId);
 
-        void RefreshSessionTimeouts(IEnumerable<int> sessions);
+        Task RefreshSessionTimeouts(IEnumerable<int> sessions);
 
-        IEnumerable<Session> GetExpiredSessions();
+        Task<IEnumerable<Session>> GetExpiredSessions();
     }
 }
