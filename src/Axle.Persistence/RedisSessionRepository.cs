@@ -29,6 +29,8 @@ namespace Axle.Persistence
 
         public async Task Add(Session session)
         {
+            this.logger.LogDebug($"Trying to add new session: {nameof(session.AccountId)}:{session.AccountId}, {nameof(session.SessionId)}: {session.SessionId}..");
+            
             var serSession = MessagePackSerializer.Serialize(session);
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
@@ -36,20 +38,32 @@ namespace Axle.Persistence
 
             var transaction = db.CreateTransaction();
 
-            await transaction.StringSetAsync(SessionKey(session.SessionId), serSession);
-
-            if (session.IsSupportUser)
+            try
             {
-                await transaction.StringSetAsync(UserKey(session.UserName), session.SessionId);
+#pragma warning disable 4014
+                transaction.StringSetAsync(SessionKey(session.SessionId), serSession);
+
+
+                if (session.IsSupportUser)
+                {
+                    transaction.StringSetAsync(UserKey(session.UserName), session.SessionId);
+                }
+                else
+                {
+                    transaction.StringSetAsync(AccountKey(session.AccountId), session.SessionId);
+                }
+
+                transaction.SortedSetAddAsync(ExpirationSetKey, session.SessionId, unixNow);
+#pragma warning restore 4014
+                if (!await transaction.ExecuteAsync())
+                {
+                    throw new Exception($"Transaction to add new session was not committed.");
+                }
             }
-            else
+            catch (Exception exception)
             {
-                await transaction.StringSetAsync(AccountKey(session.AccountId), session.SessionId);
+                this.logger.LogError(exception, $"Error occured while creating new session: {nameof(session.AccountId)}:{session.AccountId}, {nameof(session.SessionId)}: {session.SessionId}.");
             }
-
-            await transaction.SortedSetAddAsync(ExpirationSetKey, session.SessionId, unixNow);
-
-            await transaction.ExecuteAsync();
         }
 
         public async Task Update(Session session)
@@ -127,21 +141,24 @@ namespace Axle.Persistence
         public async Task<IEnumerable<Session>> GetExpiredSessions()
         {
             var db = this.multiplexer.GetDatabase();
-            var transaction = db.CreateTransaction();
-
             var maxTime = (DateTimeOffset.UtcNow - this.sessionTimeout).ToUnixTimeSeconds();
+
+            var transaction = db.CreateTransaction();
 
             // Retrieve the IDs to remove and remove them in one transaction - that way other instances of Axle
             // won't be able to produce duplicate TimeOut activities by retrieving the same range before it gets deleted
             var idsToRemoveTask = transaction.SortedSetRangeByScoreAsync(ExpirationSetKey, stop: maxTime);
-            await transaction.SortedSetRemoveRangeByScoreAsync(ExpirationSetKey, double.NegativeInfinity, maxTime);
+#pragma warning disable 4014
+            transaction.SortedSetRemoveRangeByScoreAsync(ExpirationSetKey, double.NegativeInfinity, maxTime);
+#pragma warning restore 4014
 
-            await transaction.ExecuteAsync();
-
-            var idsToRemove = await idsToRemoveTask;
+            if (!await transaction.ExecuteAsync())
+            {
+                throw new Exception($"{nameof(RedisSessionRepository)}:{nameof(GetExpiredSessions)} failed to commit transaction.");
+            }
 
             var serializedSessions = await db.StringGetAsync(
-                idsToRemove.Select(x => (RedisKey)SessionKey((int)x)).ToArray());
+                (await idsToRemoveTask).Select(x => (RedisKey) SessionKey((int) x)).ToArray());
 
             return serializedSessions.Where(x => !x.IsNull).Select(x => MessagePackSerializer.Deserialize<Session>(x));
         }
@@ -155,14 +172,19 @@ namespace Axle.Persistence
             return string.IsNullOrEmpty(sessionId) ? null : await this.Get(int.Parse(sessionId));
         }
 
-        private static async Task RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
+        private async Task RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
         {
             var transaction = db.CreateTransaction();
 
             transaction.AddCondition(Condition.StringEqual(key, value));
-            await transaction.KeyDeleteAsync(key);
+#pragma warning disable 4014
+            transaction.KeyDeleteAsync(key);
+#pragma warning restore 4014
 
-            await transaction.ExecuteAsync();
+            if (!await transaction.ExecuteAsync())
+            {
+                this.logger.LogWarning($"{nameof(RedisSessionRepository)}:{nameof(RemoveKeyIfEquals)}: failed to commit transaction.");
+            }
         }
 
         private static string UserKey(string user) => $"axle:users:{user}";
