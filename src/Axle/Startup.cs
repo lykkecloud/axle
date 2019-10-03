@@ -147,7 +147,8 @@ namespace Axle
             services.AddSingleton<ISessionRepository, RedisSessionRepository>(x =>
                 new RedisSessionRepository(
                     x.GetService<IConnectionMultiplexer>(),
-                    sessionSettings.Timeout));
+                    sessionSettings.Timeout,
+                    x.GetService<ILogger<RedisSessionRepository>>()));
             services.AddSingleton<ISessionService, SessionService>();
             services.AddSingleton<IHubConnectionService, HubConnectionService>();
             services.AddSingleton<IActivityService, ActivityService>();

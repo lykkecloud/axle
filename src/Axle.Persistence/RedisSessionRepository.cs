@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Axle.Persistence
 {
@@ -15,11 +16,13 @@ namespace Axle.Persistence
     {
         private readonly IConnectionMultiplexer multiplexer;
         private readonly TimeSpan sessionTimeout;
+        private readonly ILogger<RedisSessionRepository> logger;
 
-        public RedisSessionRepository(IConnectionMultiplexer multiplexer, TimeSpan sessionTimeout)
+        public RedisSessionRepository(IConnectionMultiplexer multiplexer, TimeSpan sessionTimeout, ILogger<RedisSessionRepository> logger)
         {
             this.multiplexer = multiplexer;
             this.sessionTimeout = sessionTimeout;
+            this.logger = logger;
         }
 
         private static string ExpirationSetKey => "axle:expirations";
@@ -63,6 +66,7 @@ namespace Axle.Persistence
             // No information about session in the expiration set - return null
             if (!lastUpdated.HasValue)
             {
+                this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(Get)}:{id}: No information about session in the expiration set - return null");
                 return null;
             }
 
@@ -72,6 +76,7 @@ namespace Axle.Persistence
             // Session has expired and will be removed on the next expiration check - return null
             if (lastAlive + this.sessionTimeout < utcNow)
             {
+                this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(Get)}:{id}: Session has expired and will be removed on the next expiration check - return null");
                 return null;
             }
 
@@ -81,6 +86,7 @@ namespace Axle.Persistence
             // and retrieving the session itself
             if (serialized.IsNull)
             {
+                this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(Get)}:{id}: Edge case - will only happen if the session gets deleted in between fetching its last update time and retrieving the session itself");
                 return null;
             }
 
