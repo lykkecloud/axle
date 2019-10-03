@@ -46,18 +46,18 @@ namespace Axle.Services
             string accessToken,
             bool isSupportUser)
         {
-            Session userInfo;
-
             await this.slimLock.WaitAsync();
 
             try
             {
-                userInfo = isSupportUser 
+                var userInfo = isSupportUser 
                     ? await this.sessionRepository.GetByUser(userName) 
                     : await this.sessionRepository.GetByAccount(accountId);
 
                 if (userInfo != null && userInfo.AccessToken == accessToken)
                 {
+                    this.logger.LogDebug($"Session resolved by existing cache. {nameof(userName)}: {userName}, {nameof(accountId)}: {accountId}, {nameof(userInfo.SessionId)}: {userInfo.SessionId}, {nameof(userInfo.IsSupportUser)}: {userInfo.IsSupportUser}.");
+                    
                     return userInfo;
                 }
 
