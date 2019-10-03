@@ -148,11 +148,11 @@ namespace Axle.Persistence
 
         private async Task<Session> GetBySessionKey(RedisKey sessionKey)
         {
-            var sessionId = await this.multiplexer.GetDatabase().StringGetAsync(sessionKey);
+            string sessionId = await this.multiplexer.GetDatabase().StringGetAsync(sessionKey);
             
-            this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(GetBySessionKey)}:{sessionKey} returned {sessionId}");
+            this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(GetBySessionKey)}:{sessionKey} returned {(string.IsNullOrEmpty(sessionId) ? "empty string": sessionId)}");
 
-            return sessionId.HasValue ? await this.Get((int) sessionId) : null;
+            return string.IsNullOrEmpty(sessionId) ? null : await this.Get(int.Parse(sessionId));
         }
 
         private static async Task RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
