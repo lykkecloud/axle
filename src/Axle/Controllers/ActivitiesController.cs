@@ -31,7 +31,7 @@ namespace Axle.Controllers
         public async Task<IActionResult> Login(string accountId)
         {
             var userName = this.User.GetUsername();
-            var sessionId = this.sessionService.GenerateSessionId();
+            var sessionId = await this.sessionService.GenerateSessionId();
 
             var activity = new SessionActivity(SessionActivityType.Login, sessionId, userName, accountId);
 

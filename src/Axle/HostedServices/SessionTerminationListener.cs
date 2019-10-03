@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using JetBrains.Annotations;
+
 namespace Axle.HostedServices
 {
     using System.Linq;
@@ -14,6 +16,7 @@ namespace Axle.HostedServices
     using Microsoft.Extensions.Hosting;
     using StackExchange.Redis;
 
+    [UsedImplicitly]
     public class SessionTerminationListener : IHostedService
     {
         private readonly ISubscriber subscriber;
@@ -29,21 +32,24 @@ namespace Axle.HostedServices
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.SubscribeAsync(RedisChannels.SessionTermination, this.HandleSessionTermination);
+            return this.subscriber.SubscribeAsync(RedisChannels.SessionTermination, 
+                async (channel, value) => await this.HandleSessionTermination(channel, value));
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.UnsubscribeAsync(RedisChannels.SessionTermination, this.HandleSessionTermination);
+            return this.subscriber.UnsubscribeAsync(RedisChannels.SessionTermination,
+                async (channel, value) => await this.HandleSessionTermination(channel, value));
         }
 
-        private void HandleSessionTermination(RedisChannel channel, RedisValue value)
+        private async Task HandleSessionTermination(RedisChannel channel, RedisValue value)
         {
             var terminateSessionNotification = MessagePackSerializer.Deserialize<TerminateSessionNotification>(value);
 
             var connections = this.hubConnectionService.FindBySessionId(terminateSessionNotification.SessionId);
 
-            this.hubConnectionService.TerminateConnections(terminateSessionNotification.Reason.ToTerminateConnectionReason(), connections.ToArray());
+            await this.hubConnectionService.TerminateConnections(
+                terminateSessionNotification.Reason.ToTerminateConnectionReason(), connections.ToArray());
         }
     }
 }

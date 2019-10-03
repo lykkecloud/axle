@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System.Threading.Tasks;
+
 namespace Axle.Persistence
 {
     using System;
@@ -22,7 +24,7 @@ namespace Axle.Persistence
 
         private static string ExpirationSetKey => "axle:expirations";
 
-        public void Add(Session session)
+        public async Task Add(Session session)
         {
             var serSession = MessagePackSerializer.Serialize(session);
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -31,32 +33,32 @@ namespace Axle.Persistence
 
             var transaction = db.CreateTransaction();
 
-            transaction.StringSetAsync(this.SessionKey(session.SessionId), serSession);
+            await transaction.StringSetAsync(SessionKey(session.SessionId), serSession);
 
             if (session.IsSupportUser)
             {
-                transaction.StringSetAsync(this.UserKey(session.UserName), session.SessionId);
+                await transaction.StringSetAsync(UserKey(session.UserName), session.SessionId);
             }
             else
             {
-                transaction.StringSetAsync(this.AccountKey(session.AccountId), session.SessionId);
+                await transaction.StringSetAsync(AccountKey(session.AccountId), session.SessionId);
             }
 
-            transaction.SortedSetAddAsync(ExpirationSetKey, session.SessionId, unixNow);
+            await transaction.SortedSetAddAsync(ExpirationSetKey, session.SessionId, unixNow);
 
-            transaction.Execute();
+            await transaction.ExecuteAsync();
         }
 
-        public void Update(Session session)
+        public async Task Update(Session session)
         {
-            this.Add(session);
+            await this.Add(session);
         }
 
-        public Session Get(int id)
+        public async Task<Session> Get(int id)
         {
             var db = this.multiplexer.GetDatabase();
 
-            var lastUpdated = db.SortedSetScore(ExpirationSetKey, id);
+            var lastUpdated = await db.SortedSetScoreAsync(ExpirationSetKey, id);
 
             // No information about session in the expiration set - return null
             if (!lastUpdated.HasValue)
@@ -73,9 +75,9 @@ namespace Axle.Persistence
                 return null;
             }
 
-            var serialized = db.StringGet(this.SessionKey(id));
+            var serialized = await db.StringGetAsync(SessionKey(id));
 
-            // Edge case - will only happen if the session gets deleted inbetween fetching its last update time
+            // Edge case - will only happen if the session gets deleted in between fetching its last update time
             // and retrieving the session itself
             if (serialized.IsNull)
             {
@@ -85,41 +87,38 @@ namespace Axle.Persistence
             return MessagePackSerializer.Deserialize<Session>(serialized);
         }
 
-        public Session GetByUser(string userName)
+        public async Task<Session> GetByUser(string userName)
         {
-            return this.GetBySessionKey(this.UserKey(userName));
+            return await this.GetBySessionKey(UserKey(userName));
         }
 
-        public Session GetByAccount(string accountId)
+        public async Task<Session> GetByAccount(string accountId)
         {
-            return this.GetBySessionKey(this.AccountKey(accountId));
+            return await this.GetBySessionKey(AccountKey(accountId));
         }
 
-        public void Remove(int sessionId, string userName, string accountId)
+        public async Task Remove(int sessionId, string userName, string accountId)
         {
             var db = this.multiplexer.GetDatabase();
-            db.SortedSetRemove(ExpirationSetKey, sessionId);
-            db.KeyDelete(this.SessionKey(sessionId));
-
-            var userKey = this.UserKey(userName);
-            var accountKey = this.AccountKey(accountId);
+            await db.SortedSetRemoveAsync(ExpirationSetKey, sessionId);
+            await db.KeyDeleteAsync(SessionKey(sessionId));
 
             // Remove the user/account -> session ID key only if it still contains the same session ID
-            this.RemoveKeyIfEquals(db, userKey, sessionId);
-            this.RemoveKeyIfEquals(db, accountKey, sessionId);
+            await RemoveKeyIfEquals(db, UserKey(userName), sessionId);
+            await RemoveKeyIfEquals(db, AccountKey(accountId), sessionId);
         }
 
-        public void RefreshSessionTimeouts(IEnumerable<int> sessions)
+        public async Task RefreshSessionTimeouts(IEnumerable<int> sessions)
         {
             var db = this.multiplexer.GetDatabase();
 
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var entriesToUpdate = sessions.Select(session => new SortedSetEntry(session, unixNow)).ToArray();
 
-            db.SortedSetAdd(ExpirationSetKey, entriesToUpdate);
+            await db.SortedSetAddAsync(ExpirationSetKey, entriesToUpdate);
         }
 
-        public IEnumerable<Session> GetExpiredSessions()
+        public async Task<IEnumerable<Session>> GetExpiredSessions()
         {
             var db = this.multiplexer.GetDatabase();
             var transaction = db.CreateTransaction();
@@ -129,38 +128,39 @@ namespace Axle.Persistence
             // Retrieve the IDs to remove and remove them in one transaction - that way other instances of Axle
             // won't be able to produce duplicate TimeOut activities by retrieving the same range before it gets deleted
             var idsToRemoveTask = transaction.SortedSetRangeByScoreAsync(ExpirationSetKey, stop: maxTime);
-            transaction.SortedSetRemoveRangeByScoreAsync(ExpirationSetKey, double.NegativeInfinity, maxTime);
+            await transaction.SortedSetRemoveRangeByScoreAsync(ExpirationSetKey, double.NegativeInfinity, maxTime);
 
-            transaction.Execute();
+            await transaction.ExecuteAsync();
 
-            var idsToRemove = idsToRemoveTask.Result;
+            var idsToRemove = await idsToRemoveTask;
 
-            var serializedSessions = db.StringGet(idsToRemove.Select(x => (RedisKey)this.SessionKey((int)x)).ToArray());
+            var serializedSessions = await db.StringGetAsync(
+                idsToRemove.Select(x => (RedisKey)SessionKey((int)x)).ToArray());
 
             return serializedSessions.Where(x => !x.IsNull).Select(x => MessagePackSerializer.Deserialize<Session>(x));
         }
 
-        private Session GetBySessionKey(RedisKey sessionKey)
+        private async Task<Session> GetBySessionKey(RedisKey sessionKey)
         {
-            var sessionId = this.multiplexer.GetDatabase().StringGet(sessionKey);
+            var sessionId = await this.multiplexer.GetDatabase().StringGetAsync(sessionKey);
 
-            return sessionId.IsNull ? null : this.Get((int)sessionId);
+            return sessionId.IsNull ? null : await this.Get((int) sessionId);
         }
 
-        private void RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
+        private static async Task RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
         {
             var transaction = db.CreateTransaction();
 
             transaction.AddCondition(Condition.StringEqual(key, value));
-            transaction.KeyDeleteAsync(key);
+            await transaction.KeyDeleteAsync(key);
 
-            transaction.Execute();
+            await transaction.ExecuteAsync();
         }
 
-        private string UserKey(string user) => $"axle:users:{user}";
+        private static string UserKey(string user) => $"axle:users:{user}";
 
-        private string AccountKey(string account) => $"axle:accounts:{account}";
+        private static string AccountKey(string account) => $"axle:accounts:{account}";
 
-        private string SessionKey(int session) => $"axle:sessions:{session}";
+        private static string SessionKey(int session) => $"axle:sessions:{session}";
     }
 }

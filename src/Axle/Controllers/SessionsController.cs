@@ -33,9 +33,9 @@ namespace Axle.Controllers
         [Authorize(AuthorizationPolicies.System)]
         [HttpGet("{userName}")]
         [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
-        public IActionResult Get(string userName)
+        public async Task<IActionResult> Get(string userName)
         {
-            var sessionState = this.sessionRepository.GetByUser(userName);
+            var sessionState = await this.sessionRepository.GetByUser(userName);
 
             if (sessionState == null)
             {
