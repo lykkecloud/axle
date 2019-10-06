@@ -27,6 +27,6 @@ namespace Axle.Services
 
         Task TerminateSession(Session userInfo, SessionActivityType reason);
 
-        int GenerateSessionId();
+        Task<int> GenerateSessionId();
     }
 }

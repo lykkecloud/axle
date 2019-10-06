@@ -1,6 +1,9 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+
 namespace Axle.Persistence
 {
     using System;
@@ -13,17 +16,21 @@ namespace Axle.Persistence
     {
         private readonly IConnectionMultiplexer multiplexer;
         private readonly TimeSpan sessionTimeout;
+        private readonly ILogger<RedisSessionRepository> logger;
 
-        public RedisSessionRepository(IConnectionMultiplexer multiplexer, TimeSpan sessionTimeout)
+        public RedisSessionRepository(IConnectionMultiplexer multiplexer, TimeSpan sessionTimeout, ILogger<RedisSessionRepository> logger)
         {
             this.multiplexer = multiplexer;
             this.sessionTimeout = sessionTimeout;
+            this.logger = logger;
         }
 
         private static string ExpirationSetKey => "axle:expirations";
 
-        public void Add(Session session)
+        public async Task Add(Session session)
         {
+            this.logger.LogDebug($"Trying to add new session: {nameof(session.AccountId)}:{session.AccountId}, {nameof(session.SessionId)}: {session.SessionId}..");
+            
             var serSession = MessagePackSerializer.Serialize(session);
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
@@ -31,36 +38,49 @@ namespace Axle.Persistence
 
             var transaction = db.CreateTransaction();
 
-            transaction.StringSetAsync(this.SessionKey(session.SessionId), serSession);
-
-            if (session.IsSupportUser)
+            try
             {
-                transaction.StringSetAsync(this.UserKey(session.UserName), session.SessionId);
+#pragma warning disable 4014
+                transaction.StringSetAsync(SessionKey(session.SessionId), serSession);
+
+
+                if (session.IsSupportUser)
+                {
+                    transaction.StringSetAsync(UserKey(session.UserName), session.SessionId);
+                }
+                else
+                {
+                    transaction.StringSetAsync(AccountKey(session.AccountId), session.SessionId);
+                }
+
+                transaction.SortedSetAddAsync(ExpirationSetKey, session.SessionId, unixNow);
+#pragma warning restore 4014
+                if (!await transaction.ExecuteAsync())
+                {
+                    throw new Exception($"Transaction to add new session was not committed.");
+                }
             }
-            else
+            catch (Exception exception)
             {
-                transaction.StringSetAsync(this.AccountKey(session.AccountId), session.SessionId);
+                this.logger.LogError(exception, $"Error occured while creating new session: {nameof(session.AccountId)}:{session.AccountId}, {nameof(session.SessionId)}: {session.SessionId}.");
             }
-
-            transaction.SortedSetAddAsync(ExpirationSetKey, session.SessionId, unixNow);
-
-            transaction.Execute();
         }
 
-        public void Update(Session session)
+        public async Task Update(Session session)
         {
-            this.Add(session);
+            await this.Add(session);
         }
 
-        public Session Get(int id)
+        public async Task<Session> Get(int id)
         {
             var db = this.multiplexer.GetDatabase();
 
-            var lastUpdated = db.SortedSetScore(ExpirationSetKey, id);
+            var lastUpdated = await db.SortedSetScoreAsync(ExpirationSetKey, id);
 
             // No information about session in the expiration set - return null
             if (!lastUpdated.HasValue)
             {
+                this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(Get)}:{id}: No information about session in the expiration set - return null");
                 return null;
             }
 
@@ -70,97 +90,107 @@ namespace Axle.Persistence
             // Session has expired and will be removed on the next expiration check - return null
             if (lastAlive + this.sessionTimeout < utcNow)
             {
+                this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(Get)}:{id}: Session has expired and will be removed on the next expiration check - return null");
                 return null;
             }
 
-            var serialized = db.StringGet(this.SessionKey(id));
+            var serialized = await db.StringGetAsync(SessionKey(id));
 
-            // Edge case - will only happen if the session gets deleted inbetween fetching its last update time
+            // Edge case - will only happen if the session gets deleted in between fetching its last update time
             // and retrieving the session itself
             if (serialized.IsNull)
             {
+                this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(Get)}:{id}: Edge case - will only happen if the session gets deleted in between fetching its last update time and retrieving the session itself");
                 return null;
             }
 
             return MessagePackSerializer.Deserialize<Session>(serialized);
         }
 
-        public Session GetByUser(string userName)
+        public async Task<Session> GetByUser(string userName)
         {
-            return this.GetBySessionKey(this.UserKey(userName));
+            return await this.GetBySessionKey(UserKey(userName));
         }
 
-        public Session GetByAccount(string accountId)
+        public async Task<Session> GetByAccount(string accountId)
         {
-            return this.GetBySessionKey(this.AccountKey(accountId));
+            return await this.GetBySessionKey(AccountKey(accountId));
         }
 
-        public void Remove(int sessionId, string userName, string accountId)
+        public async Task Remove(int sessionId, string userName, string accountId)
         {
             var db = this.multiplexer.GetDatabase();
-            db.SortedSetRemove(ExpirationSetKey, sessionId);
-            db.KeyDelete(this.SessionKey(sessionId));
-
-            var userKey = this.UserKey(userName);
-            var accountKey = this.AccountKey(accountId);
+            await db.SortedSetRemoveAsync(ExpirationSetKey, sessionId);
+            await db.KeyDeleteAsync(SessionKey(sessionId));
 
             // Remove the user/account -> session ID key only if it still contains the same session ID
-            this.RemoveKeyIfEquals(db, userKey, sessionId);
-            this.RemoveKeyIfEquals(db, accountKey, sessionId);
+            await RemoveKeyIfEquals(db, UserKey(userName), sessionId);
+            await RemoveKeyIfEquals(db, AccountKey(accountId), sessionId);
         }
 
-        public void RefreshSessionTimeouts(IEnumerable<int> sessions)
+        public async Task RefreshSessionTimeouts(IEnumerable<int> sessions)
         {
             var db = this.multiplexer.GetDatabase();
 
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var entriesToUpdate = sessions.Select(session => new SortedSetEntry(session, unixNow)).ToArray();
 
-            db.SortedSetAdd(ExpirationSetKey, entriesToUpdate);
+            await db.SortedSetAddAsync(ExpirationSetKey, entriesToUpdate);
         }
 
-        public IEnumerable<Session> GetExpiredSessions()
+        public async Task<IEnumerable<Session>> GetExpiredSessions()
         {
             var db = this.multiplexer.GetDatabase();
-            var transaction = db.CreateTransaction();
-
             var maxTime = (DateTimeOffset.UtcNow - this.sessionTimeout).ToUnixTimeSeconds();
+
+            var transaction = db.CreateTransaction();
 
             // Retrieve the IDs to remove and remove them in one transaction - that way other instances of Axle
             // won't be able to produce duplicate TimeOut activities by retrieving the same range before it gets deleted
             var idsToRemoveTask = transaction.SortedSetRangeByScoreAsync(ExpirationSetKey, stop: maxTime);
+#pragma warning disable 4014
             transaction.SortedSetRemoveRangeByScoreAsync(ExpirationSetKey, double.NegativeInfinity, maxTime);
+#pragma warning restore 4014
 
-            transaction.Execute();
+            if (!await transaction.ExecuteAsync())
+            {
+                throw new Exception($"{nameof(RedisSessionRepository)}:{nameof(GetExpiredSessions)} failed to commit transaction.");
+            }
 
-            var idsToRemove = idsToRemoveTask.Result;
-
-            var serializedSessions = db.StringGet(idsToRemove.Select(x => (RedisKey)this.SessionKey((int)x)).ToArray());
+            var serializedSessions = await db.StringGetAsync(
+                (await idsToRemoveTask).Select(x => (RedisKey) SessionKey((int) x)).ToArray());
 
             return serializedSessions.Where(x => !x.IsNull).Select(x => MessagePackSerializer.Deserialize<Session>(x));
         }
 
-        private Session GetBySessionKey(RedisKey sessionKey)
+        private async Task<Session> GetBySessionKey(RedisKey sessionKey)
         {
-            var sessionId = this.multiplexer.GetDatabase().StringGet(sessionKey);
+            string sessionId = await this.multiplexer.GetDatabase().StringGetAsync(sessionKey);
+            
+            this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(GetBySessionKey)}:{sessionKey} returned {(string.IsNullOrEmpty(sessionId) ? "empty string": sessionId)}");
 
-            return sessionId.IsNull ? null : this.Get((int)sessionId);
+            return string.IsNullOrEmpty(sessionId) ? null : await this.Get(int.Parse(sessionId));
         }
 
-        private void RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
+        private async Task RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
         {
             var transaction = db.CreateTransaction();
 
             transaction.AddCondition(Condition.StringEqual(key, value));
+#pragma warning disable 4014
             transaction.KeyDeleteAsync(key);
+#pragma warning restore 4014
 
-            transaction.Execute();
+            if (!await transaction.ExecuteAsync())
+            {
+                this.logger.LogWarning($"{nameof(RedisSessionRepository)}:{nameof(RemoveKeyIfEquals)}: failed to commit transaction.");
+            }
         }
 
-        private string UserKey(string user) => $"axle:users:{user}";
+        private static string UserKey(string user) => $"axle:users:{user}";
 
-        private string AccountKey(string account) => $"axle:accounts:{account}";
+        private static string AccountKey(string account) => $"axle:accounts:{account}";
 
-        private string SessionKey(int session) => $"axle:sessions:{session}";
+        private static string SessionKey(int session) => $"axle:sessions:{session}";
     }
 }

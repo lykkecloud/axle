@@ -46,24 +46,26 @@ namespace Axle.Services
             string accessToken,
             bool isSupportUser)
         {
-            Session userInfo;
-
             await this.slimLock.WaitAsync();
 
             try
             {
-                userInfo = isSupportUser ? this.sessionRepository.GetByUser(userName) : this.sessionRepository.GetByAccount(accountId);
+                var userInfo = isSupportUser 
+                    ? await this.sessionRepository.GetByUser(userName) 
+                    : await this.sessionRepository.GetByAccount(accountId);
 
                 if (userInfo != null && userInfo.AccessToken == accessToken)
                 {
+                    this.logger.LogDebug($"Session resolved by existing cache. {nameof(userName)}: {userName}, {nameof(accountId)}: {accountId}, {nameof(userInfo.SessionId)}: {userInfo.SessionId}, {nameof(userInfo.IsSupportUser)}: {userInfo.IsSupportUser}.");
+                    
                     return userInfo;
                 }
 
-                var sessionId = this.GenerateSessionId();
+                var sessionId = await this.GenerateSessionId();
 
                 var newSession = new Session(userName, sessionId, accountId, accessToken, clientId, isSupportUser);
 
-                this.sessionRepository.Add(newSession);
+                await this.sessionRepository.Add(newSession);
 
                 if (!newSession.IsSupportUser)
                 {
@@ -96,7 +98,7 @@ namespace Axle.Services
 
             try
             {
-                var session = this.sessionRepository.Get(sessionId);
+                var session = await this.sessionRepository.Get(sessionId);
 
                 if (session == null)
                 {
@@ -127,7 +129,7 @@ namespace Axle.Services
 
                 var newSession = new Session(session.UserName, session.SessionId, onBehalfAccount, session.AccessToken, session.ClientId, session.IsSupportUser);
 
-                this.sessionRepository.Update(newSession);
+                await this.sessionRepository.Update(newSession);
 
                 if (!string.IsNullOrEmpty(session.AccountId))
                 {
@@ -157,11 +159,11 @@ namespace Axle.Services
 
             try
             {
-                var userInfo = this.sessionRepository.GetByUser(userName);
+                var userInfo = await this.sessionRepository.GetByUser(userName);
 
                 if (userInfo == null && !isSupportUser && !string.IsNullOrEmpty(accountId))
                 {
-                    userInfo = this.sessionRepository.GetByAccount(accountId);
+                    userInfo = await this.sessionRepository.GetByAccount(accountId);
                 }
 
                 if (userInfo == null)
@@ -208,14 +210,14 @@ namespace Axle.Services
 
         public async Task TerminateSession(Session userInfo, SessionActivityType reason)
         {
-            this.sessionRepository.Remove(userInfo.SessionId, userInfo.UserName, userInfo.AccountId);
+            await this.sessionRepository.Remove(userInfo.SessionId, userInfo.UserName, userInfo.AccountId);
 
             if (reason != SessionActivityType.SignOut)
             {
                 await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
             }
 
-            this.notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });
+            await this.notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });
 
             if (!userInfo.IsSupportUser)
             {
@@ -227,7 +229,7 @@ namespace Axle.Services
             }
         }
 
-        public int GenerateSessionId()
+        public async Task<int> GenerateSessionId()
         {
             var rand = new Random();
             int sessionId;
@@ -236,7 +238,7 @@ namespace Axle.Services
             {
                 sessionId = rand.Next(int.MinValue, int.MaxValue);
             }
-            while (this.sessionRepository.Get(sessionId) != null);
+            while (await this.sessionRepository.Get(sessionId) != null);
 
             return sessionId;
         }
