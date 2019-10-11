@@ -3,9 +3,9 @@
 
 using System;
 
-namespace Axle.Client
+namespace Axle.Contracts
 {
-    using Axle.Client.Models;
+    using Axle.Contracts.Models;
     using JetBrains.Annotations;
     using Refit;
     using System.Threading.Tasks;
