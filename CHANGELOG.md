@@ -1,3 +1,7 @@
+## 2.14.1 (October 07, 2019)
+
+* LT-1635: [UAT-performance] Axle Timeouts issue with Redis
+
 ## 2.14.0 (July 08, 2019)
 
 * LT-1541: Update licenses headers and add LICENSE  file
