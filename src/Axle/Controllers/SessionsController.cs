@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System;
+
 namespace Axle.Controllers
 {
     using System.Net;
@@ -33,9 +35,40 @@ namespace Axle.Controllers
         [Authorize(AuthorizationPolicies.System)]
         [HttpGet("{userName}")]
         [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        [Obsolete("Use GET /for-support/{userName} and GET /for-user/{accountId}")]
         public async Task<IActionResult> Get(string userName)
         {
             var sessionState = await this.sessionRepository.GetByUser(userName);
+
+            if (sessionState == null)
+            {
+                return this.NotFound();
+            }
+
+            return this.Ok(new UserSessionResponse { UserSessionId = sessionState.SessionId });
+        }
+
+        [Authorize(AuthorizationPolicies.System)]
+        [HttpGet("for-support/{userName}")]
+        [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        public async Task<IActionResult> GetSessionForSupport(string userName)
+        {
+            var sessionState = await this.sessionRepository.GetByUser(userName);
+
+            if (sessionState == null)
+            {
+                return this.NotFound();
+            }
+
+            return this.Ok(new UserSessionResponse { UserSessionId = sessionState.SessionId });
+        }
+
+        [Authorize(AuthorizationPolicies.System)]
+        [HttpGet("for-user/{accountId}")]
+        [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        public async Task<IActionResult> GetSessionForUser(string accountId)
+        {
+            var sessionState = await this.sessionRepository.GetByAccount(accountId);
 
             if (sessionState == null)
             {
