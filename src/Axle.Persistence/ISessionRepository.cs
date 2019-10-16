@@ -18,7 +18,11 @@ namespace Axle.Persistence
 
         Task<Session> GetByUser(string userName);
 
+        Task<int?> GetSessionIdByUser(string userName);
+
         Task<Session> GetByAccount(string accountId);
+
+        Task<int?> GetSessionIdByAccount(string accountId);
 
         Task Remove(int sessionId, string userName, string accountId);
 
