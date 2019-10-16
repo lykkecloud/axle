@@ -38,14 +38,14 @@ namespace Axle.Controllers
         [Obsolete("Use GET /for-support/{userName} and GET /for-user/{accountId}")]
         public async Task<IActionResult> Get(string userName)
         {
-            var sessionState = await this.sessionRepository.GetByUser(userName);
+            var sessionId = await this.sessionRepository.GetSessionIdByUser(userName);
 
-            if (sessionState == null)
+            if (sessionId == null)
             {
                 return this.NotFound();
             }
 
-            return this.Ok(new UserSessionResponse { UserSessionId = sessionState.SessionId });
+            return this.Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
         }
 
         [Authorize(AuthorizationPolicies.System)]
@@ -53,14 +53,14 @@ namespace Axle.Controllers
         [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
         public async Task<IActionResult> GetSessionForSupport(string userName)
         {
-            var sessionState = await this.sessionRepository.GetByUser(userName);
+            var sessionId = await this.sessionRepository.GetSessionIdByUser(userName);
 
-            if (sessionState == null)
+            if (sessionId == null)
             {
                 return this.NotFound();
             }
 
-            return this.Ok(new UserSessionResponse { UserSessionId = sessionState.SessionId });
+            return this.Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
         }
 
         [Authorize(AuthorizationPolicies.System)]
@@ -68,14 +68,14 @@ namespace Axle.Controllers
         [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
         public async Task<IActionResult> GetSessionForUser(string accountId)
         {
-            var sessionState = await this.sessionRepository.GetByAccount(accountId);
+            var sessionId = await this.sessionRepository.GetSessionIdByAccount(accountId);
 
-            if (sessionState == null)
+            if (sessionId == null)
             {
                 return this.NotFound();
             }
 
-            return this.Ok(new UserSessionResponse { UserSessionId = sessionState.SessionId });
+            return this.Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
         }
 
         [AuthorizeUser(Permissions.CancelSession)]

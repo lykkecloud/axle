@@ -1,3 +1,7 @@
+## 2.14.2 (October 15, 2019)
+
+* LT-1707: Cannot find a session for investor
+
 ## 2.14.1 (October 07, 2019)
 
 * LT-1635: [UAT-performance] Axle Timeouts issue with Redis
