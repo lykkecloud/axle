@@ -26,8 +26,7 @@ namespace Axle.Extensions
             {
                 case SessionActivityType.DifferentDeviceTermination:
                     return TerminateConnectionReason.DifferentDevice;
-                case SessionActivityType.OnBehalfSupportConnected:
-                case SessionActivityType.OnBehalfSupportDisconnected:
+                case SessionActivityType.ManualTermination:
                     return TerminateConnectionReason.ByForce;
                 default:
                     return TerminateConnectionReason.Other;
