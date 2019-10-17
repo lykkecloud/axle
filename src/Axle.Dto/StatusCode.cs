@@ -7,6 +7,7 @@ namespace Axle.Dto
     {
         WN_ATH_701,
         IF_ATH_501,
-        IF_ATH_502
+        IF_ATH_502,
+        IF_ATH_503
     }
 }
