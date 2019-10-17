@@ -15,6 +15,7 @@ namespace Axle.Extensions
                 case StatusCode.WN_ATH_701: return "A session already existed for this user to this reference account and was terminated";
                 case StatusCode.IF_ATH_501: return "New session created";
                 case StatusCode.IF_ATH_502: return "Existing session is killed due to concurrent login";
+                case StatusCode.IF_ATH_503: return "A session was terminated by force";
                 default: return "Unknown error";
             }
         }
@@ -25,6 +26,9 @@ namespace Axle.Extensions
             {
                 case SessionActivityType.DifferentDeviceTermination:
                     return TerminateConnectionReason.DifferentDevice;
+                case SessionActivityType.OnBehalfSupportConnected:
+                case SessionActivityType.OnBehalfSupportDisconnected:
+                    return TerminateConnectionReason.ByForce;
                 default:
                     return TerminateConnectionReason.Other;
             }
