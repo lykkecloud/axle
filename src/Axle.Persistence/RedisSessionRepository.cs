@@ -112,9 +112,19 @@ namespace Axle.Persistence
             return await this.GetBySessionKey(UserKey(userName));
         }
 
+        public async Task<int?> GetSessionIdByUser(string userName)
+        {
+            return await this.GetSessionIdBySessionKey(UserKey(userName));
+        }
+
         public async Task<Session> GetByAccount(string accountId)
         {
             return await this.GetBySessionKey(AccountKey(accountId));
+        }
+
+        public async Task<int?> GetSessionIdByAccount(string accountId)
+        {
+            return await this.GetSessionIdBySessionKey(AccountKey(accountId));
         }
 
         public async Task Remove(int sessionId, string userName, string accountId)
@@ -163,13 +173,20 @@ namespace Axle.Persistence
             return serializedSessions.Where(x => !x.IsNull).Select(x => MessagePackSerializer.Deserialize<Session>(x));
         }
 
-        private async Task<Session> GetBySessionKey(RedisKey sessionKey)
+        private async Task<int?> GetSessionIdBySessionKey(RedisKey sessionKey)
         {
             string sessionId = await this.multiplexer.GetDatabase().StringGetAsync(sessionKey);
-            
-            this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(GetBySessionKey)}:{sessionKey} returned {(string.IsNullOrEmpty(sessionId) ? "empty string": sessionId)}");
 
-            return string.IsNullOrEmpty(sessionId) ? null : await this.Get(int.Parse(sessionId));
+            this.logger.LogDebug($"{nameof(RedisSessionRepository)}:{nameof(GetSessionIdBySessionKey)}:{sessionKey} returned {(string.IsNullOrEmpty(sessionId) ? "empty string" : sessionId)}");
+
+            return string.IsNullOrEmpty(sessionId) ? (int?)null : int.Parse(sessionId);
+        }
+
+        private async Task<Session> GetBySessionKey(RedisKey sessionKey)
+        {
+            var sessionId = await GetSessionIdBySessionKey(sessionKey);
+
+            return !sessionId.HasValue ? null : await this.Get(sessionId.Value);
         }
 
         private async Task RemoveKeyIfEquals(IDatabase db, RedisKey key, RedisValue value)
