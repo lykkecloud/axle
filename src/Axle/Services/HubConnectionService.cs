@@ -87,14 +87,22 @@ namespace Axle.Services
 
         public async Task TerminateConnections(TerminateConnectionReason reason, params string[] connectionIds)
         {
-            if (reason == TerminateConnectionReason.DifferentDevice)
+            switch (reason)
             {
-                await this.sessionHubContext.Clients.Clients(connectionIds)
-                                   .SendAsync("concurrentSessionTermination", StatusCode.IF_ATH_502, StatusCode.IF_ATH_502.ToMessage());
-            }
-            else if (reason == TerminateConnectionReason.DifferentTab)
-            {
-                await this.sessionHubContext.Clients.Clients(connectionIds).SendAsync("concurrentTabTermination");
+                case TerminateConnectionReason.DifferentDevice:
+                    await this.sessionHubContext.Clients.Clients(connectionIds)
+                        .SendAsync("concurrentSessionTermination", StatusCode.IF_ATH_502, StatusCode.IF_ATH_502.ToMessage());
+                    break;
+                case TerminateConnectionReason.DifferentTab:
+                    await this.sessionHubContext.Clients.Clients(connectionIds).SendAsync("concurrentTabTermination");
+                    break;
+                case TerminateConnectionReason.ByForce:
+                    await this.sessionHubContext.Clients.Clients(connectionIds)
+                        .SendAsync("byForceTermination", StatusCode.IF_ATH_503, StatusCode.IF_ATH_503.ToMessage());
+                    break;
+                default:
+                    this.logger.LogInformation($"Not implemented for reason {reason}");
+                    break;
             }
 
             foreach (var connectionId in connectionIds)
