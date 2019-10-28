@@ -1,3 +1,7 @@
+## 2.14.4 (October 28, 2019)
+
+* LT-1720: Add socket connection event for session termination
+
 ## 2.14.3 (October 22, 2019)
 
 * LT-1717: simplify session get
