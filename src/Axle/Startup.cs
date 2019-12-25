@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using Chest.Client.Extensions;
+
 namespace Axle
 {
     using System;
@@ -187,7 +189,8 @@ namespace Axle
                 this.configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"),
                 this.configuration.GetValue<string>("mtCoreAccountsApiKey"));
 
-            services.AddSingleton<IChestClient>(provider => new ChestClient(new Uri(this.configuration.GetValue<string>("chestUrl")), new ExceptionTextWithServiceNameEnricher("Chest API")));
+            services.AddChestClient(configuration.GetValue<string>("chestUrl"),
+                configuration.GetValue<string>("chestApiKey"));
 
             services.AddSingleton<IAccountsService, AccountsService>();
 
