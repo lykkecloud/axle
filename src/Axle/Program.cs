@@ -26,6 +26,7 @@ namespace Axle
             ("ConnectionStrings:Redis",     "REDIS_CONNECTIONSTRING",      null),
             ("ConnectionStrings:RabbitMq",  "RABBITMQ_CONNECTIONSTRING",   null),
             ("mtCoreAccountsApiKey",        "MTCOREACCOUNTSAPIKEY",        string.Empty),
+            ("chestApiKey",                 "CHEST_API_KEY",               string.Empty),
             ("Require-Https",               "REQUIRE_HTTPS",               "true"),
             ("Swagger-Client-Id",           "SWAGGER_CLIENT_ID",           "axle_api_swagger"),
             ("Validate-Issuer-Name",        "VALIDATE_ISSUER_NAME",        "false")
