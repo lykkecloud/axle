@@ -42,6 +42,7 @@ This project requires specification of the [following user secrets](src/Axle/Pro
   | Api-Name / API_NAME | API name for this service on authentication server |
   | Api-Secret / API_SECRET | API secret for this service on authentication server |
   | mtCoreAccountsApiKey / MTCOREACCOUNTSAPIKEY | Api key for mt core accounts management service |
+  | chestApiKey / CHEST_API_KEY | Api key for Chest service |
   | Require-Https / REQUIRE_HTTPS | Does https required by the authentication server (optional: default value is true) |
   | Swagger-Client-Id / SWAGGER_CLIENT_ID | Swagger client id for this service on authentication server (optional: default value is axle_api_swagger) |
   | Validate-Issuer-Name / VALIDATE_ISSUER_NAME | Should validate token issuer name when a secure endpoint is called (optional: default value is false) |
@@ -150,7 +151,8 @@ All the configuration above can be set via ```appSettings.json```, but if you do
       },
       "Require-Https": true,
       "Swagger-Client-Id": "<swagger-client-id>",
-      "Validate-Issuer-Name": false
+      "Validate-Issuer-Name": false,
+      "chestApiKey": "<api-key-for-chest-service>"
     }
     ```
 
@@ -172,6 +174,7 @@ All the configuration above can be set via ```appSettings.json```, but if you do
       dotnet user-secrets set "Require-Https" true
       dotnet user-secrets set "Swagger-Client-Id" "<swagger-client-id>"
       dotnet user-secrets set "Validate-Issuer-Name" false
+      dotnet user-secrets set "chestApiKey": "<API key for Chest service>"
     ```
 
 - If running the project inside a container:  
@@ -191,6 +194,7 @@ All the configuration above can be set via ```appSettings.json```, but if you do
       REQUIRE_HTTPS=true
       SWAGGER_CLIENT_ID=<swagger-client-id>
       VALIDATE_ISSUER_NAME=false
+      CHEST_API_KEY=<Api key for Chest service>
     ```
 	
 ### Add https enforcement for Axle
