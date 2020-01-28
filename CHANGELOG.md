@@ -1,3 +1,15 @@
+## 2.14.5 (January 28, 2020)
+
+* LT-1675: Chest API key authentication.
+
+### Configuration changes
+
+- Added variable for Chest service API key. If variable is left unset or empty API call will be performed without API key.
+
+```none
+  chestApiKey / CHEST_API_KEY 
+```
+
 ## 2.14.4 (October 28, 2019)
 
 * LT-1720: Add socket connection event for session termination
@@ -334,15 +346,3 @@ A nuget package used for activities models
   ```
 
   All latest configuration changes that are used and working for dev environment can be found in ```appSettings.json```
-
-## X.X.X (December 30, 2019)
-
-* LT-1675: Chest API key authentication.
-
-### Configuration changes
-
-- Added variable for Chest service API key. If variable is left unset or empty API call will be performed without API key.
-
-```none
-  chestApiKey / CHEST_API_KEY 
-```
