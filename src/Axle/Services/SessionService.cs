@@ -66,8 +66,6 @@ namespace Axle.Services
                 var newSession = new Session(userName, sessionId, accountId, accessToken, clientId, isSupportUser);
 
                 await this.sessionRepository.Add(newSession);
-                
-                throw new Exception("Test error");
 
                 if (!newSession.IsSupportUser)
                 {
