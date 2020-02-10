@@ -1,3 +1,7 @@
+## 2.14.6 (February 10, 2020)
+
+* LT-2040: Update Chest service client in Axle
+
 ## 2.14.5 (January 28, 2020)
 
 * LT-1675: Chest API key authentication.
