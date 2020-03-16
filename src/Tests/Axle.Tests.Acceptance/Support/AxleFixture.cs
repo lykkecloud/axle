@@ -1,10 +1,6 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
-
 namespace Axle.Tests.Acceptance.Support
 {
     using System;
@@ -15,6 +11,9 @@ namespace Axle.Tests.Acceptance.Support
     using System.Net.Http;
     using System.Threading;
     using Microsoft.Extensions.Configuration;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
+    using Newtonsoft.Json.Serialization;
 
     // NOTE (Marta): Based on Ironclad. This is used to create a shared
     // context between a number of tests. This shared context will include
