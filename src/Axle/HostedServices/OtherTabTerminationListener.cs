@@ -1,8 +1,6 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
-using JetBrains.Annotations;
-
 namespace Axle.HostedServices
 {
     using System.Linq;
@@ -11,6 +9,7 @@ namespace Axle.HostedServices
     using Axle.Constants;
     using Axle.Dto;
     using Axle.Services;
+    using JetBrains.Annotations;
     using MessagePack;
     using Microsoft.Extensions.Hosting;
     using StackExchange.Redis;
@@ -31,13 +30,15 @@ namespace Axle.HostedServices
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.SubscribeAsync(RedisChannels.OtherTabsTermination, 
+            return this.subscriber.SubscribeAsync(
+                RedisChannels.OtherTabsTermination,
                 async (channel, value) => await this.HandleSessionTermination(channel, value));
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.UnsubscribeAsync(RedisChannels.OtherTabsTermination, 
+            return this.subscriber.UnsubscribeAsync(
+                RedisChannels.OtherTabsTermination,
                 async (channel, value) => await this.HandleSessionTermination(channel, value));
         }
 
@@ -52,7 +53,8 @@ namespace Axle.HostedServices
                 connections = connections.Where(id => id != otherTabsNotification.OriginatingConnectionId);
             }
 
-            await this.hubConnectionService.TerminateConnections(TerminateConnectionReason.DifferentTab,
+            await this.hubConnectionService.TerminateConnections(
+                TerminateConnectionReason.DifferentTab,
                 connections.ToArray());
         }
     }

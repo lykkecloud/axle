@@ -1,8 +1,6 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
-using Chest.Client.Extensions;
-
 namespace Axle
 {
     using System;
@@ -15,16 +13,14 @@ namespace Axle
     using Axle.Contracts;
     using Axle.Extensions;
     using Axle.HostedServices;
-    using Axle.HttpClients;
     using Axle.Hubs;
     using Axle.Persistence;
     using Axle.Services;
     using Axle.Settings;
-    using Chest.Client.AutorestClient;
+    using Chest.Client.Extensions;
     using IdentityModel;
     using IdentityModel.Client;
     using IdentityServer4.AccessTokenValidation;
-    using Lykke.HttpClientGenerator;
     using Lykke.Middlewares;
     using Lykke.Middlewares.Mappers;
     using Lykke.RabbitMqBroker.Publisher;
@@ -37,7 +33,6 @@ namespace Axle
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.SignalR;
-    using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
@@ -189,8 +184,9 @@ namespace Axle
                 this.configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"),
                 this.configuration.GetValue<string>("mtCoreAccountsApiKey"));
 
-            services.AddChestClient(configuration.GetValue<string>("chestUrl"),
-                configuration.GetValue<string>("chestApiKey"));
+            services.AddChestClient(
+                this.configuration.GetValue<string>("chestUrl"),
+                this.configuration.GetValue<string>("chestApiKey"));
 
             services.AddSingleton<IAccountsService, AccountsService>();
 

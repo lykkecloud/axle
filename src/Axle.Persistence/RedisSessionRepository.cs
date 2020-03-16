@@ -1,15 +1,14 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-
 namespace Axle.Persistence
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using MessagePack;
+    using Microsoft.Extensions.Logging;
     using StackExchange.Redis;
 
     public class RedisSessionRepository : ISessionRepository
@@ -30,7 +29,7 @@ namespace Axle.Persistence
         public async Task Add(Session session)
         {
             this.logger.LogDebug($"Trying to add new session: {nameof(session.AccountId)}:{session.AccountId}, {nameof(session.SessionId)}: {session.SessionId}..");
-            
+
             var serSession = MessagePackSerializer.Serialize(session);
             var unixNow = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
@@ -42,7 +41,6 @@ namespace Axle.Persistence
             {
 #pragma warning disable 4014
                 transaction.StringSetAsync(SessionKey(session.SessionId), serSession);
-
 
                 if (session.IsSupportUser)
                 {
@@ -173,6 +171,12 @@ namespace Axle.Persistence
             return serializedSessions.Where(x => !x.IsNull).Select(x => MessagePackSerializer.Deserialize<Session>(x));
         }
 
+        private static string UserKey(string user) => $"axle:users:{user}";
+
+        private static string AccountKey(string account) => $"axle:accounts:{account}";
+
+        private static string SessionKey(int session) => $"axle:sessions:{session}";
+
         private async Task<int?> GetSessionIdBySessionKey(RedisKey sessionKey)
         {
             string sessionId = await this.multiplexer.GetDatabase().StringGetAsync(sessionKey);
@@ -203,11 +207,5 @@ namespace Axle.Persistence
                 this.logger.LogWarning($"{nameof(RedisSessionRepository)}:{nameof(RemoveKeyIfEquals)}: failed to commit transaction.");
             }
         }
-
-        private static string UserKey(string user) => $"axle:users:{user}";
-
-        private static string AccountKey(string account) => $"axle:accounts:{account}";
-
-        private static string SessionKey(int session) => $"axle:sessions:{session}";
     }
 }
