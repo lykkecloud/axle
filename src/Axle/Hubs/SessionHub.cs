@@ -1,6 +1,9 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System.Security.Claims;
+using Axle.Exceptions;
+
 namespace Axle.Hubs
 {
     using System;
@@ -36,8 +39,17 @@ namespace Axle.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var userName = this.Context.User.FindFirst(JwtClaimTypes.Name).Value;
-            var clientId = this.Context.User.FindFirst("client_id").Value;
+            var userName = this.Context.User.FindFirstValue(JwtClaimTypes.Name);
+            if (string.IsNullOrEmpty(userName))
+            {
+                throw new UserClaimIsEmptyException(JwtClaimTypes.Name);
+            }
+
+            var clientId = this.Context.User.FindFirstValue("client_id");
+            if (string.IsNullOrEmpty(clientId))
+            {
+                throw new UserClaimIsEmptyException("client_id");
+            }
 
             var query = this.Context.GetHttpContext().Request.Query;
 
