@@ -96,6 +96,10 @@ namespace Axle
             return WebHost
                 .CreateDefaultBuilder(args)
                 .UseConfiguration(configuration)
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.AddEnvironmentSecrets<Startup>(EnvironmentSecretConfig);
+                })
                 .UseStartup<Startup>()
                 .UseSerilog()
                 .Build();

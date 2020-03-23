@@ -1,8 +1,6 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
-using JetBrains.Annotations;
-
 namespace Axle.HostedServices
 {
     using System.Linq;
@@ -12,6 +10,7 @@ namespace Axle.HostedServices
     using Axle.Dto;
     using Axle.Extensions;
     using Axle.Services;
+    using JetBrains.Annotations;
     using MessagePack;
     using Microsoft.Extensions.Hosting;
     using StackExchange.Redis;
@@ -32,13 +31,15 @@ namespace Axle.HostedServices
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.SubscribeAsync(RedisChannels.SessionTermination, 
+            return this.subscriber.SubscribeAsync(
+                RedisChannels.SessionTermination,
                 async (channel, value) => await this.HandleSessionTermination(channel, value));
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.UnsubscribeAsync(RedisChannels.SessionTermination,
+            return this.subscriber.UnsubscribeAsync(
+                RedisChannels.SessionTermination,
                 async (channel, value) => await this.HandleSessionTermination(channel, value));
         }
 

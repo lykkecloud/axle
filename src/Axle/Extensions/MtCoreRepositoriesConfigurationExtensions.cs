@@ -3,12 +3,12 @@
 
 namespace Axle.Extensions
 {
-    using Microsoft.Extensions.DependencyInjection;
     using Axle.HttpClients;
     using Lykke.HttpClientGenerator;
     using Lykke.Snow.Common.Startup;
+    using Microsoft.Extensions.DependencyInjection;
     using IAccountsMgmtApi = MarginTrading.AccountsManagement.Contracts.IAccountsApi;
-    
+
     public static class MtCoreRepositoriesConfigurationExtensions
     {
         public static void AddMtCoreDalRepositories(
@@ -16,7 +16,6 @@ namespace Axle.Extensions
             string mtCoreAccountManagementEndpoint,
             string mtCoreAccountsApiKey)
         {
-            
             var mtCoreAccountsMgmtClientGenerator = HttpClientGenerator
                 .BuildForUrl(mtCoreAccountManagementEndpoint)
                 .WithServiceName<MtCoreHttpErrorResponse>("MT Core Account Management Service")
