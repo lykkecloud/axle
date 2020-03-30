@@ -1,3 +1,8 @@
+## 2.14.7 (March 30, 2020)
+
+* LT-2132: Investor couldn't connect to web client- 404 in Axle
+* LT-2064: update new Lykke.Middlewares nuget
+
 ## 2.14.6 (February 10, 2020)
 
 * LT-2040: Update Chest service client in Axle
