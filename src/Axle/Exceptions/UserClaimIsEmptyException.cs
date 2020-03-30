@@ -7,7 +7,7 @@ namespace Axle.Exceptions
         public string ClaimType { get; }
 
         public UserClaimIsEmptyException(string claimType)
-            : base("User claim is empty")
+            : base($"User claim [{claimType}] is empty")
         {
             this.ClaimType = claimType;
         }
