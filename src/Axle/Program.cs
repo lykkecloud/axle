@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using Axle.Extensions;
+
 namespace Axle
 {
     using System;
@@ -8,7 +10,7 @@ namespace Axle
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Threading.Tasks;
-    using Axle.Settings;
+    using Settings;
     using Lykke.Snow.Common.Startup;
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;

@@ -6,8 +6,8 @@ namespace Axle
     using System.Collections.Generic;
     using System.Security.Claims;
     using System.Threading.Tasks;
-    using Axle.Caches;
-    using Axle.Constants;
+    using Caches;
+    using Constants;
     using IdentityModel;
     using Microsoft.AspNetCore.Authentication;
     using PermissionsManagement.Client;
@@ -27,7 +27,7 @@ namespace Axle
 
         public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
         {
-            principal = await this.userRoleToPermissionsTransformer.AddPermissionsClaims(principal);
+            principal = await userRoleToPermissionsTransformer.AddPermissionsClaims(principal);
 
             var claims = new List<Claim>(principal.Claims);
 
@@ -42,7 +42,7 @@ namespace Axle
 
                 if (!string.IsNullOrWhiteSpace(subject))
                 {
-                    var accounts = await this.accountsCache.GetAccountIds(subject);
+                    var accounts = await accountsCache.GetAccountIds(subject);
 
                     foreach (var account in accounts)
                     {

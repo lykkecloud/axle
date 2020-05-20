@@ -9,6 +9,6 @@ namespace Axle.Settings
     {
         public int TimeoutInSec { get; set; } = 300;
 
-        public TimeSpan Timeout => TimeSpan.FromSeconds(this.TimeoutInSec);
+        public TimeSpan Timeout => TimeSpan.FromSeconds(TimeoutInSec);
     }
 }

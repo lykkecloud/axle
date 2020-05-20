@@ -4,9 +4,9 @@
 namespace Axle.Services
 {
     using System.Threading.Tasks;
-    using Axle.Contracts;
-    using Axle.Dto;
-    using Axle.Persistence;
+    using Contracts;
+    using Dto;
+    using Persistence;
 
     public interface ISessionService
     {

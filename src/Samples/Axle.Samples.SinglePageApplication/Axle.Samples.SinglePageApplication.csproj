@@ -4,21 +4,6 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
   
-  <PropertyGroup>
-    <CodeAnalysisRuleSet>../../Axle.ruleset</CodeAnalysisRuleSet>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <TrimUnusedDependencies>true</TrimUnusedDependencies>
-  </PropertyGroup>
-  
-  <ItemGroup>
-    <AdditionalFiles Include="..\..\stylecop.json" Link="stylecop.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

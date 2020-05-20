@@ -5,10 +5,10 @@ namespace Axle.Controllers
 {
     using System.Net;
     using System.Threading.Tasks;
-    using Axle.Constants;
-    using Axle.Contracts;
-    using Axle.Extensions;
-    using Axle.Services;
+    using Constants;
+    using Contracts;
+    using Extensions;
+    using Services;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using NSwag.Annotations;
@@ -30,14 +30,14 @@ namespace Axle.Controllers
         [SwaggerResponse(HttpStatusCode.OK, null)]
         public async Task<IActionResult> Login(string accountId)
         {
-            var userName = this.User.GetUsername();
-            var sessionId = await this.sessionService.GenerateSessionId();
+            var userName = User.GetUsername();
+            var sessionId = await sessionService.GenerateSessionId();
 
             var activity = new SessionActivity(SessionActivityType.Login, sessionId, userName, accountId);
 
-            await this.activityService.PublishActivity(activity);
+            await activityService.PublishActivity(activity);
 
-            return this.Ok();
+            return Ok();
         }
     }
 }

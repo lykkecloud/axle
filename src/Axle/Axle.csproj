@@ -7,13 +7,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <CodeAnalysisRuleSet>../Axle.ruleset</CodeAnalysisRuleSet>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-    <TrimUnusedDependencies>true</TrimUnusedDependencies>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <Version>2.14.7</Version>
     <Authors>Axle Contributors</Authors>
     <Company>Lykke</Company>
@@ -25,11 +18,6 @@
     <UserSecretsId>25692E6B-C123-474C-A44B-6B2C93BCF65D</UserSecretsId>
     <AssemblyName>Axle</AssemblyName>
   </PropertyGroup>
-
-  <ItemGroup>
-    <TrimFilesRootFiles Include="Microsoft.AspNetCore.ApplicationInsights.HostingStartup.dll" />
-  </ItemGroup>
-
 
   <ItemGroup>
     <Compile Remove="logs\**" />
@@ -50,10 +38,6 @@
     <PackageReference Include="Lykke.Snow.Common.Startup" Version="1.2.18" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.6.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.BrowserLink" Version="2.2.0" />
     <PackageReference Include="NSwag.AspNetCore" Version="11.20.1" />
@@ -65,12 +49,7 @@
     <PackageReference Include="Serilog.Sinks.Async" Version="1.3.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="4.0.0" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" />
     <PackageReference Include="Microsoft.Packaging.Tools.Trimming" Version="1.1.0-preview1-26619-01" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="../stylecop.json" />
   </ItemGroup>
 
   <ItemGroup>

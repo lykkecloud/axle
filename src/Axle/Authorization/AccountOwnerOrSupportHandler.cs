@@ -6,9 +6,9 @@ namespace Axle.Authorization
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using Axle.Constants;
-    using Axle.Extensions;
-    using Axle.Services;
+    using Constants;
+    using Extensions;
+    using Services;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
 
@@ -25,17 +25,17 @@ namespace Axle.Authorization
 
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AccountOwnerOrSupportRequirement requirement)
         {
-            var httpContext = this.contextAccessor.HttpContext;
+            var httpContext = contextAccessor.HttpContext;
 
-            var accountId = this.contextAccessor.HttpContext.Request.Query["account_id"].ToString();
+            var accountId = contextAccessor.HttpContext.Request.Query["account_id"].ToString();
             var accountIdEmpty = string.IsNullOrWhiteSpace(accountId);
 
-            var isAccountOwner = !accountIdEmpty && this.IsAccountOwner(context, accountId);
+            var isAccountOwner = !accountIdEmpty && IsAccountOwner(context, accountId);
 
             if (isAccountOwner || context.User.IsSupportUser(accountId))
             {
                 // Accounts for the case where a support user tries to connect on behalf a nonexistent account
-                if (accountIdEmpty || !string.IsNullOrEmpty(await this.accountsService.GetAccountOwnerUserName(accountId)))
+                if (accountIdEmpty || !string.IsNullOrEmpty(await accountsService.GetAccountOwnerUserName(accountId)))
                 {
                     context.Succeed(requirement);
                 }

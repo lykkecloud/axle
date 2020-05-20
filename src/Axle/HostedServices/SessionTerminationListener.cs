@@ -6,10 +6,10 @@ namespace Axle.HostedServices
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Axle.Constants;
-    using Axle.Dto;
-    using Axle.Extensions;
-    using Axle.Services;
+    using Constants;
+    using Dto;
+    using Extensions;
+    using Services;
     using JetBrains.Annotations;
     using MessagePack;
     using Microsoft.Extensions.Hosting;
@@ -25,31 +25,31 @@ namespace Axle.HostedServices
             IConnectionMultiplexer multiplexer,
             IHubConnectionService hubConnectionService)
         {
-            this.subscriber = multiplexer.GetSubscriber();
+            subscriber = multiplexer.GetSubscriber();
             this.hubConnectionService = hubConnectionService;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.SubscribeAsync(
+            return subscriber.SubscribeAsync(
                 RedisChannels.SessionTermination,
-                async (channel, value) => await this.HandleSessionTermination(channel, value));
+                async (channel, value) => await HandleSessionTermination(channel, value));
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            return this.subscriber.UnsubscribeAsync(
+            return subscriber.UnsubscribeAsync(
                 RedisChannels.SessionTermination,
-                async (channel, value) => await this.HandleSessionTermination(channel, value));
+                async (channel, value) => await HandleSessionTermination(channel, value));
         }
 
         private async Task HandleSessionTermination(RedisChannel channel, RedisValue value)
         {
             var terminateSessionNotification = MessagePackSerializer.Deserialize<TerminateSessionNotification>(value);
 
-            var connections = this.hubConnectionService.FindBySessionId(terminateSessionNotification.SessionId);
+            var connections = hubConnectionService.FindBySessionId(terminateSessionNotification.SessionId);
 
-            await this.hubConnectionService.TerminateConnections(
+            await hubConnectionService.TerminateConnections(
                 terminateSessionNotification.Reason.ToTerminateConnectionReason(), connections.ToArray());
         }
     }

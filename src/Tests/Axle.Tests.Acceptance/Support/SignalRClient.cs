@@ -3,10 +3,6 @@
 
 namespace Axle.Tests.Acceptance.Support
 {
-    using System;
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.SignalR.Client;
-
     //public sealed class SignalRClient
     //{
     //    private readonly Uri axleUri;

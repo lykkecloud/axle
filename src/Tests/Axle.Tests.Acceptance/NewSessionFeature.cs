@@ -3,11 +3,7 @@
 
 namespace Axle.Tests.Acceptance
 {
-    using System.Globalization;
-    using System.Threading.Tasks;
-    using Axle.Tests.Acceptance.Support;
-    using FluentAssertions;
-    using Xbehave;
+    using Support;
 
     public class NewSessionFeature : IntegrationTest
     {

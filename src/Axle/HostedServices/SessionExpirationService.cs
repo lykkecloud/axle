@@ -6,10 +6,10 @@ namespace Axle.HostedServices
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Axle.Contracts;
-    using Axle.Persistence;
-    using Axle.Services;
-    using Axle.Settings;
+    using Contracts;
+    using Persistence;
+    using Services;
+    using Settings;
     using Lykke.Middlewares;
     using Lykke.Middlewares.Mappers;
     using Microsoft.Extensions.Hosting;
@@ -45,24 +45,24 @@ namespace Axle.HostedServices
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            this.cancellationTokenSource?.Dispose();
-            this.cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cancellationTokenSource?.Dispose();
+            cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-            this.expirationJob = this.DecorateAndHandle(() => this.RefreshTimeouts(this.cancellationTokenSource.Token));
+            expirationJob = DecorateAndHandle(() => RefreshTimeouts(cancellationTokenSource.Token));
 
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            this.cancellationTokenSource?.Cancel();
-            return this.expirationJob ?? Task.CompletedTask;
+            cancellationTokenSource?.Cancel();
+            return expirationJob ?? Task.CompletedTask;
         }
 
         public void Dispose()
         {
-            this.cancellationTokenSource?.Cancel();
-            this.cancellationTokenSource?.Dispose();
+            cancellationTokenSource?.Cancel();
+            cancellationTokenSource?.Dispose();
         }
 
         private async Task RefreshTimeouts(CancellationToken cancellationToken)
@@ -73,21 +73,21 @@ namespace Axle.HostedServices
                 {
                     try
                     {
-                        await Task.Delay(this.sessionSettings.Timeout / 4, cancellationToken);
+                        await Task.Delay(sessionSettings.Timeout / 4, cancellationToken);
                     }
                     catch (TaskCanceledException)
                     {
                         break;
                     }
 
-                    await this.sessionRepository.RefreshSessionTimeouts(this.hubConnectionService.GetAllConnectedSessions());
+                    await sessionRepository.RefreshSessionTimeouts(hubConnectionService.GetAllConnectedSessions());
 
-                    var sessionsToTerminate = await this.sessionRepository.GetExpiredSessions();
+                    var sessionsToTerminate = await sessionRepository.GetExpiredSessions();
 
                     foreach (var session in sessionsToTerminate)
                     {
-                        await this.sessionLifecycleService.TerminateSession(session, SessionActivityType.TimeOut);
-                        this.logger.LogInformation($"Successfully timed out session: [{session.SessionId}] for user: [{session.UserName}]");
+                        await sessionLifecycleService.TerminateSession(session, SessionActivityType.TimeOut);
+                        logger.LogInformation($"Successfully timed out session: [{session.SessionId}] for user: [{session.UserName}]");
                     }
                 }
                 catch (Exception e)

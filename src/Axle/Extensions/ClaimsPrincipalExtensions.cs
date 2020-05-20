@@ -3,9 +3,8 @@
 
 namespace Axle.Extensions
 {
-    using System.Linq;
     using System.Security.Claims;
-    using Axle.Constants;
+    using Constants;
     using IdentityModel;
 
     public static class ClaimsPrincipalExtensions

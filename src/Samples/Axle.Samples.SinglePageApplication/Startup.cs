@@ -1,13 +1,12 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
-namespace SampleSinglePageApp
-{
-    using System;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
+namespace Axle.Samples.SinglePageApplication
+{
     public class Startup
     {
         public void ConfigureServices(IServiceCollection services)

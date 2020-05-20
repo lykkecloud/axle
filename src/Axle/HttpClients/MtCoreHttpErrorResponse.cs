@@ -7,6 +7,6 @@ namespace Axle.HttpClients
     {
         public string ErrorMessage { get; set; }
 
-        public override string ToString() => this.ErrorMessage;
+        public override string ToString() => ErrorMessage;
     }
 }

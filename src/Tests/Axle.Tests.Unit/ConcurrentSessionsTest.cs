@@ -3,17 +3,6 @@
 
 namespace Axle.Tests.Unit
 {
-    using System;
-    using System.Collections.Concurrent;
-    using System.Globalization;
-    using System.Linq;
-    using System.Threading;
-    using Axle.Persistence;
-    using Axle.Services;
-    using FakeItEasy;
-    using FluentAssertions;
-    using Xbehave;
-
     public class ConcurrentSessionsTest
     {
         private const string UserId = "abc";

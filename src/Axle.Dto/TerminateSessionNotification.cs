@@ -3,7 +3,7 @@
 
 namespace Axle.Dto
 {
-    using Axle.Contracts;
+    using Contracts;
     using MessagePack;
 
     [MessagePackObject]

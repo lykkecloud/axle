@@ -23,28 +23,28 @@ namespace Axle.Services
 
         public async Task RevokeAccessToken(string accessToken, string clientId)
         {
-            this.logger.LogInformation($"Revoking access token: [{accessToken}]");
+            logger.LogInformation($"Revoking access token: [{accessToken}]");
 
-            var discoveryResponse = await this.discoveryCache.GetAsync();
+            var discoveryResponse = await discoveryCache.GetAsync();
             if (discoveryResponse.IsError)
             {
-                this.logger.LogError($"Unable to get token revocation endpoint from ironclad | Error: {discoveryResponse.Error}", discoveryResponse.Exception);
+                logger.LogError($"Unable to get token revocation endpoint from ironclad | Error: {discoveryResponse.Error}", discoveryResponse.Exception);
                 throw new Exception(discoveryResponse.Error, discoveryResponse.Exception);
             }
 
             var clientSecret = "no-secret-for-public-client";
 
-            using (TokenRevocationClient client = new TokenRevocationClient(discoveryResponse.RevocationEndpoint, clientId, clientSecret))
+            using (var client = new TokenRevocationClient(discoveryResponse.RevocationEndpoint, clientId, clientSecret))
             {
                 var result = await client.RevokeAccessTokenAsync(accessToken);
 
                 if (result.IsError)
                 {
-                    this.logger.LogError($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
+                    logger.LogError($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
                     throw new Exception($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
                 }
 
-                this.logger.LogInformation($"Successfully revoked access token: [{accessToken}]");
+                logger.LogInformation($"Successfully revoked access token: [{accessToken}]");
             }
         }
     }
