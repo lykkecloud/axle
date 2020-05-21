@@ -4,8 +4,8 @@
 namespace Axle.Services
 {
     using System.Threading.Tasks;
-    using Axle.Contracts;
-    using Axle.Persistence;
+    using Contracts;
+    using Persistence;
 
     public interface IActivityService
     {

@@ -4,8 +4,8 @@
 namespace Axle.Services
 {
     using System.Threading.Tasks;
-    using Axle.Contracts;
-    using Axle.Persistence;
+    using Contracts;
+    using Persistence;
     using Lykke.RabbitMqBroker.Publisher;
 
     public class ActivityService : IActivityService
@@ -20,14 +20,14 @@ namespace Axle.Services
 
         public async Task PublishActivity(SessionActivity activity)
         {
-            await this.publisher.ProduceAsync(activity);
+            await publisher.ProduceAsync(activity);
         }
 
         public Task PublishActivity(Session session, SessionActivityType activityType)
         {
             var activity = new SessionActivity(activityType, session.SessionId, session.UserName, session.AccountId);
 
-            return this.PublishActivity(activity);
+            return PublishActivity(activity);
         }
     }
 }

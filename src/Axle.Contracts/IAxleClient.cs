@@ -5,7 +5,6 @@ namespace Axle.Contracts
 {
     using System;
     using System.Threading.Tasks;
-    using Axle.Contracts.Models;
     using JetBrains.Annotations;
     using Refit;
 

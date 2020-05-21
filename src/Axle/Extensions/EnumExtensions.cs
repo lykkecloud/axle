@@ -3,8 +3,8 @@
 
 namespace Axle.Extensions
 {
-    using Axle.Contracts;
-    using Axle.Dto;
+    using Contracts;
+    using Dto;
 
     public static class EnumExtensions
     {

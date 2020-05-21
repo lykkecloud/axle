@@ -4,8 +4,8 @@
 namespace Axle.Services
 {
     using System.Threading.Tasks;
-    using Axle.Constants;
-    using Axle.Dto;
+    using Constants;
+    using Dto;
     using MessagePack;
     using StackExchange.Redis;
 
@@ -21,13 +21,13 @@ namespace Axle.Services
         public async Task PublishSessionTermination(TerminateSessionNotification terminateSessionNotification)
         {
             var serializedNotification = MessagePackSerializer.Serialize(terminateSessionNotification);
-            await this.multiplexer.GetDatabase().PublishAsync(RedisChannels.SessionTermination, serializedNotification);
+            await multiplexer.GetDatabase().PublishAsync(RedisChannels.SessionTermination, serializedNotification);
         }
 
         public async Task PublishOtherTabsTermination(TerminateOtherTabsNotification terminateOtherTabsNotification)
         {
             var serializedNotification = MessagePackSerializer.Serialize(terminateOtherTabsNotification);
-            await this.multiplexer.GetDatabase().PublishAsync(RedisChannels.OtherTabsTermination, serializedNotification);
+            await multiplexer.GetDatabase().PublishAsync(RedisChannels.OtherTabsTermination, serializedNotification);
         }
     }
 }

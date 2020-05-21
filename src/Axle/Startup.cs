@@ -1,22 +1,23 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using JetBrains.Annotations;
+using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
+
 namespace Axle
 {
     using System;
-    using System.Collections.Generic;
-    using System.Reflection;
-    using Axle.Authorization;
-    using Axle.Caches;
-    using Axle.Configurators;
-    using Axle.Constants;
-    using Axle.Contracts;
-    using Axle.Extensions;
-    using Axle.HostedServices;
-    using Axle.Hubs;
-    using Axle.Persistence;
-    using Axle.Services;
-    using Axle.Settings;
+    using Authorization;
+    using Caches;
+    using Constants;
+    using Contracts;
+    using Extensions;
+    using HostedServices;
+    using Hubs;
+    using Persistence;
+    using Services;
+    using Settings;
     using Chest.Client.Extensions;
     using IdentityModel;
     using IdentityModel.Client;
@@ -29,9 +30,7 @@ namespace Axle
     using Microsoft.AspNetCore.Authentication;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
@@ -39,9 +38,7 @@ namespace Axle
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Serialization;
-    using NSwag.AspNetCore;
     using PermissionsManagement.Client;
-    using PermissionsManagement.Client.Dto;
     using PermissionsManagement.Client.Handlers;
     using StackExchange.Redis;
 
@@ -60,7 +57,7 @@ namespace Axle
             {
                 o.AddPolicy("AllowCors", p =>
                 {
-                    p.WithOrigins(this.configuration.GetSection("CorsOrigins").Get<string[]>())
+                    p.WithOrigins(configuration.GetSection("CorsOrigins").Get<string[]>())
                      .AllowAnyHeader()
                      .AllowAnyMethod()
                      .AllowCredentials();
@@ -69,41 +66,79 @@ namespace Axle
 
             services
                 .AddSignalR()
-                .AddJsonProtocol(options =>
+                .AddNewtonsoftJsonProtocol(options =>
                 {
-                    options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() };
+                    options.PayloadSerializerSettings.ContractResolver = new DefaultContractResolver
+                        {NamingStrategy = new CamelCaseNamingStrategy()};
                     options.PayloadSerializerSettings.Converters.Add(new StringEnumConverter());
                     options.PayloadSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
                 });
 
             services.AddMvcCore()
-                .AddJsonFormatters()
-                .AddJsonOptions(
+                .AddNewtonsoftJson(
                     options =>
                     {
-                        options.SerializerSettings.ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() };
+                        options.SerializerSettings.ContractResolver = new DefaultContractResolver
+                            {NamingStrategy = new CamelCaseNamingStrategy()};
                         options.SerializerSettings.Converters.Add(new StringEnumConverter());
                         options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
                     })
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddApiExplorer()
                 .AddAuthorization(
                     options =>
                     {
                         // add any authorization policy
-                        options.AddPolicy(AuthorizationPolicies.System, policy => policy.RequireClaim(JwtClaimTypes.Scope, "axle_api:server"));
-                        options.AddPolicy(AuthorizationPolicies.Mobile, policy => policy.AddRequirements(new MobileClientAndAccountOwnerRequirement()));
-                        options.AddPolicy(PermissionsManagement.Client.Constants.AuthorizeUserPolicy, policy => policy.AddRequirements(new AuthorizeUserRequirement()));
-                        options.AddPolicy(AuthorizationPolicies.AccountOwnerOrSupport, policy => policy.AddRequirements(new AccountOwnerOrSupportRequirement()));
+                        options.AddPolicy(AuthorizationPolicies.System,
+                            policy => policy.RequireClaim(JwtClaimTypes.Scope, "axle_api:server"));
+                        options.AddPolicy(AuthorizationPolicies.Mobile,
+                            policy => policy.AddRequirements(new MobileClientAndAccountOwnerRequirement()));
+                        options.AddPolicy(PermissionsManagement.Client.Constants.AuthorizeUserPolicy,
+                            policy => policy.AddRequirements(new AuthorizeUserRequirement()));
+                        options.AddPolicy(AuthorizationPolicies.AccountOwnerOrSupport,
+                            policy => policy.AddRequirements(new AccountOwnerOrSupportRequirement()));
                     });
 
-            services.AddSwagger();
-
-            var authority = this.configuration.GetValue<string>("Api-Authority");
-            var apiName = this.configuration.GetValue<string>("Api-Name");
-            var apiSecret = this.configuration.GetValue<string>("Api-Secret");
-            var validateIssuerName = this.configuration.GetValue<bool>("Validate-Issuer-Name");
-            var requireHttps = this.configuration.GetValue<bool>("Require-Https");
+            var authority = configuration.GetValue<string>("Api-Authority");
+            var apiName = configuration.GetValue<string>("Api-Name");
+            var apiSecret = configuration.GetValue<string>("Api-Secret");
+            var validateIssuerName = configuration.GetValue<bool>("Validate-Issuer-Name");
+            var requireHttps = configuration.GetValue<bool>("Require-Https");
+            
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo {Title = apiName, Version = "v1"});
+                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.OAuth2,
+                    Flows = new OpenApiOAuthFlows
+                    {
+                        Implicit = new OpenApiOAuthFlow
+                        {
+                            AuthorizationUrl = new Uri($"{authority}/connect/authorize", UriKind.Absolute),
+                            Scopes =
+                            {
+                                {apiName, "CFD Platform (Nova)"},
+                                {$"{apiName}:server", "CFD Platform (Nova) server side methods"},
+                                {$"{apiName}:mobile", "CFD Platform (Nova) mobile side methods"}
+                            }
+                        }
+                    }
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Id = "oauth2",
+                                Type = ReferenceType.SecurityScheme
+                            }
+                        },
+                        new[] {apiName}
+                    }
+                });
+            });
 
             services
                 .AddAuthentication(options =>
@@ -126,8 +161,8 @@ namespace Axle
 
                         options.TokenRetriever = BearerTokenRetriever.FromHeaderAndQueryString;
 
-                        options.EnableCaching = this.configuration.GetValue("IntrospectionCache:Enabled", true);
-                        options.CacheDuration = TimeSpan.FromSeconds(this.configuration.GetValue("IntrospectionCache:DurationInSeconds", 600));
+                        options.EnableCaching = configuration.GetValue("IntrospectionCache:Enabled", true);
+                        options.CacheDuration = TimeSpan.FromSeconds(configuration.GetValue("IntrospectionCache:DurationInSeconds", 600));
                     });
 
             var connectionRepository = new InMemoryRepository<string, HubCallerContext>();
@@ -136,7 +171,7 @@ namespace Axle
             services.AddSingleton<IRepository<string, int>>(new InMemoryRepository<string, int>());
             services.AddSingleton<IReadOnlyRepository<string, HubCallerContext>>(connectionRepository);
 
-            var sessionSettings = this.configuration.GetSection("SessionConfig").Get<SessionSettings>() ?? new SessionSettings();
+            var sessionSettings = configuration.GetSection("SessionConfig").Get<SessionSettings>() ?? new SessionSettings();
 
             services.AddSingleton(sessionSettings);
             services.AddSingleton<INotificationService, NotificationService>();
@@ -150,47 +185,37 @@ namespace Axle
             services.AddSingleton<IHubConnectionService, HubConnectionService>();
             services.AddSingleton<IActivityService, ActivityService>();
 
-            var rabbitMqSettings = this.configuration.GetSection("ActivityPublisherSettings").Get<RabbitMqSubscriptionSettings>().MakeDurable();
-            rabbitMqSettings.ConnectionString = this.configuration["ConnectionStrings:RabbitMq"];
-
-#pragma warning disable CS0618 // Type or member is obsolete
+            var rabbitMqSettings = configuration.GetSection("ActivityPublisherSettings").Get<RabbitMqSubscriptionSettings>().MakeDurable();
+            rabbitMqSettings.ConnectionString = configuration["ConnectionStrings:RabbitMq"];
+            
             services.AddSingleton(x => new RabbitMqPublisher<SessionActivity>(rabbitMqSettings)
                 .DisableInMemoryQueuePersistence()
                 .SetSerializer(new MessagePackMessageSerializer<SessionActivity>())
                 .SetPublishStrategy(new DefaultFanoutPublishStrategy(rabbitMqSettings))
                 .SetLogger(new LykkeLoggerAdapter<RabbitMqPublisher<SessionActivity>>(x.GetService<ILogger<RabbitMqPublisher<SessionActivity>>>()))
                 .PublishSynchronously());
-#pragma warning restore CS0618 // Type or member is obsolete
 
-            services.AddSingleton(provider => new DiscoveryClient(authority)
-            {
-                Policy = new DiscoveryPolicy
-                {
-                    ValidateIssuerName = validateIssuerName,
-                    RequireHttps = requireHttps
-                }
-            });
+            services.AddSingleton<IConnectionMultiplexer>(x => ConnectionMultiplexer.Connect(configuration.GetValue<string>("ConnectionStrings:Redis")));
 
-            services.AddSingleton<IConnectionMultiplexer>(x => ConnectionMultiplexer.Connect(this.configuration.GetValue<string>("ConnectionStrings:Redis")));
-
-            services.AddSingleton<DiscoveryCache>();
+            services.AddSingleton<IDiscoveryCache, DiscoveryCache>(p => new DiscoveryCache(authority,
+                new DiscoveryPolicy {RequireHttps = requireHttps, ValidateIssuerName = validateIssuerName}));
             services.AddSingleton<ITokenRevocationService, BouncerService>();
 
             services.AddSingleton<IHttpStatusCodeMapper, DefaultHttpStatusCodeMapper>();
             services.AddSingleton<ILogLevelMapper, DefaultLogLevelMapper>();
-            services.AddSingleton<AuditSettings>(this.configuration.GetSection("AuditSettings")?.Get<AuditSettings>() ?? new AuditSettings());
+            
+            // AuditSettings registration for Lykke.Middlewares.AuditHandlerMiddleware
+            services.AddSingleton(configuration.GetSection("AuditSettings")?.Get<AuditSettings>() ?? new AuditSettings());
 
             services.AddMtCoreDalRepositories(
-                this.configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"),
-                this.configuration.GetValue<string>("mtCoreAccountsApiKey"));
+                configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"),
+                configuration.GetValue<string>("mtCoreAccountsApiKey"));
 
             services.AddChestClient(
-                this.configuration.GetValue<string>("chestUrl"),
-                this.configuration.GetValue<string>("chestApiKey"));
+                configuration.GetValue<string>("chestUrl"),
+                configuration.GetValue<string>("chestApiKey"));
 
             services.AddSingleton<IAccountsService, AccountsService>();
-
-            services.AddSingleton(this.configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
             services.AddSingleton<IUserRoleToPermissionsTransformer, UserRoleToPermissionsTransformer>();
             services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
             services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
@@ -207,10 +232,13 @@ namespace Axle
             services.AddMemoryCache(o => o.ExpirationScanFrequency = TimeSpan.FromMinutes(1));
             services.AddDistributedMemoryCache(
                 options => options.ExpirationScanFrequency = TimeSpan.FromSeconds(
-                    this.configuration.GetValue("IntrospectionCache:ExpirationScanFrequencyInSeconds", 60)));
+                    configuration.GetValue("IntrospectionCache:ExpirationScanFrequencyInSeconds", 60)));
+
+            services.AddHttpClient();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        [UsedImplicitly]
+        public void Configure(IApplicationBuilder app, IHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -221,27 +249,24 @@ namespace Axle
 
             app.UseMiddleware<LogHandlerMiddleware>();
             app.UseMiddleware<ExceptionHandlerMiddleware>();
-
             app.UseCors("AllowCors");
-
             app.UseAuthentication();
             app.UseMiddleware<AuditHandlerMiddleware>();
 
-            app.UseSignalR(routes =>
+            app.UseSwagger();
+            app.UseSwaggerUI(options =>
             {
-                routes.MapHub<SessionHub>(SessionHub.Name);
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                options.OAuthClientId(configuration.GetValue<string>("Swagger-Client-Id"));
+                options.OAuthAppName(configuration.GetValue<string>("Api-Name"));
             });
 
-            // Enable the Swagger UI middleware and the Swagger generator.
-            var assembly = typeof(Startup).GetTypeInfo().Assembly;
-            app.UseSwaggerUi3WithApiExplorer(
-                SwaggerConfigurator.Configure(
-                        assembly,
-                        this.configuration.GetValue<string>("Api-Authority"),
-                        this.configuration.GetValue<string>("Api-Name"),
-                        this.configuration.GetValue<string>("Swagger-Client-Id")));
-
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapHub<SessionHub>(SessionHub.Name);
+                endpoints.MapControllers();
+            });
         }
     }
 }

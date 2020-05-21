@@ -18,7 +18,7 @@ namespace Axle.Services
 
         public async Task<string> GetAccountOwnerUserName(string accountId)
         {
-            var account = await this.chestClient.Metadata.GetAsync("metadata", "accounts", accountId);
+            var account = await chestClient.Metadata.GetAsync("metadata", "accounts", accountId);
             return account?.Data["UserId"];
         }
     }
