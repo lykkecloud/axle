@@ -2,6 +2,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Axle.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace Axle
 {
@@ -12,7 +13,6 @@ namespace Axle
     using System.Threading.Tasks;
     using Settings;
     using Lykke.Snow.Common.Startup;
-    using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Serilog;
@@ -78,7 +78,7 @@ namespace Axle
                 await configuration.ValidateSettings<AppSettings>();
 
                 Log.Information($"Starting {title} web API");
-                BuildWebHost(args, configuration).Run();
+                BuildHost(args, configuration).Run();
                 Log.Information($"{title} web API stopped");
                 return 0;
             }
@@ -93,18 +93,20 @@ namespace Axle
             }
         }
 
-        private static IWebHost BuildWebHost(string[] args, IConfigurationRoot configuration)
+        private static IHost BuildHost(string[] args, IConfiguration configuration)
         {
-            return WebHost
-                .CreateDefaultBuilder(args)
-                .UseConfiguration(configuration)
-                .ConfigureAppConfiguration(c =>
+            return Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    c.AddEnvironmentSecrets<Startup>(EnvironmentSecretConfig);
-                })
-                .UseStartup<Startup>()
-                .UseSerilog()
-                .Build();
+                    webBuilder
+                        .UseConfiguration(configuration)
+                        .ConfigureAppConfiguration(cfg =>
+                        {
+                            cfg.AddEnvironmentSecrets<Startup>(EnvironmentSecretConfig);
+                        })
+                        .UseStartup<Startup>()
+                        .UseSerilog();
+                }).Build();
         }
     }
 }

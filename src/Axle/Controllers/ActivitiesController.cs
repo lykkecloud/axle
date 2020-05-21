@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using Swashbuckle.AspNetCore.Annotations;
+
 namespace Axle.Controllers
 {
     using System.Net;
@@ -11,7 +13,6 @@ namespace Axle.Controllers
     using Services;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
-    using NSwag.Annotations;
 
     [Authorize(AuthorizationPolicies.Mobile)]
     [Route("api/accounts/{accountId}/[controller]")]
@@ -27,7 +28,7 @@ namespace Axle.Controllers
         }
 
         [HttpPost("login")]
-        [SwaggerResponse(HttpStatusCode.OK, null)]
+        [SwaggerResponse((int) HttpStatusCode.OK)]
         public async Task<IActionResult> Login(string accountId)
         {
             var userName = User.GetUsername();

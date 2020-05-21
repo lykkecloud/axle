@@ -1,9 +1,10 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Axle.Samples.SinglePageApplication
 {
@@ -15,15 +16,16 @@ namespace Axle.Samples.SinglePageApplication
              {
                  o.AddPolicy("AllowCors", p =>
                  {
-                     p.AllowAnyHeader()
+                     p.WithOrigins("localhost")
+                         .AllowAnyHeader()
                          .AllowAnyMethod()
-                         .AllowAnyOrigin()
                          .AllowCredentials();
                  });
              });
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        [UsedImplicitly]
+        public void Configure(IApplicationBuilder app, IHostEnvironment env)
         {
             app.UseFileServer();
 

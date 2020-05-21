@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System.Net.Http;
+
 namespace Axle.Services
 {
     using System;
@@ -10,15 +12,20 @@ namespace Axle.Services
 
     public class BouncerService : ITokenRevocationService
     {
-        private readonly DiscoveryCache discoveryCache;
+        private readonly IDiscoveryCache discoveryCache;
+        private readonly IHttpClientFactory httpClientFactory;
         private readonly ILogger<BouncerService> logger;
 
+        private const string ClientSecret = "no-secret-for-public-client";
+
         public BouncerService(
-            DiscoveryCache discoveryCache,
-            ILogger<BouncerService> logger)
+            IDiscoveryCache discoveryCache,
+            ILogger<BouncerService> logger,
+            IHttpClientFactory httpClientFactory)
         {
             this.discoveryCache = discoveryCache;
             this.logger = logger;
+            this.httpClientFactory = httpClientFactory;
         }
 
         public async Task RevokeAccessToken(string accessToken, string clientId)
@@ -32,20 +39,22 @@ namespace Axle.Services
                 throw new Exception(discoveryResponse.Error, discoveryResponse.Exception);
             }
 
-            var clientSecret = "no-secret-for-public-client";
-
-            using (var client = new TokenRevocationClient(discoveryResponse.RevocationEndpoint, clientId, clientSecret))
+            var httpClient = httpClientFactory.CreateClient();
+            var result = await httpClient.RevokeTokenAsync(new TokenRevocationRequest
             {
-                var result = await client.RevokeAccessTokenAsync(accessToken);
-
-                if (result.IsError)
-                {
-                    logger.LogError($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
-                    throw new Exception($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
-                }
-
-                logger.LogInformation($"Successfully revoked access token: [{accessToken}]");
+                Address = discoveryResponse.RevocationEndpoint, 
+                ClientId = clientId, 
+                ClientSecret = ClientSecret,
+                Token = accessToken
+            });
+            
+            if (result.IsError)
+            {
+                logger.LogError($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
+                throw new Exception($"An error occurred while revoking token | Error: {result.Error}", result.Exception);
             }
+
+            logger.LogInformation($"Successfully revoked access token: [{accessToken}]");
         }
     }
 }

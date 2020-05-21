@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using Swashbuckle.AspNetCore.Annotations;
+
 namespace Axle.Controllers
 {
     using System;
@@ -13,7 +15,6 @@ namespace Axle.Controllers
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.ModelBinding;
-    using NSwag.Annotations;
     using PermissionsManagement.Client.Attribute;
 
     [Route("api/[controller]")]
@@ -33,7 +34,7 @@ namespace Axle.Controllers
 
         [Authorize(AuthorizationPolicies.System)]
         [HttpGet("{userName}")]
-        [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.OK, type: typeof(UserSessionResponse))]
         [Obsolete("Use GET /for-support/{userName} and GET /for-user/{accountId}")]
         public async Task<IActionResult> Get(string userName)
         {
@@ -44,12 +45,12 @@ namespace Axle.Controllers
                 return NotFound();
             }
 
-            return Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
+            return Ok(new UserSessionResponse {UserSessionId = sessionId.Value});
         }
 
         [Authorize(AuthorizationPolicies.System)]
         [HttpGet("for-support/{userName}")]
-        [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.OK, type: typeof(UserSessionResponse))]
         public async Task<IActionResult> GetSessionForSupport(string userName)
         {
             var sessionId = await sessionRepository.GetSessionIdByUser(userName);
@@ -59,12 +60,12 @@ namespace Axle.Controllers
                 return NotFound();
             }
 
-            return Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
+            return Ok(new UserSessionResponse {UserSessionId = sessionId.Value});
         }
 
         [Authorize(AuthorizationPolicies.System)]
         [HttpGet("for-user/{accountId}")]
-        [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.OK, type: typeof(UserSessionResponse))]
         public async Task<IActionResult> GetSessionForUser(string accountId)
         {
             var sessionId = await sessionRepository.GetSessionIdByAccount(accountId);
@@ -74,14 +75,14 @@ namespace Axle.Controllers
                 return NotFound();
             }
 
-            return Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
+            return Ok(new UserSessionResponse {UserSessionId = sessionId.Value});
         }
 
         [AuthorizeUser(Permissions.CancelSession)]
         [HttpDelete]
-        [SwaggerResponse((int)HttpStatusCode.OK, typeof(TerminateSessionResponse))]
-        [SwaggerResponse((int)HttpStatusCode.NotFound, typeof(TerminateSessionResponse))]
-        [SwaggerResponse((int)HttpStatusCode.BadRequest, typeof(TerminateSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.OK, type: typeof(TerminateSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.NotFound, type: typeof(TerminateSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.BadRequest, type: typeof(TerminateSessionResponse))]
         public async Task<IActionResult> TerminateSession([BindRequired] [FromQuery] string accountId)
         {
             var result = await sessionService.TerminateSession(null, accountId, false);
@@ -93,7 +94,7 @@ namespace Axle.Controllers
 
             if (result.Status == TerminateSessionStatus.Failed)
             {
-                return StatusCode((int)HttpStatusCode.InternalServerError, result);
+                return StatusCode((int) HttpStatusCode.InternalServerError, result);
             }
 
             return Ok(result);

@@ -25,8 +25,6 @@ namespace Axle.Authorization
 
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AccountOwnerOrSupportRequirement requirement)
         {
-            var httpContext = contextAccessor.HttpContext;
-
             var accountId = contextAccessor.HttpContext.Request.Query["account_id"].ToString();
             var accountIdEmpty = string.IsNullOrWhiteSpace(accountId);
 
