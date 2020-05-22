@@ -249,8 +249,6 @@ namespace Axle
 
             app.UseMiddleware<LogHandlerMiddleware>();
             app.UseMiddleware<ExceptionHandlerMiddleware>();
-            app.UseCors("AllowCors");
-            app.UseAuthentication();
             app.UseMiddleware<AuditHandlerMiddleware>();
 
             app.UseSwagger();
@@ -262,6 +260,9 @@ namespace Axle
             });
 
             app.UseRouting();
+            app.UseCors("AllowCors");
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<SessionHub>(SessionHub.Name);
