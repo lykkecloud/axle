@@ -249,7 +249,6 @@ namespace Axle
 
             app.UseMiddleware<LogHandlerMiddleware>();
             app.UseMiddleware<ExceptionHandlerMiddleware>();
-            app.UseMiddleware<AuditHandlerMiddleware>();
 
             app.UseSwagger();
             app.UseSwaggerUI(options =>
@@ -262,6 +261,7 @@ namespace Axle
             app.UseRouting();
             app.UseCors("AllowCors");
             app.UseAuthentication();
+            app.UseMiddleware<AuditHandlerMiddleware>();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
