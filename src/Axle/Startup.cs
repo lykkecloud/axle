@@ -1,9 +1,12 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using PermissionsManagement.Client.Dto;
 
 namespace Axle
 {
@@ -216,6 +219,8 @@ namespace Axle
                 configuration.GetValue<string>("chestApiKey"));
 
             services.AddSingleton<IAccountsService, AccountsService>();
+            // The security groups are being injected by permissions management library, not obvious but no need to remove
+            services.AddSingleton(configuration.GetSection("SecurityGroups").Get<IEnumerable<SecurityGroup>>());
             services.AddSingleton<IUserRoleToPermissionsTransformer, UserRoleToPermissionsTransformer>();
             services.AddSingleton<IUserPermissionsClient, FakeUserPermissionsRepository>();
             services.AddSingleton<IClaimsTransformation, ClaimsTransformation>();
