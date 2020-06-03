@@ -4,7 +4,7 @@
 namespace Axle.Services
 {
     using System.Threading.Tasks;
-    using Axle.Dto;
+    using Dto;
 
     public interface INotificationService
     {

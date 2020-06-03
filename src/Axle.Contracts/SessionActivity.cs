@@ -16,10 +16,10 @@ namespace Axle.Contracts
             string userName,
             string accountId)
         {
-            this.Type = type;
-            this.SessionId = sessionId;
-            this.UserName = userName ?? throw new ArgumentNullException(nameof(userName));
-            this.AccountId = accountId;
+            Type = type;
+            SessionId = sessionId;
+            UserName = userName ?? throw new ArgumentNullException(nameof(userName));
+            AccountId = accountId;
         }
 
         [Key(0)]

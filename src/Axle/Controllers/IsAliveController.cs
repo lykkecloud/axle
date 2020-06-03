@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using Axle.Extensions;
+
 namespace Axle.Controllers
 {
     using System.Diagnostics;
@@ -20,6 +22,6 @@ namespace Axle.Controllers
             };
 
         [HttpGet]
-        public IActionResult Get() => this.Ok(Version);
+        public IActionResult Get() => Ok(Version);
     }
 }

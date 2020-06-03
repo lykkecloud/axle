@@ -4,7 +4,7 @@
 namespace Axle.Authorization
 {
     using System.Threading.Tasks;
-    using Axle.Constants;
+    using Constants;
     using IdentityModel;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
@@ -21,7 +21,7 @@ namespace Axle.Authorization
 
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, MobileClientAndAccountOwnerRequirement requirement)
         {
-            var routeData = this.contextAccessor.HttpContext.GetRouteData();
+            var routeData = contextAccessor.HttpContext.GetRouteData();
             var accountId = routeData.Values["accountId"]?.ToString();
 
             var isMobileClient = context.User.HasClaim(JwtClaimTypes.Scope, "axle_api:mobile");

@@ -3,7 +3,7 @@
 
 namespace Axle.Extensions
 {
-    using Axle.HttpClients;
+    using HttpClients;
     using Lykke.HttpClientGenerator;
     using Lykke.Snow.Common.Startup;
     using Microsoft.Extensions.DependencyInjection;

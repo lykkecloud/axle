@@ -5,7 +5,7 @@ namespace Axle.Services
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using Axle.Dto;
+    using Dto;
     using Microsoft.AspNetCore.SignalR;
 
     public interface IHubConnectionService

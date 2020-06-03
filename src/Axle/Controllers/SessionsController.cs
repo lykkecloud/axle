@@ -1,19 +1,20 @@
 ﻿// Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using Swashbuckle.AspNetCore.Annotations;
+
 namespace Axle.Controllers
 {
     using System;
     using System.Net;
     using System.Threading.Tasks;
-    using Axle.Constants;
-    using Axle.Dto;
-    using Axle.Persistence;
-    using Axle.Services;
+    using Constants;
+    using Dto;
+    using Persistence;
+    using Services;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.ModelBinding;
-    using NSwag.Annotations;
     using PermissionsManagement.Client.Attribute;
 
     [Route("api/[controller]")]
@@ -33,70 +34,70 @@ namespace Axle.Controllers
 
         [Authorize(AuthorizationPolicies.System)]
         [HttpGet("{userName}")]
-        [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.OK, type: typeof(UserSessionResponse))]
         [Obsolete("Use GET /for-support/{userName} and GET /for-user/{accountId}")]
         public async Task<IActionResult> Get(string userName)
         {
-            var sessionId = await this.sessionRepository.GetSessionIdByUser(userName);
+            var sessionId = await sessionRepository.GetSessionIdByUser(userName);
 
             if (sessionId == null)
             {
-                return this.NotFound();
+                return NotFound();
             }
 
-            return this.Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
+            return Ok(new UserSessionResponse {UserSessionId = sessionId.Value});
         }
 
         [Authorize(AuthorizationPolicies.System)]
         [HttpGet("for-support/{userName}")]
-        [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.OK, type: typeof(UserSessionResponse))]
         public async Task<IActionResult> GetSessionForSupport(string userName)
         {
-            var sessionId = await this.sessionRepository.GetSessionIdByUser(userName);
+            var sessionId = await sessionRepository.GetSessionIdByUser(userName);
 
             if (sessionId == null)
             {
-                return this.NotFound();
+                return NotFound();
             }
 
-            return this.Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
+            return Ok(new UserSessionResponse {UserSessionId = sessionId.Value});
         }
 
         [Authorize(AuthorizationPolicies.System)]
         [HttpGet("for-user/{accountId}")]
-        [SwaggerResponse((int)HttpStatusCode.OK, typeof(UserSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.OK, type: typeof(UserSessionResponse))]
         public async Task<IActionResult> GetSessionForUser(string accountId)
         {
-            var sessionId = await this.sessionRepository.GetSessionIdByAccount(accountId);
+            var sessionId = await sessionRepository.GetSessionIdByAccount(accountId);
 
             if (sessionId == null)
             {
-                return this.NotFound();
+                return NotFound();
             }
 
-            return this.Ok(new UserSessionResponse { UserSessionId = sessionId.Value });
+            return Ok(new UserSessionResponse {UserSessionId = sessionId.Value});
         }
 
         [AuthorizeUser(Permissions.CancelSession)]
         [HttpDelete]
-        [SwaggerResponse((int)HttpStatusCode.OK, typeof(TerminateSessionResponse))]
-        [SwaggerResponse((int)HttpStatusCode.NotFound, typeof(TerminateSessionResponse))]
-        [SwaggerResponse((int)HttpStatusCode.BadRequest, typeof(TerminateSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.OK, type: typeof(TerminateSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.NotFound, type: typeof(TerminateSessionResponse))]
+        [SwaggerResponse((int) HttpStatusCode.BadRequest, type: typeof(TerminateSessionResponse))]
         public async Task<IActionResult> TerminateSession([BindRequired] [FromQuery] string accountId)
         {
-            var result = await this.sessionService.TerminateSession(null, accountId, false);
+            var result = await sessionService.TerminateSession(null, accountId, false);
 
             if (result.Status == TerminateSessionStatus.NotFound)
             {
-                return this.NotFound(result);
+                return NotFound(result);
             }
 
             if (result.Status == TerminateSessionStatus.Failed)
             {
-                return this.StatusCode((int)HttpStatusCode.InternalServerError, result);
+                return StatusCode((int) HttpStatusCode.InternalServerError, result);
             }
 
-            return this.Ok(result);
+            return Ok(result);
         }
     }
 }

@@ -16,6 +16,6 @@ namespace Axle.Tests.Acceptance.Support
             this.axleFixture = axleFixture;
         }
 
-        protected Uri AxleUrl => this.axleFixture.AxleUrl;
+        protected Uri AxleUrl => axleFixture.AxleUrl;
     }
 }

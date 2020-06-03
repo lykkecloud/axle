@@ -24,11 +24,11 @@ namespace Axle.Caches
 
         public Task<List<string>> GetAccountIds(string clientId)
         {
-            return this.cache.GetOrCreateAsync(clientId, async entity =>
+            return cache.GetOrCreateAsync(clientId, async entity =>
             {
                 entity.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
 
-                var userAccounts = await this.accountsApi.GetByClient(clientId);
+                var userAccounts = await accountsApi.GetByClient(clientId);
 
                 return userAccounts?.Select(a => a.Id).ToList();
             });

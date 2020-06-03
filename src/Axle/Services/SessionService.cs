@@ -6,10 +6,10 @@ namespace Axle.Services
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Axle.Contracts;
-    using Axle.Dto;
-    using Axle.Extensions;
-    using Axle.Persistence;
+    using Contracts;
+    using Dto;
+    using Extensions;
+    using Persistence;
     using Microsoft.Extensions.Logging;
 
     public sealed class SessionService : ISessionService, IDisposable
@@ -46,59 +46,59 @@ namespace Axle.Services
             string accessToken,
             bool isSupportUser)
         {
-            await this.slimLock.WaitAsync();
+            await slimLock.WaitAsync();
 
             try
             {
                 var userInfo = isSupportUser 
-                    ? await this.sessionRepository.GetByUser(userName) 
-                    : await this.sessionRepository.GetByAccount(accountId);
+                    ? await sessionRepository.GetByUser(userName) 
+                    : await sessionRepository.GetByAccount(accountId);
 
                 if (userInfo != null && userInfo.AccessToken == accessToken)
                 {
-                    this.logger.LogDebug($"Session resolved by existing cache. {nameof(userName)}: {userName}, {nameof(accountId)}: {accountId}, {nameof(userInfo.SessionId)}: {userInfo.SessionId}, {nameof(userInfo.IsSupportUser)}: {userInfo.IsSupportUser}.");
+                    logger.LogDebug($"Session resolved by existing cache. {nameof(userName)}: {userName}, {nameof(accountId)}: {accountId}, {nameof(userInfo.SessionId)}: {userInfo.SessionId}, {nameof(userInfo.IsSupportUser)}: {userInfo.IsSupportUser}.");
                     
                     return userInfo;
                 }
 
-                var sessionId = await this.GenerateSessionId();
+                var sessionId = await GenerateSessionId();
 
                 var newSession = new Session(userName, sessionId, accountId, accessToken, clientId, isSupportUser);
 
-                await this.sessionRepository.Add(newSession);
+                await sessionRepository.Add(newSession);
 
                 if (!newSession.IsSupportUser)
                 {
-                    await this.activityService.PublishActivity(newSession, SessionActivityType.Login);
+                    await activityService.PublishActivity(newSession, SessionActivityType.Login);
                 }
                 else if (!string.IsNullOrEmpty(newSession.AccountId))
                 {
-                    await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportConnected, newSession);
+                    await MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportConnected, newSession);
                 }
 
                 if (userInfo != null)
                 {
-                    await this.TerminateSession(userInfo, SessionActivityType.DifferentDeviceTermination);
-                    this.logger.LogWarning(StatusCode.IF_ATH_502.ToMessage());
+                    await TerminateSession(userInfo, SessionActivityType.DifferentDeviceTermination);
+                    logger.LogWarning(StatusCode.IF_ATH_502.ToMessage());
                 }
 
-                this.logger.LogWarning(StatusCode.IF_ATH_501.ToMessage());
+                logger.LogWarning(StatusCode.IF_ATH_501.ToMessage());
 
                 return newSession;
             }
             finally
             {
-                this.slimLock.Release();
+                slimLock.Release();
             }
         }
 
         public async Task<OnBehalfChangeResponse> UpdateOnBehalfState(int sessionId, string onBehalfAccount)
         {
-            this.slimLock.Wait();
+            slimLock.Wait();
 
             try
             {
-                var session = await this.sessionRepository.Get(sessionId);
+                var session = await sessionRepository.Get(sessionId);
 
                 if (session == null)
                 {
@@ -119,7 +119,7 @@ namespace Axle.Services
 
                 if (!string.IsNullOrEmpty(onBehalfAccount))
                 {
-                    onBehalfOwner = await this.accountsService.GetAccountOwnerUserName(onBehalfAccount);
+                    onBehalfOwner = await accountsService.GetAccountOwnerUserName(onBehalfAccount);
 
                     if (string.IsNullOrEmpty(onBehalfOwner))
                     {
@@ -129,23 +129,23 @@ namespace Axle.Services
 
                 var newSession = new Session(session.UserName, session.SessionId, onBehalfAccount, session.AccessToken, session.ClientId, session.IsSupportUser);
 
-                await this.sessionRepository.Update(newSession);
+                await sessionRepository.Update(newSession);
 
                 if (!string.IsNullOrEmpty(session.AccountId))
                 {
-                    await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportDisconnected, session);
+                    await MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportDisconnected, session);
                 }
 
                 if (!string.IsNullOrEmpty(onBehalfAccount))
                 {
-                    await this.activityService.PublishActivity(new SessionActivity(SessionActivityType.OnBehalfSupportConnected, session.SessionId, onBehalfOwner, onBehalfAccount));
+                    await activityService.PublishActivity(new SessionActivity(SessionActivityType.OnBehalfSupportConnected, session.SessionId, onBehalfOwner, onBehalfAccount));
                 }
 
                 return OnBehalfChangeResponse.Success();
             }
             finally
             {
-                this.slimLock.Release();
+                slimLock.Release();
             }
         }
 
@@ -155,15 +155,15 @@ namespace Axle.Services
             bool isSupportUser,
             SessionActivityType reason = SessionActivityType.ManualTermination)
         {
-            await this.slimLock.WaitAsync();
+            await slimLock.WaitAsync();
 
             try
             {
-                var userInfo = await this.sessionRepository.GetByUser(userName);
+                var userInfo = await sessionRepository.GetByUser(userName);
 
                 if (userInfo == null && !isSupportUser && !string.IsNullOrEmpty(accountId))
                 {
-                    userInfo = await this.sessionRepository.GetByAccount(accountId);
+                    userInfo = await sessionRepository.GetByAccount(accountId);
                 }
 
                 if (userInfo == null)
@@ -175,16 +175,16 @@ namespace Axle.Services
                     };
                 }
 
-                this.logger.LogInformation($"Terminating session: [{userInfo.SessionId}] for user: [{userName}] and account: [{accountId}]");
+                logger.LogInformation($"Terminating session: [{userInfo.SessionId}] for user: [{userName}] and account: [{accountId}]");
 
-                await this.TerminateSession(userInfo, reason);
+                await TerminateSession(userInfo, reason);
 
                 if (reason == SessionActivityType.ManualTermination)
                 {
-                    this.logger.LogWarning(StatusCode.WN_ATH_701.ToMessage());
+                    logger.LogWarning(StatusCode.WN_ATH_701.ToMessage());
                 }
 
-                this.logger.LogInformation($"Successfully terminated session: [{userInfo.SessionId}] for user: [{userName}] and account: [{accountId}]");
+                logger.LogInformation($"Successfully terminated session: [{userInfo.SessionId}] for user: [{userName}] and account: [{accountId}]");
 
                 return new TerminateSessionResponse
                 {
@@ -194,7 +194,7 @@ namespace Axle.Services
             }
             catch (Exception error)
             {
-                this.logger.LogError(error, $"An unexpected error occurred while terminating session for user [{userName}] and account: [{accountId}]");
+                logger.LogError(error, $"An unexpected error occurred while terminating session for user [{userName}] and account: [{accountId}]");
 
                 return new TerminateSessionResponse
                 {
@@ -204,28 +204,28 @@ namespace Axle.Services
             }
             finally
             {
-                this.slimLock.Release();
+                slimLock.Release();
             }
         }
 
         public async Task TerminateSession(Session userInfo, SessionActivityType reason)
         {
-            await this.sessionRepository.Remove(userInfo.SessionId, userInfo.UserName, userInfo.AccountId);
+            await sessionRepository.Remove(userInfo.SessionId, userInfo.UserName, userInfo.AccountId);
 
             if (reason != SessionActivityType.SignOut)
             {
-                await this.tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
+                await tokenRevocationService.RevokeAccessToken(userInfo.AccessToken, userInfo.ClientId);
             }
 
-            await this.notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });
+            await notificationService.PublishSessionTermination(new TerminateSessionNotification() { SessionId = userInfo.SessionId, Reason = reason });
 
             if (!userInfo.IsSupportUser)
             {
-                await this.activityService.PublishActivity(userInfo, reason);
+                await activityService.PublishActivity(userInfo, reason);
             }
             else if (!string.IsNullOrEmpty(userInfo.AccountId))
             {
-                await this.MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportDisconnected, userInfo);
+                await MakeAndPublishOnBehalfActivity(SessionActivityType.OnBehalfSupportDisconnected, userInfo);
             }
         }
 
@@ -238,23 +238,23 @@ namespace Axle.Services
             {
                 sessionId = rand.Next(int.MinValue, int.MaxValue);
             }
-            while (await this.sessionRepository.Get(sessionId) != null);
+            while (await sessionRepository.Get(sessionId) != null);
 
             return sessionId;
         }
 
         public void Dispose()
         {
-            this.slimLock?.Dispose();
+            slimLock?.Dispose();
             GC.SuppressFinalize(this);
         }
 
         private async Task MakeAndPublishOnBehalfActivity(SessionActivityType type, Session session)
         {
-            var accountOwner = await this.accountsService.GetAccountOwnerUserName(session.AccountId);
+            var accountOwner = await accountsService.GetAccountOwnerUserName(session.AccountId);
             var sessionActivity = new SessionActivity(type, session.SessionId, accountOwner, session.AccountId);
 
-            await this.activityService.PublishActivity(sessionActivity);
+            await activityService.PublishActivity(sessionActivity);
         }
     }
 }

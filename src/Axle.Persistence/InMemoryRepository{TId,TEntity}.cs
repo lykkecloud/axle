@@ -14,12 +14,12 @@ namespace Axle.Persistence
 
         public void Add(TId id, TEntity entity)
         {
-            this.repo.TryAdd(id, entity);
+            repo.TryAdd(id, entity);
         }
 
         public TEntity Get(TId id)
         {
-            if (this.repo.TryGetValue(id, out var entity))
+            if (repo.TryGetValue(id, out var entity))
             {
                 return entity;
             }
@@ -27,21 +27,21 @@ namespace Axle.Persistence
             return default;
         }
 
-        public bool TryGet(TId id, out TEntity entity) => this.repo.TryGetValue(id, out entity);
+        public bool TryGet(TId id, out TEntity entity) => repo.TryGetValue(id, out entity);
 
         public IReadOnlyList<KeyValuePair<TId, TEntity>> GetAll()
         {
-            return this.repo.ToArray();
+            return repo.ToArray();
         }
 
         public IEnumerable<KeyValuePair<TId, TEntity>> Find(Func<TEntity, bool> filter)
         {
-            return this.repo.Where(x => filter(x.Value));
+            return repo.Where(x => filter(x.Value));
         }
 
         public void Remove(TId id)
         {
-            this.repo.TryRemove(id, out var _);
+            repo.TryRemove(id, out var _);
         }
     }
 }

@@ -18,12 +18,12 @@ namespace Axle.Persistence
             string clientId,
             bool isSupportUser)
         {
-            this.UserName = userName ?? throw new ArgumentNullException(nameof(userName));
-            this.AccountId = accountId;
-            this.AccessToken = accessToken ?? throw new ArgumentNullException(nameof(accessToken));
-            this.ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
-            this.SessionId = sessionId;
-            this.IsSupportUser = isSupportUser;
+            UserName = userName ?? throw new ArgumentNullException(nameof(userName));
+            AccountId = accountId;
+            AccessToken = accessToken ?? throw new ArgumentNullException(nameof(accessToken));
+            ClientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
+            SessionId = sessionId;
+            IsSupportUser = isSupportUser;
         }
 
         [Key(0)]

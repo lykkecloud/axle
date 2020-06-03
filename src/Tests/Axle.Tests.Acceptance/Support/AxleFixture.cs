@@ -26,9 +26,9 @@ namespace Axle.Tests.Acceptance.Support
         public AxleFixture()
         {
             var config = new ConfigurationBuilder().AddJsonFile("testsettings.json").Build();
-            this.AxleUrl = config.GetValue<Uri>("axleUrl");
+            AxleUrl = config.GetValue<Uri>("axleUrl");
 
-            this.axleProcess = this.StartAxle();
+            axleProcess = StartAxle();
         }
 
         public Uri AxleUrl { get; }
@@ -37,13 +37,13 @@ namespace Axle.Tests.Acceptance.Support
         {
             try
             {
-                this.axleProcess.Kill();
+                axleProcess.Kill();
             }
             catch (InvalidOperationException)
             {
             }
 
-            this.axleProcess.Dispose();
+            axleProcess.Dispose();
         }
 
         private static JsonSerializerSettings GetJsonSerializerSettings()
@@ -73,7 +73,7 @@ namespace Axle.Tests.Acceptance.Support
                     UseShellExecute = true,
                 });
 
-            return Process.GetProcessById(this.GetProcessIdFromAxleWebApi());
+            return Process.GetProcessById(GetProcessIdFromAxleWebApi());
         }
 
         private int GetProcessIdFromAxleWebApi()
@@ -85,7 +85,7 @@ namespace Axle.Tests.Acceptance.Support
                     Thread.Sleep(500);
                     try
                     {
-                        using (var response = client.GetAsync(new Uri(this.AxleUrl, "api/isalive")).GetAwaiter().GetResult())
+                        using (var response = client.GetAsync(new Uri(AxleUrl, "api/isalive")).GetAwaiter().GetResult())
                         {
                             if (response.StatusCode == HttpStatusCode.OK)
                             {

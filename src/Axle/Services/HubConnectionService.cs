@@ -6,11 +6,11 @@ namespace Axle.Services
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Axle.Constants;
-    using Axle.Dto;
-    using Axle.Extensions;
-    using Axle.Hubs;
-    using Axle.Persistence;
+    using Constants;
+    using Dto;
+    using Extensions;
+    using Hubs;
+    using Persistence;
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.Logging;
 
@@ -47,10 +47,10 @@ namespace Axle.Services
             string accessToken,
             bool isSupportUser)
         {
-            var session = await this.sessionService.BeginSession(userName, accountId, clientId, accessToken, isSupportUser);
+            var session = await sessionService.BeginSession(userName, accountId, clientId, accessToken, isSupportUser);
 
-            this.connectionRepository.Add(context.ConnectionId, context);
-            this.sessionIdRepository.Add(context.ConnectionId, session.SessionId);
+            connectionRepository.Add(context.ConnectionId, context);
+            sessionIdRepository.Add(context.ConnectionId, session.SessionId);
 
             var terminateOtherTabs = new TerminateOtherTabsNotification
             {
@@ -59,30 +59,30 @@ namespace Axle.Services
                 OriginatingServiceId = AxleConstants.ServiceId
             };
 
-            await this.notificationService.PublishOtherTabsTermination(terminateOtherTabs);
+            await notificationService.PublishOtherTabsTermination(terminateOtherTabs);
         }
 
         public void CloseConnection(string connectionId)
         {
-            this.connectionRepository.Remove(connectionId);
-            this.sessionIdRepository.Remove(connectionId);
+            connectionRepository.Remove(connectionId);
+            sessionIdRepository.Remove(connectionId);
         }
 
         public IEnumerable<int> GetAllConnectedSessions()
         {
-            return this.sessionIdRepository.GetAll().Select(x => x.Value).Distinct();
+            return sessionIdRepository.GetAll().Select(x => x.Value).Distinct();
         }
 
-        public bool TryGetSessionId(string connectionId, out int sessionId) => this.sessionIdRepository.TryGet(connectionId, out sessionId);
+        public bool TryGetSessionId(string connectionId, out int sessionId) => sessionIdRepository.TryGet(connectionId, out sessionId);
 
         public IEnumerable<string> FindBySessionId(int sessionId)
         {
-            return this.sessionIdRepository.Find(id => id == sessionId).Select(x => x.Key);
+            return sessionIdRepository.Find(id => id == sessionId).Select(x => x.Key);
         }
 
         public IEnumerable<string> FindByAccessToken(string accessToken)
         {
-            return this.connectionRepository.Find(context => context.GetHttpContext().Request.Query["access_token"].ToString() == accessToken).Select(x => x.Key);
+            return connectionRepository.Find(context => context.GetHttpContext().Request.Query["access_token"].ToString() == accessToken).Select(x => x.Key);
         }
 
         public async Task TerminateConnections(TerminateConnectionReason reason, params string[] connectionIds)
@@ -90,33 +90,33 @@ namespace Axle.Services
             switch (reason)
             {
                 case TerminateConnectionReason.DifferentDevice:
-                    await this.sessionHubContext.Clients.Clients(connectionIds)
+                    await sessionHubContext.Clients.Clients(connectionIds)
                         .SendAsync("concurrentSessionTermination", StatusCode.IF_ATH_502, StatusCode.IF_ATH_502.ToMessage());
                     break;
                 case TerminateConnectionReason.DifferentTab:
-                    await this.sessionHubContext.Clients.Clients(connectionIds).SendAsync("concurrentTabTermination");
+                    await sessionHubContext.Clients.Clients(connectionIds).SendAsync("concurrentTabTermination");
                     break;
                 case TerminateConnectionReason.ByForce:
-                    await this.sessionHubContext.Clients.Clients(connectionIds)
+                    await sessionHubContext.Clients.Clients(connectionIds)
                         .SendAsync("byForceTermination", StatusCode.IF_ATH_503, StatusCode.IF_ATH_503.ToMessage());
                     break;
                 default:
-                    this.logger.LogInformation($"Not implemented for reason {reason}");
+                    logger.LogInformation($"Not implemented for reason {reason}");
                     break;
             }
 
             foreach (var connectionId in connectionIds)
             {
-                var connection = this.connectionRepository.Get(connectionId);
+                var connection = connectionRepository.Get(connectionId);
 
                 if (connection == null)
                 {
-                    this.logger.LogWarning($"Connection with ID [{connectionId}] was not found and could not be terminated");
+                    logger.LogWarning($"Connection with ID [{connectionId}] was not found and could not be terminated");
                 }
                 else
                 {
                     connection.Abort();
-                    this.logger.LogInformation($"Connection with ID [{connectionId}] was successfully terminated");
+                    logger.LogInformation($"Connection with ID [{connectionId}] was successfully terminated");
                 }
             }
         }

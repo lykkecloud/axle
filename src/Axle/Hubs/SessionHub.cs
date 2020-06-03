@@ -9,11 +9,11 @@ namespace Axle.Hubs
     using System;
     using System.Net;
     using System.Threading.Tasks;
-    using Axle.Constants;
-    using Axle.Contracts;
-    using Axle.Dto;
-    using Axle.Extensions;
-    using Axle.Services;
+    using Constants;
+    using Contracts;
+    using Dto;
+    using Extensions;
+    using Services;
     using IdentityModel;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authorization;
@@ -39,66 +39,66 @@ namespace Axle.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var userName = this.Context.User.FindFirstValue(JwtClaimTypes.Name);
+            var userName = Context.User.FindFirstValue(JwtClaimTypes.Name);
             if (string.IsNullOrEmpty(userName))
             {
                 throw new UserClaimIsEmptyException(JwtClaimTypes.Name);
             }
 
-            var clientId = this.Context.User.FindFirstValue("client_id");
+            var clientId = Context.User.FindFirstValue("client_id");
             if (string.IsNullOrEmpty(clientId))
             {
                 throw new UserClaimIsEmptyException("client_id");
             }
 
-            var query = this.Context.GetHttpContext().Request.Query;
+            var query = Context.GetHttpContext().Request.Query;
 
             var token = query["access_token"];
             var accountId = query["account_id"];
 
-            var isSupportUser = this.Context.User.IsSupportUser(accountId);
+            var isSupportUser = Context.User.IsSupportUser(accountId);
 
-            await this.hubConnectionService.OpenConnection(this.Context, userName, accountId, clientId, token, isSupportUser);
+            await hubConnectionService.OpenConnection(Context, userName, accountId, clientId, token, isSupportUser);
 
-            Log.Information($"New connection established. User: {userName}, ID: {this.Context.ConnectionId}.");
+            Log.Information($"New connection established. User: {userName}, ID: {Context.ConnectionId}.");
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            var userName = this.Context.User.FindFirst(JwtClaimTypes.Name).Value;
+            var userName = Context.User.FindFirst(JwtClaimTypes.Name).Value;
 
-            Log.Information($"Connection closed. User: {userName}, ID: {this.Context.ConnectionId}.");
-            this.hubConnectionService.CloseConnection(this.Context.ConnectionId);
+            Log.Information($"Connection closed. User: {userName}, ID: {Context.ConnectionId}.");
+            hubConnectionService.CloseConnection(Context.ConnectionId);
 
             return base.OnDisconnectedAsync(exception);
         }
 
         public async Task<bool> SignOut()
         {
-            var userName = this.Context.User.FindFirst(JwtClaimTypes.Name).Value;
-            var accountId = this.Context.GetHttpContext().Request.Query["account_id"];
-            var isSupportUser = this.Context.User.IsSupportUser(accountId);
+            var userName = Context.User.FindFirst(JwtClaimTypes.Name).Value;
+            var accountId = Context.GetHttpContext().Request.Query["account_id"];
+            var isSupportUser = Context.User.IsSupportUser(accountId);
 
-            var response = await this.sessionService.TerminateSession(userName, accountId, isSupportUser, SessionActivityType.SignOut);
+            var response = await sessionService.TerminateSession(userName, accountId, isSupportUser, SessionActivityType.SignOut);
 
             return response.Status == TerminateSessionStatus.Terminated;
         }
 
         public Task<OnBehalfChangeResponse> SetOnBehalfAccount(string accountId)
         {
-            this.ThrowIfUnauthorized(matchAllPermissions: true, Permissions.OnBehalfSelection);
+            ThrowIfUnauthorized(matchAllPermissions: true, Permissions.OnBehalfSelection);
 
-            if (!this.hubConnectionService.TryGetSessionId(this.Context.ConnectionId, out int sessionId))
+            if (!hubConnectionService.TryGetSessionId(Context.ConnectionId, out int sessionId))
             {
                 throw new HubException("The current connection has not been registered");
             }
 
-            return this.sessionService.UpdateOnBehalfState(sessionId, accountId);
+            return sessionService.UpdateOnBehalfState(sessionId, accountId);
         }
 
         private void ThrowIfUnauthorized(bool matchAllPermissions = false, params string[] permissions)
         {
-            if (!this.Context.User.IsAuthorized(matchAllPermissions, permissions))
+            if (!Context.User.IsAuthorized(matchAllPermissions, permissions))
             {
                 throw new HubException(
                     $"Action Forbidden ({(int)HttpStatusCode.Forbidden}). " +
