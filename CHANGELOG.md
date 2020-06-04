@@ -1,3 +1,7 @@
+## 2.15.0 (June 04, 2020)
+
+* LT-2261: Migrate to 3.1 Core and update DL libraries
+
 ## 2.14.7 (March 30, 2020)
 
 * LT-2132: Investor couldn't connect to web client- 404 in Axle
