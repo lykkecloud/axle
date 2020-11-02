@@ -212,7 +212,8 @@ namespace Axle
 
             services.AddMtCoreDalRepositories(
                 configuration.GetValue<string>("mtCoreAccountsMgmtServiceUrl"),
-                configuration.GetValue<string>("mtCoreAccountsApiKey"));
+                configuration.GetValue<string>("mtCoreAccountsApiKey"),
+                configuration.GetValue("BackofficeSupportMode", false));
 
             services.AddChestClient(
                 configuration.GetValue<string>("chestUrl"),
