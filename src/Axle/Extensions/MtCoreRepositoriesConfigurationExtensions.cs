@@ -1,6 +1,8 @@
 // Copyright (c) 2019 Lykke Corp.
 // See the LICENSE file in the project root for more information.
 
+using Axle.Services;
+
 namespace Axle.Extensions
 {
     using HttpClients;
@@ -11,11 +13,19 @@ namespace Axle.Extensions
 
     public static class MtCoreRepositoriesConfigurationExtensions
     {
-        public static void AddMtCoreDalRepositories(
-            this IServiceCollection services,
+        public static void AddMtCoreDalRepositories(this IServiceCollection services,
             string mtCoreAccountManagementEndpoint,
-            string mtCoreAccountsApiKey)
+            string mtCoreAccountsApiKey, 
+            bool backofficeSupportMode)
         {
+
+            if (backofficeSupportMode)
+            {
+                services.AddSingleton<IAccountsMgmtApi, EmptyAccountsApiStub>();
+
+                return;
+            }
+            
             var mtCoreAccountsMgmtClientGenerator = HttpClientGenerator
                 .BuildForUrl(mtCoreAccountManagementEndpoint)
                 .WithServiceName<MtCoreHttpErrorResponse>("MT Core Account Management Service")
