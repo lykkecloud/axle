@@ -75,8 +75,17 @@ namespace Axle
             {
                 configuration.ValidateEnvironmentSecrets(EnvironmentSecretConfig, Log.Logger);
 
-                await configuration.ValidateSettings<AppSettings>();
+                var backofficeSupportMode = configuration.GetValue("BackofficeSupportMode", false);
 
+                if (backofficeSupportMode)
+                {
+                    await configuration.ValidateSettings<BaseAppSettings>();
+                }
+                else
+                {
+                    await configuration.ValidateSettings<AppSettings>();    
+                }
+                
                 Log.Information($"Starting {title} web API");
                 BuildHost(args, configuration).Run();
                 Log.Information($"{title} web API stopped");

@@ -5,17 +5,9 @@ namespace Axle.Settings
 {
     using Lykke.SettingsReader.Attributes;
 
-    public class AppSettings
+    public class AppSettings : BaseAppSettings
     {
         [HttpCheck("api/isalive")]
-        public string ApiAuthority { get; set; }
-
-        [HttpCheck("api/isalive")]
-        public string chestUrl { get; set; }
-
-        [HttpCheck("api/isalive")]
         public string mtCoreAccountsMgmtServiceUrl { get; set; }
-
-        public ConnectionStrings ConnectionStrings { get; set; }
     }
 }
