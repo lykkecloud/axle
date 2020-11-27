@@ -45,21 +45,25 @@ namespace Axle.Services
             string accountId,
             string clientId,
             string accessToken,
-            bool isSupportUser)
+            bool isSupportUser,
+            bool isConcurrentConnection)
         {
             var session = await sessionService.BeginSession(userName, accountId, clientId, accessToken, isSupportUser);
 
             connectionRepository.Add(context.ConnectionId, context);
             sessionIdRepository.Add(context.ConnectionId, session.SessionId);
 
-            var terminateOtherTabs = new TerminateOtherTabsNotification
+            if (!isConcurrentConnection)
             {
-                AccessToken = accessToken,
-                OriginatingConnectionId = context.ConnectionId,
-                OriginatingServiceId = AxleConstants.ServiceId
-            };
+                var terminateOtherTabs = new TerminateOtherTabsNotification
+                {
+                    AccessToken = accessToken,
+                    OriginatingConnectionId = context.ConnectionId,
+                    OriginatingServiceId = AxleConstants.ServiceId
+                };
 
-            await notificationService.PublishOtherTabsTermination(terminateOtherTabs);
+                await notificationService.PublishOtherTabsTermination(terminateOtherTabs);   
+            }
         }
 
         public void CloseConnection(string connectionId)

@@ -1,3 +1,12 @@
+## 2.16.0 (November 03, 2020)
+
+* LT-2738: Introduce mode for support users
+
+### Deployment
+
+Added new setting "BackofficeSupportMode" : false
+If set to true, Axle does not require Account Management service on startup and works correctly without it, but this mode is valid ONLY for BNPP support users. Investors (and also on-behalf support users) will not be able to use Axle in such a mode (that's why the default value is false).
+
 ## 2.15.0 (June 04, 2020)
 
 * LT-2261: Migrate to 3.1 Core and update DL libraries

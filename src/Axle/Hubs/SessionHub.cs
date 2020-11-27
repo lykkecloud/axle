@@ -55,10 +55,12 @@ namespace Axle.Hubs
 
             var token = query["access_token"];
             var accountId = query["account_id"];
+            if (!bool.TryParse(query["is_concurrent_connection"], out var isConcurrentConnection))
+                isConcurrentConnection = false;
 
             var isSupportUser = Context.User.IsSupportUser(accountId);
 
-            await hubConnectionService.OpenConnection(Context, userName, accountId, clientId, token, isSupportUser);
+            await hubConnectionService.OpenConnection(Context, userName, accountId, clientId, token, isSupportUser, isConcurrentConnection);
 
             Log.Information($"New connection established. User: {userName}, ID: {Context.ConnectionId}.");
         }
