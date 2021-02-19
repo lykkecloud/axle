@@ -16,7 +16,8 @@ namespace Axle.Services
             string accountId,
             string clientId,
             string accessToken,
-            bool isSupportUser);
+            bool isSupportUser,
+            bool isConcurrentConnection);
 
         void CloseConnection(string connectionId);
 
