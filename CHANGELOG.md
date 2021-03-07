@@ -1,3 +1,7 @@
+## 2.20.0 (March 01, 2021). Nova 2. Delivery 8.
+
+* LT-2806: Implement "extract tab" feature
+
 ## 2.16.0 (November 03, 2020)
 
 * LT-2738: Introduce mode for support users
