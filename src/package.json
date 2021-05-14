@@ -1,4 +1,5 @@
 {
+  "name": "Axle",
   "devDependencies": {
     "@commitlint/cli": "^12.1.4",
     "@commitlint/config-conventional": "^12.1.4",
