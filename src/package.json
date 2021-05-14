@@ -4,7 +4,7 @@
     "@commitlint/cli": "^12.1.4",
     "@commitlint/config-conventional": "^12.1.4",
     "@commitlint/format": "^12.1.4",
-    "husky": "^6.0.0",
-    "semantic-release": "^17.4.3"
+    "@semantic-release/github": "^7.2.3",
+    "husky": "^6.0.0"
   }
 }
