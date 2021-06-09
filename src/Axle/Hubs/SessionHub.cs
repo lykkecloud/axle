@@ -69,8 +69,7 @@ namespace Axle.Hubs
         {
             var userName = Context.User.FindFirst(JwtClaimTypes.Name).Value;
 
-            Log.Information(exception, $"Connection closed. User: {userName}, ID: {Context.ConnectionId}.");
-            Log.Warning(exception, $"Connection closed: message: {exception?.Message}");
+            Log.Information($"Connection closed. User: {userName}, ID: {Context.ConnectionId}.");
             hubConnectionService.CloseConnection(Context.ConnectionId);
 
             return base.OnDisconnectedAsync(exception);
